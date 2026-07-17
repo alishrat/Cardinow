@@ -559,10 +559,16 @@ export async function syncWithDirectus() {
 export const dbService = {
   // ---- TENANTS ----
   getTenants: async (): Promise<Tenant[]> => {
-    const res = await fetch(`${DIRECTUS_BASE_URL}/items/tenants`);
-    if (!res.ok) throw new Error('خطا در دریافت اطلاعات نمایندگان از سرور دایرکتوس');
-    const json = await res.json();
-    return json?.data || [];
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/tenants`);
+      if (!res.ok) throw new Error('Failed to fetch from Directus');
+      const json = await res.json();
+      const data = json?.data || [];
+      return data.length > 0 ? data : SEED_TENANTS;
+    } catch {
+      console.warn('Directus tenants fetch failed, using SEED_TENANTS');
+      return SEED_TENANTS;
+    }
   },
   saveTenant: async (tenant: Tenant): Promise<void> => {
     const cleanPayload = cleanDataForDirectus(tenant);
@@ -585,24 +591,30 @@ export const dbService = {
 
   // ---- TEMPLATES ----
   getTemplates: async (): Promise<Template[]> => {
-    const res = await fetch(`${DIRECTUS_BASE_URL}/items/templates`);
-    if (!res.ok) throw new Error('خطا در دریافت اطلاعات قالب‌ها از دایرکتوس');
-    const json = await res.json();
-    const data = json?.data || [];
-    return data.map((temp: any) => {
-      let parsedSchema = temp.schema;
-      if (typeof parsedSchema === 'string') {
-        try {
-          parsedSchema = JSON.parse(parsedSchema);
-        } catch {
-          parsedSchema = null;
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/templates`);
+      if (!res.ok) throw new Error('Failed to fetch from Directus');
+      const json = await res.json();
+      const data = json?.data || [];
+      if (data.length === 0) return SEED_TEMPLATES;
+      return data.map((temp: any) => {
+        let parsedSchema = temp.schema;
+        if (typeof parsedSchema === 'string') {
+          try {
+            parsedSchema = JSON.parse(parsedSchema);
+          } catch {
+            parsedSchema = null;
+          }
         }
-      }
-      return {
-        ...temp,
-        schema: parsedSchema
-      };
-    });
+        return {
+          ...temp,
+          schema: parsedSchema
+        };
+      });
+    } catch {
+      console.warn('Directus templates fetch failed, using SEED_TEMPLATES');
+      return SEED_TEMPLATES;
+    }
   },
   saveTemplate: async (template: Template): Promise<void> => {
     const cleanPayload = cleanDataForDirectus(template);
@@ -624,31 +636,41 @@ export const dbService = {
 
   // ---- PLANS ----
   getPlans: async (tenantId?: string | null): Promise<Plan[]> => {
-    let url = `${DIRECTUS_BASE_URL}/items/plans`;
-    if (tenantId) {
-      url += `?filter[tenant_id][_eq]=${toUUID(tenantId)}`;
-    }
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('خطا در دریافت اطلاعات پلن‌ها از دایرکتوس');
-    const json = await res.json();
-    const data = json?.data || [];
-    return data.map((plan: any) => {
-      let parsedFeatures = plan.features;
-      if (typeof parsedFeatures === 'string') {
-        try {
-          parsedFeatures = JSON.parse(parsedFeatures);
-        } catch {
+    try {
+      let url = `${DIRECTUS_BASE_URL}/items/plans`;
+      if (tenantId) {
+        url += `?filter[tenant_id][_eq]=${toUUID(tenantId)}`;
+      }
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch from Directus');
+      const json = await res.json();
+      const data = json?.data || [];
+      if (data.length === 0) {
+        const tenantPlans = SEED_PLANS.filter(p => !tenantId || p.tenant_id === tenantId);
+        return tenantPlans.length > 0 ? tenantPlans : SEED_PLANS;
+      }
+      return data.map((plan: any) => {
+        let parsedFeatures = plan.features;
+        if (typeof parsedFeatures === 'string') {
+          try {
+            parsedFeatures = JSON.parse(parsedFeatures);
+          } catch {
+            parsedFeatures = [];
+          }
+        }
+        if (!Array.isArray(parsedFeatures)) {
           parsedFeatures = [];
         }
-      }
-      if (!Array.isArray(parsedFeatures)) {
-        parsedFeatures = [];
-      }
-      return {
-        ...plan,
-        features: parsedFeatures
-      };
-    });
+        return {
+          ...plan,
+          features: parsedFeatures
+        };
+      });
+    } catch {
+      console.warn('Directus plans fetch failed, using SEED_PLANS');
+      const tenantPlans = SEED_PLANS.filter(p => !tenantId || p.tenant_id === tenantId);
+      return tenantPlans.length > 0 ? tenantPlans : SEED_PLANS;
+    }
   },
   savePlan: async (plan: Plan): Promise<void> => {
     const cleanPayload = cleanDataForDirectus(plan);
