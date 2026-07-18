@@ -6,7 +6,7 @@ import { dbService, Template, Plan } from '../lib/directus';
 import { 
   CreditCard, Smartphone, ShieldCheck, Sparkles, Zap, Award, 
   BarChart3, Globe2, ChevronLeft, ChevronRight, ArrowUpRight, CheckCircle2, 
-  Users, Building2, Layers, Download, Check
+  Users, Building2, Layers, Download, Check, Phone, MessageSquare, Send, Instagram, FileText
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -81,7 +81,7 @@ export default function LandingPage() {
             </div>
             <div>
               <span className="text-lg font-black tracking-tight bg-gradient-to-l from-white to-slate-400 bg-clip-text text-transparent">سامانه کاردینو</span>
-              <p className="text-[10px] text-blue-500 -mt-1 font-bold">کارت ویزیت دیجیتال دایرکتوس</p>
+              <p className="text-[10px] text-blue-500 -mt-1 font-bold">کارت ویزیت دیجیتال</p>
             </div>
           </div>
 
@@ -174,74 +174,102 @@ export default function LandingPage() {
               {/* Card visual stack decoration */}
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-3xl blur-xl opacity-25 group-hover:opacity-45 transition duration-500"></div>
               
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl relative z-10 space-y-5">
-                {/* Visual Phone Frame Header */}
-                <div className="flex justify-between items-center pb-2 border-b border-slate-800/60 text-xs text-slate-400">
-                  <span className="font-mono">demo-card</span>
-                  <div className="flex items-center gap-1.5 text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative z-10">
+                {/* Visual Cover Photo */}
+                <div className="h-28 bg-slate-800 relative shrink-0">
+                  <img 
+                    src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80" 
+                    alt="cover" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/50"></div>
+                  
+                  {/* Status indicator overlay */}
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[9px] bg-emerald-500/25 backdrop-blur-md text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span>آنلاین / فعال</span>
                   </div>
                 </div>
 
-                {/* Profile row */}
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-pink-500 p-0.5 shrink-0">
+                {/* Avatar overlapping cover */}
+                <div className="px-5 -mt-10 relative z-20 flex justify-between items-end" dir="rtl">
+                  <div className="h-20 w-20 rounded-full border-4 border-slate-900 overflow-hidden shadow-lg bg-slate-900 shrink-0">
                     <img 
                       src="https://picsum.photos/150/150?random=120" 
                       alt="avatar" 
-                      className="w-full h-full object-cover rounded-2xl border-2 border-slate-900"
+                      className="w-full h-full object-cover"
                     />
                   </div>
+                  <span className="text-[9px] bg-slate-850 text-slate-300 px-2.5 py-1 rounded-full border border-slate-800 font-bold">
+                    ۱,۵۰۰+ بازدید
+                  </span>
+                </div>
+
+                {/* Profile Details */}
+                <div className="p-5 space-y-4 text-right" dir="rtl">
                   <div>
-                    <h3 className="font-black text-white text-base">دانیال راد</h3>
-                    <p className="text-xs text-blue-400 font-semibold">توسعه‌دهنده فول‌استک و مشاور برندینگ</p>
-                    <p className="text-[10px] text-slate-500">شرکت دانش بنیان کاردینو</p>
+                    <h3 className="font-black text-white text-lg flex items-center gap-1">
+                      دانیال راد
+                      <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500/10 shrink-0" />
+                    </h3>
+                    <p className="text-xs text-blue-400 font-bold mt-0.5">توسعه‌دهنده فول‌استک و مشاور برندینگ</p>
+                    <p className="text-[10px] text-slate-400">شرکت دانش بنیان کاردینو</p>
                   </div>
-                </div>
 
-                {/* Short Bio */}
-                <p className="text-slate-400 text-xs leading-relaxed bg-slate-950 p-3 rounded-xl border border-slate-800/40">
-                  خلاقیت در ساخت ابزارهای ارتباطی مدرن. من به شما کمک می‌کنم تا ارتباطات تجاری خود را هوشمندانه و بدون محدودیت کاغذ مدیریت کنید.
-                </p>
+                  {/* Short Bio */}
+                  <p className="text-slate-300 text-xs leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/40">
+                    خلاقیت در ساخت ابزارهای ارتباطی مدرن. من به شما کمک می‌کنم تا ارتباطات تجاری خود را هوشمندانه و بدون محدودیت کاغذ مدیریت کنید.
+                  </p>
 
-                {/* Action simulation */}
-                <div className="space-y-2.5">
-                  <button className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/10">
-                    <Download className="h-3.5 w-3.5" />
-                    ذخیره مستقیم شماره تلفن در گوشی
-                  </button>
-
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="p-2 bg-slate-950 border border-slate-800/60 rounded-lg text-center cursor-pointer hover:bg-slate-800/40 transition">
-                      💬 چت در تلگرام
+                  {/* Action grid (Socials) using Lucide Icons */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="flex flex-col items-center justify-center p-2 bg-slate-950/80 border border-slate-850 rounded-xl hover:border-blue-500/40 transition cursor-pointer">
+                      <Phone className="h-4 w-4 text-emerald-400" />
+                      <span className="text-[9px] font-bold mt-1.5 text-slate-400">تلفن</span>
                     </div>
-                    <div className="p-2 bg-slate-950 border border-slate-800/60 rounded-lg text-center cursor-pointer hover:bg-slate-800/40 transition">
-                      📞 تماس مستقیم
+                    <div className="flex flex-col items-center justify-center p-2 bg-slate-950/80 border border-slate-850 rounded-xl hover:border-blue-500/40 transition cursor-pointer">
+                      <MessageSquare className="h-4 w-4 text-emerald-500" />
+                      <span className="text-[9px] font-bold mt-1.5 text-slate-400">واتساپ</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 bg-slate-950/80 border border-slate-850 rounded-xl hover:border-blue-500/40 transition cursor-pointer">
+                      <Send className="h-4 w-4 text-blue-400" />
+                      <span className="text-[9px] font-bold mt-1.5 text-slate-400">تلگرام</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 bg-slate-950/80 border border-slate-850 rounded-xl hover:border-blue-500/40 transition cursor-pointer">
+                      <Instagram className="h-4 w-4 text-pink-400" />
+                      <span className="text-[9px] font-bold mt-1.5 text-slate-400">اینستا</span>
                     </div>
                   </div>
-                </div>
 
-                {/* Demo Trigger Link */}
-                <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-[11px]">
-                  <span className="text-slate-500">لینک اختصاصی تست:</span>
-                  <div className="flex items-center gap-1.5">
-                    <button 
-                      onClick={() => handleCopyDemoLink('ali-alavi')}
-                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 font-bold transition text-[10px]"
-                    >
-                      {copiedLink === 'ali-alavi' ? 'کپی شد!' : 'کپی آدرس کارت'}
+                  {/* Save Contact Button */}
+                  <div className="space-y-3">
+                    <button className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/10">
+                      <Download className="h-4 w-4" />
+                      ذخیره مستقیم شماره تلفن در گوشی
                     </button>
-                    <button 
-                      onClick={() => router.push('/card/ali-alavi')}
-                      className="text-blue-400 hover:underline flex items-center font-bold"
-                    >
-                      مشاهده زنده
-                      <ArrowUpRight className="h-3 w-3 mr-0.5" />
-                    </button>
+
+                    {/* Bottom Links */}
+                    <div className="pt-3 border-t border-slate-850 flex justify-between items-center text-[11px]">
+                      <span className="text-slate-500">لینک اختصاصی تست:</span>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleCopyDemoLink('ali-alavi')}
+                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 font-bold transition text-[10px]"
+                        >
+                          {copiedLink === 'ali-alavi' ? 'کپی شد!' : 'کپی آدرس کارت'}
+                        </button>
+                        <button 
+                          onClick={() => router.push('/card/ali-alavi')}
+                          className="text-blue-400 hover:underline flex items-center font-bold"
+                        >
+                          مشاهده زنده
+                          <ArrowUpRight className="h-3.5 w-3.5 mr-0.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
+                </div>
               </div>
             </div>
           </div>
@@ -305,9 +333,9 @@ export default function LandingPage() {
               <div className="h-12 w-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center shadow-inner">
                 <Building2 className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">پورتال اختصاصی وایت لیبل (نمایندگی)</h3>
+              <h3 className="text-lg font-bold text-white">پورتال اختصاصی نمایندگی (به زودی)</h3>
               <p className="text-slate-400 text-xs leading-relaxed">
-                می‌توانید نمایندگی اختصاصی بگیرید و سامانه را با برند، لوگو، دامنه و پلن‌های قیمت‌گذاری دلخواه خود عرضه کنید و ۱۰۰٪ سود ببرید.
+                می‌توانید نمایندگی اختصاصی بگیرید و سامانه را با برند، لوگو، دامنه و پلن‌های قیمت‌گذاری دلخواه خود عرضه کنید و ۱۰۰٪ سود ببرید. این قابلیت در برنامه‌های آینده به پنل افزوده می‌شود.
               </p>
             </div>
 
@@ -563,7 +591,15 @@ export default function LandingPage() {
                               <div className="grid grid-cols-4 gap-2">
                                 {['تلفن', 'واتساپ', 'تلگرام', 'اینستا'].map((social, i) => (
                                   <div key={social} className="flex flex-col items-center justify-center p-1.5 bg-white rounded-xl border border-slate-100">
-                                    <span className="text-[11px]">{i === 0 ? '📞' : i === 1 ? '💬' : i === 2 ? '✈️' : '📸'}</span>
+                                    {i === 0 ? (
+                                      <Phone className="h-3.5 w-3.5 text-blue-600" />
+                                    ) : i === 1 ? (
+                                      <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+                                    ) : i === 2 ? (
+                                      <Send className="h-3.5 w-3.5 text-sky-500" />
+                                    ) : (
+                                      <Instagram className="h-3.5 w-3.5 text-pink-500" />
+                                    )}
                                     <span className="text-[7px] font-bold mt-1 text-slate-500">{social}</span>
                                   </div>
                                 ))}
@@ -572,7 +608,7 @@ export default function LandingPage() {
                               {/* Custom buttons */}
                               <div className="space-y-1.5">
                                 <div className="p-2 bg-white rounded-xl border border-slate-200 hover:bg-slate-50 flex items-center justify-between text-[8px] font-bold text-slate-700 shadow-sm">
-                                  <span className="text-emerald-500">📁</span>
+                                  <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                                   <span>دریافت رزومه کاری و پورتفولیو</span>
                                   <span className="opacity-30">➔</span>
                                 </div>
@@ -619,7 +655,15 @@ export default function LandingPage() {
                               <div className="grid grid-cols-4 gap-2">
                                 {['تلفن', 'واتساپ', 'تلگرام', 'اینستا'].map((social, i) => (
                                   <div key={social} className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/10 rounded-xl shadow-[0_0_8px_rgba(168,85,247,0.15)]">
-                                    <span className="text-[11px]">{i === 0 ? '📞' : i === 1 ? '💬' : i === 2 ? '✈️' : '📸'}</span>
+                                    {i === 0 ? (
+                                      <Phone className="h-3.5 w-3.5 text-purple-400" />
+                                    ) : i === 1 ? (
+                                      <MessageSquare className="h-3.5 w-3.5 text-emerald-400" />
+                                    ) : i === 2 ? (
+                                      <Send className="h-3.5 w-3.5 text-sky-400" />
+                                    ) : (
+                                      <Instagram className="h-3.5 w-3.5 text-pink-400" />
+                                    )}
                                     <span className="text-[7px] font-bold mt-1 text-slate-400">{social}</span>
                                   </div>
                                 ))}
@@ -629,7 +673,7 @@ export default function LandingPage() {
                             {/* Buttons */}
                             <div className="space-y-1.5">
                               <div className="p-2 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between text-[8px] font-bold text-white shadow-sm hover:bg-white/10">
-                                <span className="text-purple-400">📁</span>
+                                <FileText className="h-3.5 w-3.5 text-purple-400 shrink-0" />
                                 <span>دانلود رزومه (پورتفولیو شیشه‌ای)</span>
                                 <span className="opacity-40">➔</span>
                               </div>
@@ -670,11 +714,15 @@ export default function LandingPage() {
                               <div className="space-y-1.5">
                                 <span className="text-[8px] font-bold opacity-40 block">ارتباط سریع</span>
                                 <div className="flex items-center gap-2 py-1 text-[8px] font-medium border-b border-zinc-100">
-                                  <span className="p-1 bg-zinc-100 rounded">📞</span>
+                                  <span className="p-1 bg-zinc-100 rounded">
+                                    <Phone className="h-2.5 w-2.5 text-zinc-700" />
+                                  </span>
                                   <span className="font-sans text-zinc-600">۰۹۱۲۳۴۵۶۷۸۹</span>
                                 </div>
                                 <div className="flex items-center gap-2 py-1 text-[8px] font-medium border-b border-zinc-100">
-                                  <span className="p-1 bg-zinc-100 rounded">💬</span>
+                                  <span className="p-1 bg-zinc-100 rounded">
+                                    <MessageSquare className="h-2.5 w-2.5 text-zinc-700" />
+                                  </span>
                                   <span className="text-zinc-600">ارسال در واتساپ</span>
                                 </div>
                               </div>
@@ -682,7 +730,7 @@ export default function LandingPage() {
 
                             {/* Buttons */}
                             <button className="w-full py-2 border border-zinc-900 font-bold flex items-center justify-center gap-1.5 text-[8px] rounded-lg">
-                              <span>📁</span>
+                              <FileText className="h-3 w-3 text-zinc-900 shrink-0" />
                               <span>دانلود مشخصات تماس سارا</span>
                             </button>
                           </div>
@@ -722,7 +770,15 @@ export default function LandingPage() {
                               <div className="grid grid-cols-4 gap-2">
                                 {['تلفن', 'واتساپ', 'تلگرام', 'اینستا'].map((social, i) => (
                                   <div key={social} className="flex flex-col items-center justify-center p-1.5 bg-stone-900 border border-amber-500/20 rounded-xl text-amber-300">
-                                    <span className="text-[11px]">{i === 0 ? '📞' : i === 1 ? '💬' : i === 2 ? '✈️' : '📸'}</span>
+                                    {i === 0 ? (
+                                      <Phone className="h-3.5 w-3.5 text-amber-400" />
+                                    ) : i === 1 ? (
+                                      <MessageSquare className="h-3.5 w-3.5 text-amber-500" />
+                                    ) : i === 2 ? (
+                                      <Send className="h-3.5 w-3.5 text-amber-400" />
+                                    ) : (
+                                      <Instagram className="h-3.5 w-3.5 text-amber-500" />
+                                    )}
                                     <span className="text-[7px] font-bold mt-1 text-stone-400">{social}</span>
                                   </div>
                                 ))}
@@ -732,7 +788,7 @@ export default function LandingPage() {
                             {/* Luxury actions */}
                             <div className="space-y-1.5">
                               <div className="p-2 bg-stone-900 border border-amber-500/30 rounded-xl flex items-center justify-between text-[8px] font-bold text-amber-300">
-                                <span>📁</span>
+                                <FileText className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                                 <span>کتابچه سوابق درمانی کلینیک</span>
                                 <span className="opacity-40">➔</span>
                               </div>
@@ -846,10 +902,10 @@ export default function LandingPage() {
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-8 space-y-6">
-              <span className="text-xs font-bold text-blue-400 uppercase tracking-wider block">کسب درآمد میلیونی با اعطای نمایندگی</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">صاحب یک سامانه کامل کارت ویزیت دیجیتال شوید!</h2>
+              <span className="text-xs font-bold text-blue-400 uppercase tracking-wider block">کسب درآمد میلیونی با اعطای نمایندگی (به زودی)</span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">صاحب یک سامانه کامل کارت ویزیت دیجیتال شوید! (به زودی)</h2>
               <p className="text-slate-300 text-xs leading-relaxed">
-                نمایندگان سیستم (Tenants) دسترسی به پورتال مدیریت اختصاصی دارند. آنها می‌توانند نام تجاری خود را ثبت کنند، رنگ تم هدر پنل را ویرایش کنند، لوگوی خود را بارگذاری و حتی پلن‌های فروش اختصاصی با قیمت‌گذاری‌های مستقل ایجاد کنند.
+                نمایندگان سیستم (Tenants) دسترسی به پورتال مدیریت اختصاصی خواهند داشت. آنها می‌توانند نام تجاری خود را ثبت کنند، رنگ تم هدر پنل را ویرایش کنند، لوگوی خود را بارگذاری و حتی پلن‌های فروش اختصاصی با قیمت‌گذاری‌های مستقل ایجاد کنند. این قابلیت به زودی در برنامه‌های آینده فعال خواهد شد.
               </p>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-400 font-medium pt-2">
                 <li className="flex items-center gap-2">
@@ -884,9 +940,10 @@ export default function LandingPage() {
                 </div>
                 <button 
                   onClick={() => router.push('/dashboard?role=tenant')}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow shadow-indigo-600/10"
+                  className="w-full py-2.5 bg-indigo-600/50 hover:bg-indigo-600/60 text-white/80 text-xs font-bold rounded-xl transition shadow shadow-indigo-600/10 cursor-not-allowed"
+                  disabled
                 >
-                  تست پنل نمایندگی (Tenant)
+                  تست پنل نمایندگی (به زودی)
                 </button>
               </div>
             </div>
