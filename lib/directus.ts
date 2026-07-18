@@ -490,7 +490,7 @@ export async function seedDirectusIfEmpty() {
           const lastName = nameParts.slice(1).join(' ') || 'دمو';
           const resolvedRole = item.role === 'admin' 
             ? '745c670e-f21a-43de-8a14-0dccf10cb900' 
-            : 'e9928ac3-396f-4ca6-b3bb-fa1e49c93d36'; // customer/tenant valid role
+            : '05826f60-e759-4348-b4c2-6f085cd5e425'; // customer/tenant valid role
 
           const cleanItem = {
             id: toUUID(item.id),
@@ -1014,7 +1014,7 @@ export const authService = {
       password: password,
       user_phone: mobile, // Requirement: store in user_phone
       location: mobile,   // Store in location for public query availability during login
-      role: 'e9928ac3-396f-4ca6-b3bb-fa1e49c93d36', // customer role
+      role: '05826f60-e759-4348-b4c2-6f085cd5e425', // customer role
       status: 'active'
     };
 
