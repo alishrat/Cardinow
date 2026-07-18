@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # --- 1. PostgreSQL Database ---
+  db:
+    image: postgres:16-alpine
+    container_name: cardino_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: directus
+      POSTGRES_USER: directus_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me_to_a_secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U directus_user -d directus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- 2. Directus Backend CMS ---
+  directus:
+    image: directus/directus:11.1.0
+    container_name: cardino_directus
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8055:8055"
+    environment:
+      # Database connection
+      DB_CLIENT: "pg"
+      DB_HOST: "db"
+      DB_PORT: 5432
+      DB_DATABASE: "directus"
+      DB_USER: "directus_user"
+      DB_PASSWORD: ${DB_PASSWORD:-change_me_to_a_secure_password}
+
+      # Security & Admin Setup
+      # (Change these when launching in production)
+      KEY: ${DIRECTUS_KEY:-generate-a-random-uuid-for-key}
+      SECRET: ${DIRECTUS_SECRET:-generate-a-random-uuid-for-secret}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cardino.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin_secure_pass_123}
+
+      # Configuration
+      WEBSOCKETS_ENABLED: "true"
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "*" # In production, restrict to your frontend domain
+      
+      # public URL of your Directus container (provided by Coolify or your domain)
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8055}
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+
+  # --- 3. Cardino Next.js Frontend ---
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Bake the public Directus URL into the Next.js bundle at build time
+        NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL:-https://directus-production-ec98.up.railway.app}
+    container_name: cardino_frontend
+    restart: always
+    depends_on:
+      - directus
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+      # IMPORTANT: Client-side fetches from the user's browser need a PUBLIC Directus URL,
+      # not the internal 'http://directus:8055' docker network bridge.
+      NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL:-https://directus-production-ec98.up.railway.app}
+
+volumes:
+  postgres_data:
+    driver: local
+  directus_uploads:
+    driver: local
+  directus_extensions:
+    driver: local
