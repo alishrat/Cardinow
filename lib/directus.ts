@@ -730,6 +730,13 @@ export const dbService = {
     const json = await res.json();
     return json?.data?.[0] || null;
   },
+  getCardById: async (id: string): Promise<Card | null> => {
+    const url = `${DIRECTUS_BASE_URL}/items/cards/${toUUID(id)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.data || null;
+  },
   saveCard: async (card: Card): Promise<void> => {
     const cleanPayload = cleanDataForDirectus(card);
     await ensureValidTenantId(cleanPayload);

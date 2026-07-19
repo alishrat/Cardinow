@@ -17,11 +17,11 @@ async function handleProxy(req: NextRequest, { params }: { params: { path?: stri
     // Construct the final Directus URL
     const targetUrl = `${TARGET_BASE_URL}/${pathStr}${search}`;
 
-    // Read the request body if present
+    // Read the request body if present (using arrayBuffer to preserve binary integrity for file uploads)
     let body: any = null;
     const method = req.method.toUpperCase();
     if (method !== 'GET' && method !== 'HEAD' && req.body) {
-      body = await req.text();
+      body = await req.arrayBuffer();
     }
 
     // Build headers to forward

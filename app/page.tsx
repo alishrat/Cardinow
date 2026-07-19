@@ -30,14 +30,20 @@ export default function LandingPage() {
       ]);
       setTemplates(fetchedTemplates);
       
-      // Fetch demo card
+      // Fetch target card for hero section (9b645595-de36-42cd-98a3-60c3cd3e50bf)
       try {
-        const fetchedDemo = await dbService.getCardBySlug('demo');
-        if (fetchedDemo) {
-          setDemoCard(fetchedDemo);
+        const targetCardId = '9b645595-de36-42cd-98a3-60c3cd3e50bf';
+        const fetchedHeroCard = await dbService.getCardById(targetCardId);
+        if (fetchedHeroCard) {
+          setDemoCard(fetchedHeroCard);
+        } else {
+          const fetchedDemo = await dbService.getCardBySlug('demo');
+          if (fetchedDemo) {
+            setDemoCard(fetchedDemo);
+          }
         }
       } catch (demoErr) {
-        console.warn('Could not fetch demo card:', demoErr);
+        console.warn('Could not fetch target hero card:', demoErr);
       }
       
       const targetTenantId = 't-1';

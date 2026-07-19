@@ -10,8 +10,16 @@ import {
   Settings, User, LogOut, LayoutGrid, CreditCard, BarChart2, ShieldCheck, 
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
-  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin
+  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram
 } from 'lucide-react';
+
+function generateRandomUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 function DashboardContent() {
   const router = useRouter();
@@ -51,6 +59,54 @@ function DashboardContent() {
   const [newBtnLabel, setNewBtnLabel] = useState('');
   const [newBtnUrl, setNewBtnUrl] = useState('');
   const [newExtraPhone, setNewExtraPhone] = useState('');
+  
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  const handleFileUpload = async (file: File, type: 'profile' | 'cover') => {
+    if (!editingCard) return;
+    if (type === 'profile') setUploadingProfile(true);
+    else setUploadingCover(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/directus/files', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error('خطا در بارگذاری فایل در سرور دایرکتوس.');
+      }
+
+      const json = await res.json();
+      const fileId = json?.data?.id;
+      if (!fileId) {
+        throw new Error('شناسه فایل از سرور دایرکتوس دریافت نشد.');
+      }
+
+      // Construct directus assets URL
+      let rawBaseUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'https://directus-iuao17eclszuzc06zaqzodkr.89.42.199.190.sslip.io';
+      if (rawBaseUrl && !/^https?:\/\//i.test(rawBaseUrl)) {
+        rawBaseUrl = `https://${rawBaseUrl}`;
+      }
+      const cleanedBaseUrl = rawBaseUrl.replace(/\/+$/, '');
+      const fileUrl = `${cleanedBaseUrl}/assets/${fileId}`;
+
+      if (type === 'profile') {
+        setEditingCard({ ...editingCard, profile_image: fileUrl });
+      } else {
+        setEditingCard({ ...editingCard, cover_image: fileUrl });
+      }
+    } catch (err: any) {
+      alert('خطا در بارگذاری تصویر: ' + err.message);
+    } finally {
+      if (type === 'profile') setUploadingProfile(false);
+      else setUploadingCover(false);
+    }
+  };
   
   // Simulated Bank Gate Modal / Offline Payment Submission
   const [payingPlan, setPayingPlan] = useState<Plan | null>(null);
@@ -361,7 +417,7 @@ function DashboardContent() {
         if (isOffline) {
           // Create a pending transaction for manual admin verification
           const newTx: Transaction = {
-            id: 'tx-off-' + Math.floor(Math.random() * 9000000 + 1000000),
+            id: generateRandomUUID(),
             user_id: user.id,
             tenant_id: user.tenant_id || 't-1',
             amount: payingPlan.price,
@@ -391,7 +447,7 @@ function DashboardContent() {
         } else {
           // 1. Create Transaction
           const newTx: Transaction = {
-            id: 'tx-' + Math.floor(Math.random() * 9000000 + 1000000),
+            id: generateRandomUUID(),
             user_id: user.id,
             tenant_id: user.tenant_id || 't-1',
             amount: payingPlan.price,
@@ -410,7 +466,7 @@ function DashboardContent() {
           endDate.setDate(startDate.getDate() + payingPlan.duration_days);
 
           const newSub: Subscription = {
-            id: 'sub-' + Math.random().toString(36).substring(2, 11),
+            id: generateRandomUUID(),
             user_id: user.id,
             plan_id: payingPlan.id,
             status: 'active',
@@ -487,7 +543,7 @@ function DashboardContent() {
         endDate.setDate(startDate.getDate() + planDuration);
 
         const newSub: Subscription = {
-          id: 'sub-' + Math.random().toString(36).substring(2, 11),
+          id: generateRandomUUID(),
           user_id: tx.user_id,
           plan_id: planId,
           status: 'active',
@@ -1372,42 +1428,134 @@ function DashboardContent() {
                         </div>
                       </div>
 
-                      {/* Profile Image & Cover Image URLs */}
+                      {/* Profile Image & Cover Image Direct Upload */}
                       <div className="grid grid-cols-2 gap-3">
+                        {/* Profile Image Direct Upload */}
                         <div className="space-y-1">
-                          <label className="font-bold text-slate-400">آدرس تصویر پروفایل:</label>
-                          <input 
-                            type="text" 
-                            value={editingCard.profile_image || ''} 
-                            onChange={(e) => setEditingCard({ ...editingCard, profile_image: e.target.value })}
-                            placeholder="https://example.com/pic.jpg"
-                            className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg focus:border-blue-500 focus:outline-none text-left font-mono"
-                          />
-                          <button 
-                            type="button" 
-                            onClick={() => setEditingCard({ ...editingCard, profile_image: `https://picsum.photos/150/150?random=${Math.floor(Math.random() * 50)}` })}
-                            className="text-[10px] text-blue-400 hover:underline"
+                          <label className="font-bold text-slate-400">تصویر اصلی پروفایل:</label>
+                          <div 
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (e.dataTransfer.files?.[0]) {
+                                handleFileUpload(e.dataTransfer.files[0], 'profile');
+                              }
+                            }}
+                            onClick={() => document.getElementById('profile-file-input')?.click()}
+                            className="h-28 border-2 border-dashed border-slate-800 hover:border-blue-500 bg-slate-900 rounded-lg flex flex-col items-center justify-center cursor-pointer transition relative overflow-hidden group p-2 text-center"
                           >
-                            تصویر تصادفی رندوم
-                          </button>
+                            <input 
+                              id="profile-file-input"
+                              type="file" 
+                              accept="image/*"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  handleFileUpload(e.target.files[0], 'profile');
+                                }
+                              }}
+                              className="hidden" 
+                            />
+                            
+                            {uploadingProfile ? (
+                              <div className="flex flex-col items-center gap-1">
+                                <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
+                                <span className="text-[10px] text-slate-400">در حال آپلود...</span>
+                              </div>
+                            ) : editingCard.profile_image ? (
+                              <>
+                                <img 
+                                  src={editingCard.profile_image} 
+                                  alt="Profile" 
+                                  className="w-full h-full object-cover rounded" 
+                                />
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                  <span className="text-[10px] text-white bg-blue-600 px-2 py-1 rounded">تغییر تصویر</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center gap-1.5 text-slate-500">
+                                <User className="h-6 w-6" />
+                                <span className="text-[10px] leading-tight">برای بارگذاری کلیک کنید یا بکشید اینجا</span>
+                                <span className="text-[8px] text-slate-600">فرمت‌های مجاز: JPG, PNG</span>
+                              </div>
+                            )}
+                          </div>
+                          {editingCard.profile_image && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingCard({ ...editingCard, profile_image: '' });
+                              }}
+                              className="text-[10px] text-red-400 hover:underline mt-1"
+                            >
+                              حذف تصویر
+                            </button>
+                          )}
                         </div>
 
+                        {/* Cover Image Direct Upload */}
                         <div className="space-y-1">
-                          <label className="font-bold text-slate-400">آدرس تصویر کاور:</label>
-                          <input 
-                            type="text" 
-                            value={editingCard.cover_image || ''} 
-                            onChange={(e) => setEditingCard({ ...editingCard, cover_image: e.target.value })}
-                            placeholder="https://example.com/cover.jpg"
-                            className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg focus:border-blue-500 focus:outline-none text-left font-mono"
-                          />
-                          <button 
-                            type="button" 
-                            onClick={() => setEditingCard({ ...editingCard, cover_image: `https://picsum.photos/600/300?random=${Math.floor(Math.random() * 50)}` })}
-                            className="text-[10px] text-blue-400 hover:underline"
+                          <label className="font-bold text-slate-400">تصویر کاور:</label>
+                          <div 
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (e.dataTransfer.files?.[0]) {
+                                handleFileUpload(e.dataTransfer.files[0], 'cover');
+                              }
+                            }}
+                            onClick={() => document.getElementById('cover-file-input')?.click()}
+                            className="h-28 border-2 border-dashed border-slate-800 hover:border-blue-500 bg-slate-900 rounded-lg flex flex-col items-center justify-center cursor-pointer transition relative overflow-hidden group p-2 text-center"
                           >
-                            تصویر تصادفی رندوم
-                          </button>
+                            <input 
+                              id="cover-file-input"
+                              type="file" 
+                              accept="image/*"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  handleFileUpload(e.target.files[0], 'cover');
+                                }
+                              }}
+                              className="hidden" 
+                            />
+                            
+                            {uploadingCover ? (
+                              <div className="flex flex-col items-center gap-1">
+                                <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
+                                <span className="text-[10px] text-slate-400">در حال آپلود...</span>
+                              </div>
+                            ) : editingCard.cover_image ? (
+                              <>
+                                <img 
+                                  src={editingCard.cover_image} 
+                                  alt="Cover" 
+                                  className="w-full h-full object-cover rounded" 
+                                />
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                  <span className="text-[10px] text-white bg-blue-600 px-2 py-1 rounded">تغییر کاور</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center gap-1.5 text-slate-500">
+                                <Palette className="h-6 w-6" />
+                                <span className="text-[10px] leading-tight">برای بارگذاری کلیک کنید یا بکشید اینجا</span>
+                                <span className="text-[8px] text-slate-600">فرمت‌های مجاز: JPG, PNG</span>
+                              </div>
+                            )}
+                          </div>
+                          {editingCard.cover_image && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingCard({ ...editingCard, cover_image: '' });
+                              }}
+                              className="text-[10px] text-red-400 hover:underline mt-1"
+                            >
+                              حذف تصویر کاور
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -1854,7 +2002,10 @@ function DashboardContent() {
                                     <div className="grid grid-cols-4 gap-1.5">
                                       {['تلفن', 'واتساپ', 'تلگرام', 'اینستا'].map((social, i) => (
                                         <div key={social} className="flex flex-col items-center justify-center p-1 bg-white/80 rounded-lg border border-slate-100">
-                                          <span className="text-[10px]">{i === 0 ? '📞' : i === 1 ? '💬' : i === 2 ? '✈️' : '📸'}</span>
+                                          {i === 0 && <Phone className="h-3 w-3 text-blue-500" />}
+                                          {i === 1 && <MessageCircle className="h-3 w-3 text-emerald-500" />}
+                                          {i === 2 && <Send className="h-3 w-3 text-sky-500" />}
+                                          {i === 3 && <Instagram className="h-3 w-3 text-pink-500" />}
                                           <span className="text-[6px] font-bold mt-0.5 text-slate-500">{social}</span>
                                         </div>
                                       ))}
@@ -1919,7 +2070,10 @@ function DashboardContent() {
                                     <div className="grid grid-cols-4 gap-1.5">
                                       {['تلفن', 'واتساپ', 'تلگرام', 'اینستا'].map((social, i) => (
                                         <div key={social} className="flex flex-col items-center justify-center p-1 bg-white/5 border border-white/10 rounded-lg">
-                                          <span className="text-[10px]">{i === 0 ? '📞' : i === 1 ? '💬' : i === 2 ? '✈️' : '📸'}</span>
+                                          {i === 0 && <Phone className="h-3 w-3 text-blue-400" />}
+                                          {i === 1 && <MessageCircle className="h-3 w-3 text-emerald-400" />}
+                                          {i === 2 && <Send className="h-3 w-3 text-sky-400" />}
+                                          {i === 3 && <Instagram className="h-3 w-3 text-pink-400" />}
                                           <span className="text-[6px] font-bold mt-0.5 text-slate-400">{social}</span>
                                         </div>
                                       ))}
@@ -1978,7 +2132,7 @@ function DashboardContent() {
                                     <div className="space-y-1">
                                       <span className="text-[7px] font-bold opacity-40 block">ارتباط سریع</span>
                                       <div className="flex items-center gap-2 py-0.5 text-[8px] border-b border-zinc-100">
-                                        <span className="p-0.5 bg-zinc-100 rounded">📞</span>
+                                        <span className="p-0.5 bg-zinc-100 rounded flex items-center justify-center"><Phone className="h-2 w-2 text-zinc-600" /></span>
                                         <span className="font-sans opacity-80">{editingCard.social_links?.phone || '۰۹۱۲۳۴۵۶۷۸۹'}</span>
                                       </div>
                                     </div>
@@ -2038,7 +2192,10 @@ function DashboardContent() {
                                     <div className="grid grid-cols-4 gap-1.5">
                                       {['تلفن', 'واتساپ', 'تلگرام', 'اینستا'].map((social, i) => (
                                         <div key={social} className="flex flex-col items-center justify-center p-1 bg-stone-900 border border-amber-500/20 rounded-lg text-amber-300">
-                                          <span className="text-[10px]">{i === 0 ? '📞' : i === 1 ? '💬' : i === 2 ? '✈️' : '📸'}</span>
+                                          {i === 0 && <Phone className="h-3 w-3 text-amber-500" />}
+                                          {i === 1 && <MessageCircle className="h-3 w-3 text-emerald-500" />}
+                                          {i === 2 && <Send className="h-3 w-3 text-sky-400" />}
+                                          {i === 3 && <Instagram className="h-3 w-3 text-pink-500" />}
                                           <span className="text-[6px] font-bold mt-0.5 text-stone-400">{social}</span>
                                         </div>
                                       ))}
@@ -2135,7 +2292,10 @@ function DashboardContent() {
                                       <div className="grid grid-cols-4 gap-1.5 pt-2">
                                         {['تلفن', 'واتساپ', 'تلگرام', 'سایت'].map((social, i) => (
                                           <div key={social} className="flex flex-col items-center justify-center p-1 rounded-md border text-[7px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                                            <span className="text-[9px]">{i === 0 ? '📞' : i === 1 ? '💬' : i === 2 ? '✈️' : '📸'}</span>
+                                            {i === 0 && <Phone className="h-3 w-3 text-blue-500" style={{ color: pColor }} />}
+                                            {i === 1 && <MessageCircle className="h-3 w-3 text-emerald-500" style={{ color: pColor }} />}
+                                            {i === 2 && <Send className="h-3 w-3 text-sky-500" style={{ color: pColor }} />}
+                                            {i === 3 && <Globe className="h-3 w-3 text-zinc-500" style={{ color: pColor }} />}
                                             <span className="text-[5.5px] font-bold mt-0.5" style={{ color: txtSecColor }}>{social}</span>
                                           </div>
                                         ))}
@@ -3196,7 +3356,10 @@ function DashboardContent() {
                               <div className="grid grid-cols-4 gap-1.5">
                                 {['تلفن', 'اینستاگرام', 'تلگرام', 'واتساپ'].map((soc, i) => (
                                   <div key={soc} className="flex flex-col items-center justify-center p-1 rounded-lg border text-[7px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                                    <span className="text-[9px]">{i === 0 ? '📞' : i === 1 ? '📸' : i === 2 ? '✈️' : '💬'}</span>
+                                    {i === 0 && <Phone className="h-3 w-3 text-blue-500" style={{ color: pColor }} />}
+                                    {i === 1 && <Instagram className="h-3 w-3 text-pink-500" style={{ color: pColor }} />}
+                                    {i === 2 && <Send className="h-3 w-3 text-sky-500" style={{ color: pColor }} />}
+                                    {i === 3 && <MessageCircle className="h-3 w-3 text-emerald-500" style={{ color: pColor }} />}
                                     <span className="text-[6px] font-bold mt-0.5" style={{ color: txtSecColor }}>{soc}</span>
                                   </div>
                                 ))}
