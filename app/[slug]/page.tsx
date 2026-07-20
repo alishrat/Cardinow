@@ -234,7 +234,7 @@ export default function PublicCardPage() {
             {/* Cover photo */}
             <div className="h-36 bg-slate-300 relative">
               <img 
-                src={getImageUrl(card.cover_image) || 'https://picsum.photos/600/300?random=105'} 
+                src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} 
                 alt="cover" 
                 className="w-full h-full object-cover"
               />
@@ -253,7 +253,7 @@ export default function PublicCardPage() {
             <div className="px-6 -mt-16 relative z-10 flex justify-between items-end">
               <div className="h-28 w-28 rounded-2xl border-4 border-white overflow-hidden shadow-md bg-white">
                 <img 
-                  src={getImageUrl(card.profile_image) || 'https://picsum.photos/150/150?random=106'} 
+                  src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
                   alt="profile" 
                   className="w-full h-full object-cover"
                 />
@@ -467,7 +467,7 @@ export default function PublicCardPage() {
                 ></div>
                 <div className="h-28 w-28 rounded-full border-2 border-white/50 overflow-hidden relative bg-slate-950">
                   <img 
-                    src={getImageUrl(card.profile_image) || 'https://picsum.photos/150/150?random=106'} 
+                    src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
                     alt="profile" 
                     className="w-full h-full object-cover"
                   />
@@ -656,7 +656,7 @@ export default function PublicCardPage() {
             <div className="flex items-center gap-5">
               <div className="h-20 w-20 rounded-full overflow-hidden bg-slate-100 shrink-0">
                 <img 
-                  src={getImageUrl(card.profile_image) || 'https://picsum.photos/150/150?random=106'} 
+                  src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
                   alt="profile" 
                   className="w-full h-full object-cover"
                 />
@@ -828,7 +828,7 @@ export default function PublicCardPage() {
             <div className="text-center space-y-4">
               <div className="mx-auto h-24 w-24 rounded-full border-2 border-[#e2b53e] p-1 shadow-inner">
                 <img 
-                  src={getImageUrl(card.profile_image) || 'https://picsum.photos/150/150?random=106'} 
+                  src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
                   alt="profile" 
                   className="w-full h-full object-cover rounded-full"
                 />
@@ -1032,7 +1032,7 @@ export default function PublicCardPage() {
                   <div className="flex items-center gap-3">
                     <div className="h-16 w-16 overflow-hidden border-2 shrink-0" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '16px' }}>
                       <img 
-                        src={getImageUrl(card.profile_image) || 'https://picsum.photos/150/150?random=107'} 
+                        src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
                         alt="profile" 
                         className="w-full h-full object-cover"
                       />
@@ -1069,7 +1069,7 @@ export default function PublicCardPage() {
                   <div className="flex flex-col items-center text-center space-y-2">
                     <div className="h-24 w-24 overflow-hidden border-2 p-1" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '24px' }}>
                       <img 
-                        src={getImageUrl(card.profile_image) || 'https://picsum.photos/150/150?random=108'} 
+                        src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
                         alt="profile" 
                         className="w-full h-full object-cover"
                         style={{ borderRadius: isCircleAvatar ? '9999px' : '16px' }}

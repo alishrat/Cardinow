@@ -6,7 +6,8 @@ import { dbService, Template, Plan, Card } from '../lib/directus';
 import { 
   CreditCard, Smartphone, ShieldCheck, Sparkles, Zap, Award, 
   BarChart3, Globe2, ChevronLeft, ChevronRight, ArrowUpRight, CheckCircle2, 
-  Users, Building2, Layers, Download, Check, Phone, MessageSquare, Send, Instagram, FileText
+  Users, Building2, Layers, Download, Check, Phone, MessageSquare, Send, Instagram, FileText,
+  Menu, X
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -19,6 +20,7 @@ export default function LandingPage() {
   const [activeTab, setActiveTab] = useState<'users' | 'agencies'>('users');
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const fetchLandingData = async () => {
     try {
@@ -98,15 +100,15 @@ export default function LandingPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white rtl" dir="rtl">
       
       {/* 1. HEADER / NAVIGATION */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-900 px-6 py-4">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-900 px-4 md:px-6 py-3 md:py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20">
+            <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-lg md:text-xl shadow-lg shadow-blue-500/20">
               ک
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight bg-gradient-to-l from-white to-slate-400 bg-clip-text text-transparent">سامانه کاردینو</span>
-              <p className="text-[10px] text-blue-500 -mt-1 font-bold">کارت ویزیت دیجیتال</p>
+              <span className="text-sm md:text-lg font-black tracking-tight bg-gradient-to-l from-white to-slate-400 bg-clip-text text-transparent">سامانه کاردینو</span>
+              <p className="text-[9px] md:text-[10px] text-blue-500 -mt-1 font-bold">کارت ویزیت دیجیتال</p>
             </div>
           </div>
 
@@ -117,22 +119,44 @@ export default function LandingPage() {
             <a href="#agencies" className="hover:text-blue-500 transition">بخش نمایندگی</a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 md:gap-3">
             <button 
               onClick={() => router.push('/dashboard')}
-              className="px-5 py-2 rounded-xl text-xs font-bold text-white border border-slate-800 hover:border-slate-700 bg-slate-900 transition flex items-center gap-1.5"
+              className="px-3 md:px-5 py-1.5 md:py-2 rounded-xl text-[10px] md:text-xs font-bold text-white border border-slate-800 hover:border-slate-700 bg-slate-900 transition flex items-center gap-1"
             >
-              ورود به پنل کاربری
-              <ChevronLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">ورود به پنل</span>
+              <span className="sm:hidden">ورود</span>
+              <ChevronLeft className="h-3 w-3 md:h-3.5 md:w-3.5" />
             </button>
             <button 
               onClick={() => router.push('/dashboard?action=register')}
-              className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/10 transition"
+              className="px-3 md:px-5 py-1.5 md:py-2 rounded-xl text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/10 transition"
             >
-              ثبت‌نام رایگان
+              ثبت‌نام
+            </button>
+            
+            {/* Mobile Menu Toggle */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg border border-slate-800 bg-slate-900 flex items-center justify-center shrink-0"
+              aria-label="منوی موبایل"
+            >
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-3 p-4 bg-slate-950/95 border border-slate-900 rounded-2xl space-y-3 backdrop-blur-md">
+            <nav className="flex flex-col gap-3 text-xs font-semibold text-slate-300">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="hover:text-blue-500 transition py-1.5 border-b border-slate-900">امکانات کلیدی</a>
+              <a href="#templates" onClick={() => setMobileMenuOpen(false)} className="hover:text-blue-500 transition py-1.5 border-b border-slate-900">تم‌های اختصاصی</a>
+              <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="hover:text-blue-500 transition py-1.5 border-b border-slate-900">تعرفه‌ها و پلن‌ها</a>
+              <a href="#agencies" onClick={() => setMobileMenuOpen(false)} className="hover:text-blue-500 transition py-1.5">بخش نمایندگی</a>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* 2. HERO SECTION */}
@@ -203,7 +227,7 @@ export default function LandingPage() {
                 {/* Visual Cover Photo */}
                 <div className="h-28 bg-slate-800 relative shrink-0">
                   <img 
-                    src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80" 
+                    src="/cover-fallback.avif" 
                     alt="cover" 
                     className="w-full h-full object-cover"
                   />
@@ -220,7 +244,7 @@ export default function LandingPage() {
                 <div className="px-5 -mt-10 relative z-20 flex justify-between items-end" dir="rtl">
                   <div className="h-20 w-20 rounded-full border-4 border-slate-900 overflow-hidden shadow-lg bg-slate-900 shrink-0">
                     <img 
-                      src="https://picsum.photos/150/150?random=120" 
+                      src="/profile-fallback.jpg" 
                       alt="avatar" 
                       className="w-full h-full object-cover"
                     />

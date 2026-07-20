@@ -6,7 +6,7 @@ import {
   Settings, User, LayoutGrid, CreditCard, BarChart2, ShieldCheck, 
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
-  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram
+  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, Linkedin, Download
 } from 'lucide-react';
 import { Card, Template, toUUID, getImageUrl } from '../../lib/directus';
 
@@ -195,7 +195,7 @@ export function CustomerCardsView({
                     <div className="flex items-start gap-3">
                       <div className="h-14 w-14 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden shrink-0">
                         <img 
-                          src={getImageUrl(card.profile_image) || 'https://picsum.photos/150/150?random=1'} 
+                          src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
                           alt="avatar" 
                           className="h-full w-full object-cover"
                         />
@@ -896,84 +896,182 @@ export function CustomerCardsView({
 
                   return (
                     <>
+                      {/* Inject user's custom CSS live inside preview */}
+                      {editingCard.custom_css && (
+                        <style dangerouslySetInnerHTML={{ __html: editingCard.custom_css }} />
+                      )}
+
                       {/* Classic Style */}
                       {isClassic && (
                         <div className="w-full min-h-full bg-slate-100 text-slate-850 flex flex-col font-sans" style={{ backgroundColor: cardBg, color: textColor }}>
                           {/* Cover photo */}
-                          <div className="h-20 bg-slate-300 relative shrink-0">
+                          <div className="h-20 bg-slate-300 relative shrink-0 overflow-hidden">
+                            <img 
+                              src={getImageUrl(editingCard.cover_image) || '/cover-fallback.avif'} 
+                              alt="cover" 
+                              className="w-full h-full object-cover"
+                            />
                             <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30"></div>
-                            <div className="h-full w-full bg-blue-600/20"></div>
                           </div>
 
                           {/* Profile Pic overlapping cover */}
                           <div className="px-3 -mt-6 relative z-10 flex justify-between items-end">
                             <div className="h-14 w-14 rounded-xl border-2 border-white overflow-hidden shadow-sm bg-white">
                               <img 
-                                src={getImageUrl(editingCard.profile_image) || 'https://picsum.photos/150/150?random=1'} 
+                                src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                 alt="profile" 
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <span className="text-[7px] bg-slate-200/80 px-1.5 py-0.5 rounded-full text-slate-600 font-bold">
-                              پیش‌نمایش کلاسیک
+                            <span className="text-[7px] bg-slate-200/80 px-1.5 py-0.5 rounded-full text-slate-600 font-bold flex items-center gap-1">
+                              <Eye className="h-2.5 w-2.5" />
+                              {(editingCard.views_count || 0).toLocaleString('fa-IR')} بازدید
                             </span>
                           </div>
 
                           {/* Info */}
-                          <div className="p-3 space-y-3.5 flex-grow">
+                          <div className="p-3 space-y-3 flex-grow overflow-y-auto">
                             <div>
                               <h4 className="text-xs font-black" style={{ color: textColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
                               <p className="text-[9px] font-bold mt-0.5" style={{ color: primaryColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
-                              <p className="text-[8px] opacity-70">{editingCard.company || 'نام برند یا شرکت'}</p>
+                              <p className="text-[8px] opacity-70" style={{ color: textColor }}>{editingCard.company || 'نام برند یا شرکت'}</p>
                             </div>
 
                             {editingCard.bio && (
-                              <div className="p-2 bg-white/60 rounded-xl text-[8px] leading-relaxed border border-slate-200/50 opacity-90">
+                              <div className="p-2 bg-white/60 rounded-xl text-[8px] leading-relaxed border border-slate-200/50 opacity-90" style={{ color: textColor }}>
                                 {editingCard.bio}
                               </div>
                             )}
 
-                            {/* Social Contact links Grid */}
-                            <div className="grid grid-cols-4 gap-1.5 pt-1">
-                              {editingCard.social_links?.phone && (
-                                <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[7px] font-bold shadow-sm">
-                                  <Phone className="h-3.5 w-3.5 text-blue-500 mb-0.5" />
-                                  <span>تلفن ثابت</span>
-                                </div>
-                              )}
-                              {editingCard.social_links?.mobile && (
-                                <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[7px] font-bold shadow-sm">
-                                  <Phone className="h-3.5 w-3.5 text-emerald-500 mb-0.5" />
-                                  <span>موبایل</span>
-                                </div>
-                              )}
-                              {editingCard.social_links?.email && (
-                                <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[7px] font-bold shadow-sm">
-                                  <Mail className="h-3.5 w-3.5 text-blue-400 mb-0.5" />
-                                  <span>ایمیل</span>
-                                </div>
-                              )}
-                              {editingCard.social_links?.telegram && (
-                                <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[7px] font-bold shadow-sm">
-                                  <Send className="h-3.5 w-3.5 text-sky-500 mb-0.5" />
-                                  <span>تلگرام</span>
-                                </div>
-                              )}
+                            {/* Download contact mockup */}
+                            <div className="w-full py-1.5 rounded-lg text-white flex items-center justify-center gap-1 text-[8px] font-bold shadow-sm cursor-pointer" style={{ backgroundColor: primaryColor }}>
+                              <Download className="h-2.5 w-2.5" />
+                              <span>ذخیره در مخاطبین گوشی</span>
                             </div>
+
+                            {/* Social Contact links Grid */}
+                            <div className="space-y-1">
+                              <h5 className="text-[7.5px] font-bold opacity-60">راه‌های ارتباطی</h5>
+                              <div className="grid grid-cols-4 gap-1">
+                                {editingCard.social_links?.phone && (
+                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                    <Phone className="h-3 w-3 text-blue-500 mb-0.5" />
+                                    <span>تماس</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.mobile && (
+                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                    <Phone className="h-3 w-3 text-emerald-500 mb-0.5" />
+                                    <span>موبایل</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.email && (
+                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                    <Mail className="h-3 w-3 text-blue-400 mb-0.5" />
+                                    <span>ایمیل</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.telegram && (
+                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                    <Send className="h-3 w-3 text-sky-500 mb-0.5" />
+                                    <span>تلگرام</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.whatsapp && (
+                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                    <MessageCircle className="h-3 w-3 text-emerald-500 mb-0.5" />
+                                    <span>واتساپ</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.instagram && (
+                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                    <Instagram className="h-3 w-3 text-pink-500 mb-0.5" />
+                                    <span>اینستا</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.linkedin && (
+                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                    <Linkedin className="h-3 w-3 text-indigo-600 mb-0.5" />
+                                    <span>لینکدین</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.website && (
+                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                    <Globe className="h-3 w-3 text-violet-600 mb-0.5" />
+                                    <span>وبسایت</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Map links */}
+                            {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
+                              <div className="space-y-1 pt-1.5 border-t border-slate-200/50">
+                                <h5 className="text-[7.5px] font-bold opacity-60">مسیریابی روی نقشه</h5>
+                                <div className="grid grid-cols-2 gap-1">
+                                  {editingCard.neshan && (
+                                    <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                      <MapPin className="h-2.5 w-2.5 text-emerald-500 shrink-0" />
+                                      <span>نشان</span>
+                                    </div>
+                                  )}
+                                  {editingCard.balad && (
+                                    <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                      <MapPin className="h-2.5 w-2.5 text-blue-500 shrink-0" />
+                                      <span>بلد</span>
+                                    </div>
+                                  )}
+                                  {editingCard.waze && (
+                                    <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                      <MapPin className="h-2.5 w-2.5 text-amber-500 shrink-0" />
+                                      <span>ویز</span>
+                                    </div>
+                                  )}
+                                  {editingCard.googlemap && (
+                                    <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                      <MapPin className="h-2.5 w-2.5 text-red-500 shrink-0" />
+                                      <span>گوگل مپ</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
                             {/* Additional custom button links */}
                             {editingCard.custom_buttons && editingCard.custom_buttons.length > 0 && (
                               <div className="space-y-1 pt-1.5 border-t border-slate-200/50">
+                                <h5 className="text-[7.5px] font-bold opacity-60">لینک‌های کاربردی</h5>
                                 {editingCard.custom_buttons.map((btn) => (
                                   <div 
                                     key={btn.id}
-                                    className="p-1.5 bg-white border border-slate-200 rounded-lg flex items-center justify-between text-[8px] font-bold shadow-sm"
-                                    style={{ borderRightColor: primaryColor, borderRightWidth: '3px' }}
+                                    className="p-1 bg-white border border-slate-200 rounded-lg flex items-center justify-between text-[7.5px] font-bold shadow-sm"
+                                    style={{ borderRightColor: primaryColor, borderRightWidth: '3px', color: textColor }}
                                   >
                                     <span>{btn.label}</span>
                                     <span className="opacity-40">➔</span>
                                   </div>
                                 ))}
+                              </div>
+                            )}
+
+                            {/* Extra/multiple contacts */}
+                            {(editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) && (
+                              <div className="space-y-1 pt-1.5 border-t border-slate-200/50">
+                                <h5 className="text-[7.5px] font-bold opacity-60">تلفن‌های همراه</h5>
+                                <div className="space-y-1">
+                                  {editingCard.social_links?.mobile && (
+                                    <div className="flex items-center justify-between p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                      <span>موبایل اصلی:</span>
+                                      <span className="font-mono text-slate-500">{editingCard.social_links.mobile}</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
+                                    <div key={idx} className="flex items-center justify-between p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                      <span>تلفن جانبی {idx + 1}:</span>
+                                      <span className="font-mono text-slate-500">{ph}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
 
@@ -983,21 +1081,22 @@ export function CustomerCardsView({
 
                       {/* Neon Glass Style */}
                       {isNeonGlass && (
-                        <div className="w-full min-h-full bg-slate-950 text-slate-100 p-3.5 space-y-3.5 flex flex-col font-sans" style={{ backgroundColor: cardBg, color: textColor }}>
-                          <div className="p-3 bg-zinc-900/80 border border-zinc-800/80 rounded-2xl relative overflow-hidden backdrop-blur space-y-3 flex-grow">
+                        <div className="w-full min-h-full bg-slate-950 text-slate-100 p-3 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg || '#0f172a', color: textColor || '#ffffff' }}>
+                          <div className="p-3 bg-slate-900/80 border border-white/10 rounded-2xl relative overflow-hidden backdrop-blur space-y-3.5 flex-grow">
                             <div className="absolute top-0 right-0 h-10 w-10 bg-blue-500/10 rounded-full blur-xl"></div>
                             <div className="absolute bottom-0 left-0 h-10 w-10 bg-purple-500/10 rounded-full blur-xl"></div>
 
                             <div className="flex justify-between items-start">
                               <div className="h-12 w-12 rounded-xl border border-blue-500/30 overflow-hidden shrink-0 bg-zinc-950">
                                 <img 
-                                  src={getImageUrl(editingCard.profile_image) || 'https://picsum.photos/150/150?random=1'} 
+                                  src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                   alt="profile" 
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <span className="text-[6px] text-blue-400 font-black tracking-widest bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">
-                                NEON GLASS
+                              <span className="text-[6px] text-blue-400 font-black tracking-widest bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                                <Eye className="h-2 w-2 text-cyan-400" />
+                                {(editingCard.views_count || 0).toLocaleString('fa-IR')} بازدید
                               </span>
                             </div>
 
@@ -1013,34 +1112,128 @@ export function CustomerCardsView({
                               </p>
                             )}
 
-                            {/* Social connections */}
-                            <div className="grid grid-cols-2 gap-1.5 pt-1.5">
-                              {editingCard.social_links?.mobile && (
-                                <div className="p-1.5 bg-zinc-950/60 border border-zinc-800 rounded-lg flex items-center gap-1.5 text-[7px] font-bold text-zinc-300">
-                                  <Phone className="h-3 w-3 text-emerald-400 shrink-0" />
-                                  <span className="truncate">تماس مستقیم</span>
-                                </div>
-                              )}
-                              {editingCard.social_links?.telegram && (
-                                <div className="p-1.5 bg-zinc-950/60 border border-zinc-800 rounded-lg flex items-center gap-1.5 text-[7px] font-bold text-zinc-300">
-                                  <Send className="h-3 w-3 text-sky-400 shrink-0" />
-                                  <span className="truncate">پیام تلگرام</span>
-                                </div>
-                              )}
+                            {/* VCF download */}
+                            <div className="w-full py-1.5 rounded-lg text-slate-950 flex items-center justify-center gap-1 text-[8px] font-extrabold shadow-sm cursor-pointer" style={{ backgroundImage: `linear-gradient(to left, ${primaryColor}, ${secondaryColor})` }}>
+                              <Download className="h-2.5 w-2.5" />
+                              <span>ذخیره مستقیم شماره تلفن</span>
                             </div>
+
+                            {/* Social connections */}
+                            <div className="space-y-1.5">
+                              <h5 className="text-[7.5px] font-bold text-slate-400">راه‌های ارتباطی سریع</h5>
+                              <div className="grid grid-cols-4 gap-1.5">
+                                {editingCard.social_links?.phone && (
+                                  <div className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/5 rounded-lg text-[6.5px] font-bold">
+                                    <Phone className="h-3 w-3 text-cyan-400 mb-0.5" />
+                                    <span className="text-[5.5px] text-slate-400">تماس</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.email && (
+                                  <div className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/5 rounded-lg text-[6.5px] font-bold">
+                                    <Mail className="h-3 w-3 text-amber-400 mb-0.5" />
+                                    <span className="text-[5.5px] text-slate-400">ایمیل</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.telegram && (
+                                  <div className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/5 rounded-lg text-[6.5px] font-bold">
+                                    <Send className="h-3 w-3 text-sky-400 mb-0.5" />
+                                    <span className="text-[5.5px] text-slate-400">تلگرام</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.whatsapp && (
+                                  <div className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/5 rounded-lg text-[6.5px] font-bold">
+                                    <MessageCircle className="h-3 w-3 text-emerald-400 mb-0.5" />
+                                    <span className="text-[5.5px] text-slate-400">واتساپ</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.instagram && (
+                                  <div className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/5 rounded-lg text-[6.5px] font-bold">
+                                    <Instagram className="h-3 w-3 text-pink-400 mb-0.5" />
+                                    <span className="text-[5.5px] text-slate-400">اینستا</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.linkedin && (
+                                  <div className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/5 rounded-lg text-[6.5px] font-bold">
+                                    <Linkedin className="h-3 w-3 text-indigo-400 mb-0.5" />
+                                    <span className="text-[5.5px] text-slate-400">لینکدین</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.website && (
+                                  <div className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/5 rounded-lg text-[6.5px] font-bold">
+                                    <Globe className="h-3 w-3 text-violet-400 mb-0.5" />
+                                    <span className="text-[5.5px] text-slate-400">وبسایت</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Map Routing Links */}
+                            {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
+                              <div className="space-y-1.5 pt-1.5 border-t border-white/10">
+                                <h5 className="text-[7.5px] font-bold text-slate-400">مسیریابی روی نقشه</h5>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  {editingCard.neshan && (
+                                    <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/5 rounded-lg text-[7px] font-bold">
+                                      <MapPin className="h-2.5 w-2.5 text-emerald-400 shrink-0" />
+                                      <span>نشان</span>
+                                    </div>
+                                  )}
+                                  {editingCard.balad && (
+                                    <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/5 rounded-lg text-[7px] font-bold">
+                                      <MapPin className="h-2.5 w-2.5 text-blue-400 shrink-0" />
+                                      <span>بلد</span>
+                                    </div>
+                                  )}
+                                  {editingCard.waze && (
+                                    <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/5 rounded-lg text-[7px] font-bold">
+                                      <MapPin className="h-2.5 w-2.5 text-amber-400 shrink-0" />
+                                      <span>ویز</span>
+                                    </div>
+                                  )}
+                                  {editingCard.googlemap && (
+                                    <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/5 rounded-lg text-[7px] font-bold">
+                                      <MapPin className="h-2.5 w-2.5 text-red-400 shrink-0" />
+                                      <span>گوگل مپ</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
                             {/* custom buttons */}
                             {editingCard.custom_buttons && editingCard.custom_buttons.length > 0 && (
-                              <div className="space-y-1 pt-2">
+                              <div className="space-y-1 pt-1.5 border-t border-white/10">
+                                <h5 className="text-[7.5px] font-bold text-slate-400">لینک‌های کاربردی</h5>
                                 {editingCard.custom_buttons.map((btn) => (
                                   <div 
                                     key={btn.id}
-                                    className="p-1.5 bg-gradient-to-l from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-lg flex items-center justify-between text-[8px] font-bold text-blue-300"
+                                    className="p-1 bg-gradient-to-l from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-lg flex items-center justify-between text-[7.5px] font-bold text-blue-300"
                                   >
                                     <span>{btn.label}</span>
                                     <span className="text-purple-400">⚡</span>
                                   </div>
                                 ))}
+                              </div>
+                            )}
+
+                            {/* Extra/multiple contacts */}
+                            {(editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) && (
+                              <div className="space-y-1.5 pt-1.5 border-t border-white/10">
+                                <h5 className="text-[7.5px] font-bold text-slate-400">تلفن‌های همراه دیگر</h5>
+                                <div className="space-y-1">
+                                  {editingCard.social_links?.mobile && (
+                                    <div className="flex items-center justify-between p-1 bg-white/5 border border-white/5 rounded-lg text-[7px] font-bold">
+                                      <span>موبایل اصلی:</span>
+                                      <span className="font-mono text-slate-300">{editingCard.social_links.mobile}</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
+                                    <div key={idx} className="flex items-center justify-between p-1 bg-white/5 border border-white/5 rounded-lg text-[7px] font-bold">
+                                      <span>تلفن جانبی {idx + 1}:</span>
+                                      <span className="font-mono text-slate-300">{ph}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
 
@@ -1050,11 +1243,11 @@ export function CustomerCardsView({
 
                       {/* Minimal Style */}
                       {isMinimal && (
-                        <div className="w-full min-h-full bg-stone-50 text-stone-800 p-4 space-y-4 flex flex-col font-sans" style={{ backgroundColor: cardBg, color: textColor }}>
+                        <div className="w-full min-h-full bg-stone-50 text-stone-800 p-3.5 space-y-3.5 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg, color: textColor }}>
                           <div className="flex flex-col items-center text-center space-y-2 flex-grow">
-                            <div className="h-14 w-14 rounded-full overflow-hidden border border-stone-200 p-0.5 bg-white shrink-0">
+                            <div className="h-14 w-14 rounded-full overflow-hidden border border-stone-200 p-0.5 bg-white shrink-0 relative">
                               <img 
-                                src={getImageUrl(editingCard.profile_image) || 'https://picsum.photos/150/150?random=1'} 
+                                src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                 alt="profile" 
                                 className="w-full h-full object-cover rounded-full"
                               />
@@ -1072,41 +1265,136 @@ export function CustomerCardsView({
                               </p>
                             )}
 
-                            {/* Minimal Links */}
-                            <div className="w-full space-y-1 pt-2.5">
-                              {editingCard.social_links?.mobile && (
-                                <div className="p-1.5 bg-white border border-stone-200 hover:bg-stone-50 rounded-xl flex items-center justify-between text-[8px] font-bold text-stone-700">
-                                  <span className="flex items-center gap-1.5">
-                                    <Phone className="h-3 w-3 text-stone-500" />
-                                    موبایل
-                                  </span>
-                                  <span className="text-stone-400 font-mono text-[7px]">{editingCard.social_links?.mobile}</span>
-                                </div>
-                              )}
-                              {editingCard.social_links?.email && (
-                                <div className="p-1.5 bg-white border border-stone-200 hover:bg-stone-50 rounded-xl flex items-center justify-between text-[8px] font-bold text-stone-700">
-                                  <span className="flex items-center gap-1.5">
-                                    <Mail className="h-3 w-3 text-stone-500" />
-                                    پست الکترونیکی
-                                  </span>
-                                  <span className="text-stone-400 font-mono text-[7px] truncate max-w-[100px]">{editingCard.social_links?.email}</span>
-                                </div>
-                              )}
+                            {/* Download contact mockup */}
+                            <div className="w-full py-1 rounded-lg text-white flex items-center justify-center gap-1 text-[7.5px] font-bold shadow-sm cursor-pointer" style={{ backgroundColor: primaryColor }}>
+                              <Download className="h-2.5 w-2.5" />
+                              <span>ذخیره در مخاطبین</span>
+                            </div>
 
-                              {editingCard.custom_buttons && editingCard.custom_buttons.length > 0 && (
-                                <div className="space-y-1 pt-2 border-t border-stone-200">
-                                  {editingCard.custom_buttons.map((btn) => (
-                                    <div 
-                                      key={btn.id}
-                                      className="p-1.5 bg-stone-900 text-white rounded-xl flex items-center justify-between text-[8px] font-bold shadow-sm"
-                                    >
-                                      <span>{btn.label}</span>
-                                      <span>➔</span>
+                            {/* Minimal Links Grid */}
+                            <div className="w-full space-y-1 pt-1.5 border-t border-stone-200">
+                              <h5 className="text-[7.5px] font-bold text-stone-500 text-right">راه‌های ارتباطی</h5>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {editingCard.social_links?.phone && (
+                                  <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
+                                    <Phone className="h-3 w-3 text-stone-500" />
+                                    <span>تلفن ثابت</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.mobile && (
+                                  <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
+                                    <Phone className="h-3 w-3 text-stone-500" />
+                                    <span>موبایل</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.email && (
+                                  <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
+                                    <Mail className="h-3 w-3 text-stone-500" />
+                                    <span className="truncate">ایمیل</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.telegram && (
+                                  <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
+                                    <Send className="h-3 w-3 text-stone-500" />
+                                    <span>تلگرام</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.whatsapp && (
+                                  <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
+                                    <MessageCircle className="h-3 w-3 text-stone-500" />
+                                    <span>واتساپ</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.instagram && (
+                                  <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
+                                    <Instagram className="h-3 w-3 text-stone-500" />
+                                    <span>اینستاگرام</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.linkedin && (
+                                  <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
+                                    <Linkedin className="h-3 w-3 text-stone-500" />
+                                    <span>لینکدین</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.website && (
+                                  <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
+                                    <Globe className="h-3 w-3 text-stone-500" />
+                                    <span>وبسایت</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Map links */}
+                            {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
+                              <div className="w-full space-y-1 pt-1.5 border-t border-stone-200">
+                                <h5 className="text-[7.5px] font-bold text-stone-500 text-right">مسیریابی آدرس</h5>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  {editingCard.neshan && (
+                                    <div className="p-1 bg-white border border-stone-200 rounded-lg flex items-center gap-1 text-[7px] font-bold text-stone-700">
+                                      <MapPin className="h-2.5 w-2.5 text-stone-500" />
+                                      <span>نشان</span>
+                                    </div>
+                                  )}
+                                  {editingCard.balad && (
+                                    <div className="p-1 bg-white border border-stone-200 rounded-lg flex items-center gap-1 text-[7px] font-bold text-stone-700">
+                                      <MapPin className="h-2.5 w-2.5 text-stone-500" />
+                                      <span>بلد</span>
+                                    </div>
+                                  )}
+                                  {editingCard.waze && (
+                                    <div className="p-1 bg-white border border-stone-200 rounded-lg flex items-center gap-1 text-[7px] font-bold text-stone-700">
+                                      <MapPin className="h-2.5 w-2.5 text-stone-500" />
+                                      <span>ویز</span>
+                                    </div>
+                                  )}
+                                  {editingCard.googlemap && (
+                                    <div className="p-1 bg-white border border-stone-200 rounded-lg flex items-center gap-1 text-[7px] font-bold text-stone-700">
+                                      <MapPin className="h-2.5 w-2.5 text-stone-500" />
+                                      <span>گوگل مپ</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* custom buttons */}
+                            {editingCard.custom_buttons && editingCard.custom_buttons.length > 0 && (
+                              <div className="w-full space-y-1 pt-1.5 border-t border-stone-200">
+                                <h5 className="text-[7.5px] font-bold text-stone-500 text-right">لینک‌های کاربردی</h5>
+                                {editingCard.custom_buttons.map((btn) => (
+                                  <div 
+                                    key={btn.id}
+                                    className="p-1 bg-stone-900 text-white rounded-lg flex items-center justify-between text-[7.5px] font-bold shadow-sm"
+                                  >
+                                    <span>{btn.label}</span>
+                                    <span>➔</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Extra/multiple contacts */}
+                            {(editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) && (
+                              <div className="w-full space-y-1 pt-1.5 border-t border-stone-200">
+                                <h5 className="text-[7.5px] font-bold text-stone-500 text-right">تلفن‌های همراه</h5>
+                                <div className="space-y-1">
+                                  {editingCard.social_links?.mobile && (
+                                    <div className="flex items-center justify-between p-1 bg-white border border-stone-200 rounded-lg text-[7px] font-bold text-stone-700">
+                                      <span>موبایل اصلی:</span>
+                                      <span className="font-mono text-stone-500">{editingCard.social_links.mobile}</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
+                                    <div key={idx} className="flex items-center justify-between p-1 bg-white border border-stone-200 rounded-lg text-[7px] font-bold text-stone-700">
+                                      <span>تلفن جانبی {idx + 1}:</span>
+                                      <span className="font-mono text-stone-500">{ph}</span>
                                     </div>
                                   ))}
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
 
                           </div>
                         </div>
@@ -1114,7 +1402,7 @@ export function CustomerCardsView({
 
                       {/* Luxury Dark Style */}
                       {isLuxuryDark && (
-                        <div className="w-full min-h-full bg-stone-950 text-amber-100 p-4 space-y-4 flex flex-col font-sans" style={{ backgroundColor: cardBg, color: textColor }}>
+                        <div className="w-full min-h-full bg-stone-950 text-amber-100 p-3.5 space-y-3.5 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg, color: textColor }}>
                           <div className="border border-amber-500/20 bg-stone-900/60 p-3 rounded-2xl flex flex-col flex-grow space-y-3.5 relative overflow-hidden">
                             <div className="absolute top-0 right-0 h-16 w-16 bg-amber-500/5 rounded-full blur-2xl"></div>
 
@@ -1124,7 +1412,7 @@ export function CustomerCardsView({
                               </span>
                               <div className="h-10 w-10 rounded-lg border-2 border-amber-500/40 overflow-hidden shrink-0">
                                 <img 
-                                  src={getImageUrl(editingCard.profile_image) || 'https://picsum.photos/150/150?random=1'} 
+                                  src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                   alt="profile" 
                                   className="w-full h-full object-cover"
                                 />
@@ -1143,21 +1431,87 @@ export function CustomerCardsView({
                               </p>
                             )}
 
-                            {/* Luxury contact info list */}
-                            <div className="space-y-1 pt-1">
-                              {editingCard.social_links?.mobile && (
-                                <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
-                                  <span className="opacity-50">تلفن مستقیم:</span>
-                                  <span className="font-mono text-amber-500/90">{editingCard.social_links?.mobile}</span>
-                                </div>
-                              )}
-                              {editingCard.social_links?.instagram && (
-                                <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
-                                  <span className="opacity-50">اینستاگرام:</span>
-                                  <span className="font-mono text-amber-500/90">@{editingCard.social_links?.instagram}</span>
-                                </div>
-                              )}
+                            {/* Download contact mockup */}
+                            <div className="w-full py-1 rounded-lg border border-amber-500/40 text-amber-200 flex items-center justify-center gap-1 text-[7.5px] font-bold shadow-sm cursor-pointer hover:bg-amber-500/10">
+                              <Download className="h-2.5 w-2.5" />
+                              <span>ذخیره مستقیم کارت شخصی</span>
                             </div>
+
+                            {/* Luxury contact info list */}
+                            <div className="space-y-1.5 pt-1 border-t border-stone-800/60">
+                              <h5 className="text-[7.5px] font-serif text-amber-500/70 text-right">راه‌های ارتباطی مجلل</h5>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {editingCard.social_links?.phone && (
+                                  <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
+                                    <span className="opacity-50 flex items-center gap-1"><Phone className="h-2.5 w-2.5" /> ثابت</span>
+                                    <span className="font-mono text-amber-500/90 truncate max-w-[80px]">{editingCard.social_links.phone}</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.mobile && (
+                                  <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
+                                    <span className="opacity-50 flex items-center gap-1"><Phone className="h-2.5 w-2.5" /> همراه</span>
+                                    <span className="font-mono text-amber-500/90 truncate max-w-[80px]">{editingCard.social_links.mobile}</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.email && (
+                                  <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
+                                    <span className="opacity-50 flex items-center gap-1"><Mail className="h-2.5 w-2.5" /> ایمیل</span>
+                                    <span className="font-mono text-amber-500/90 truncate max-w-[80px]">{editingCard.social_links.email}</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.telegram && (
+                                  <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
+                                    <span className="opacity-50 flex items-center gap-1"><Send className="h-2.5 w-2.5" /> تلگرام</span>
+                                    <span className="font-mono text-amber-500/90 truncate max-w-[80px]">@{editingCard.social_links.telegram}</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.whatsapp && (
+                                  <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
+                                    <span className="opacity-50 flex items-center gap-1"><MessageCircle className="h-2.5 w-2.5" /> واتساپ</span>
+                                    <span className="font-mono text-amber-500/90 truncate max-w-[80px]">{editingCard.social_links.whatsapp}</span>
+                                  </div>
+                                )}
+                                {editingCard.social_links?.instagram && (
+                                  <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
+                                    <span className="opacity-50 flex items-center gap-1"><Instagram className="h-2.5 w-2.5" /> اینستاگرام</span>
+                                    <span className="font-mono text-amber-500/90 truncate max-w-[80px]">@{editingCard.social_links.instagram}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Map routing links */}
+                            {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
+                              <div className="space-y-1 pt-1.5 border-t border-stone-800/60">
+                                <h5 className="text-[7.5px] font-serif text-amber-500/70 text-right">مسیریابی آدرس</h5>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  {editingCard.neshan && (
+                                    <div className="p-1 bg-stone-900 border border-amber-500/20 rounded text-[7px] flex items-center gap-1 text-amber-200">
+                                      <MapPin className="h-2.5 w-2.5 text-amber-500" />
+                                      <span>مسیریابی نشان</span>
+                                    </div>
+                                  )}
+                                  {editingCard.balad && (
+                                    <div className="p-1 bg-stone-900 border border-amber-500/20 rounded text-[7px] flex items-center gap-1 text-amber-200">
+                                      <MapPin className="h-2.5 w-2.5 text-amber-500" />
+                                      <span>مسیریابی بلد</span>
+                                    </div>
+                                  )}
+                                  {editingCard.waze && (
+                                    <div className="p-1 bg-stone-900 border border-amber-500/20 rounded text-[7px] flex items-center gap-1 text-amber-200">
+                                      <MapPin className="h-2.5 w-2.5 text-amber-500" />
+                                      <span>مسیریابی ویز</span>
+                                    </div>
+                                  )}
+                                  {editingCard.googlemap && (
+                                    <div className="p-1 bg-stone-900 border border-amber-500/20 rounded text-[7px] flex items-center gap-1 text-amber-200">
+                                      <MapPin className="h-2.5 w-2.5 text-amber-500" />
+                                      <span>مسیریابی گوگل مپ</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
                             {/* Custom buttons */}
                             {editingCard.custom_buttons && editingCard.custom_buttons.length > 0 && (
@@ -1165,10 +1519,23 @@ export function CustomerCardsView({
                                 {editingCard.custom_buttons.map((btn) => (
                                   <div 
                                     key={btn.id}
-                                    className="p-1.5 bg-stone-900 border border-amber-500/30 rounded-lg flex items-center justify-between text-[8px] font-bold text-amber-300"
+                                    className="p-1 bg-stone-900 border border-amber-500/30 rounded-lg flex items-center justify-between text-[8px] font-bold text-amber-300"
                                   >
                                     <span>{btn.label}</span>
                                     <span className="opacity-40">➔</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Extra/multiple contacts */}
+                            {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0 && (
+                              <div className="space-y-1 pt-1.5 border-t border-stone-800/60">
+                                <h5 className="text-[7.5px] font-serif text-amber-500/70 text-right">شماره‌های فرعی</h5>
+                                {editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
+                                  <div key={idx} className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
+                                    <span className="opacity-50">تلفن همراه {idx + 1}:</span>
+                                    <span className="font-mono text-amber-500/90">{ph}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1196,7 +1563,7 @@ export function CustomerCardsView({
 
                         return (
                           <div 
-                            className="w-full min-h-full transition-all p-3.5 space-y-3.5 flex flex-col justify-between text-right font-sans"
+                            className="w-full min-h-full transition-all p-3.5 space-y-3.5 flex flex-col justify-between text-right font-sans overflow-y-auto"
                             style={{ 
                               backgroundColor: customCardBg, 
                               color: txtColor
@@ -1213,7 +1580,7 @@ export function CustomerCardsView({
                                 <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100">
                                   <div className="h-10 w-10 overflow-hidden border shrink-0" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '6px' }}>
                                     <img 
-                                      src={getImageUrl(editingCard.profile_image) || 'https://picsum.photos/150/150?random=1'} 
+                                      src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                       alt="profile" 
                                       className="w-full h-full object-cover"
                                     />
@@ -1227,7 +1594,7 @@ export function CustomerCardsView({
                                 <div className="flex flex-col items-center text-center space-y-1.5">
                                   <div className="h-12 w-12 overflow-hidden border p-0.5" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '8px' }}>
                                     <img 
-                                      src={getImageUrl(editingCard.profile_image) || 'https://picsum.photos/150/150?random=1'} 
+                                      src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                       alt="profile" 
                                       className="w-full h-full object-cover"
                                       style={{ borderRadius: isCircleAvatar ? '9999px' : '6px' }}
@@ -1246,18 +1613,112 @@ export function CustomerCardsView({
                                 </p>
                               )}
 
-                              {/* Mini Contact Buttons */}
-                              <div className="grid grid-cols-4 gap-1.5 pt-2">
-                                {['تلفن', 'واتساپ', 'تلگرام', 'سایت'].map((social, i) => (
-                                  <div key={social} className="flex flex-col items-center justify-center p-1 rounded-md border text-[7px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                                    {i === 0 && <Phone className="h-3 w-3 text-blue-500" style={{ color: pColor }} />}
-                                    {i === 1 && <MessageCircle className="h-3 w-3 text-emerald-500" style={{ color: pColor }} />}
-                                    {i === 2 && <Send className="h-3 w-3 text-sky-500" style={{ color: pColor }} />}
-                                    {i === 3 && <Globe className="h-3 w-3 text-zinc-500" style={{ color: pColor }} />}
-                                    <span className="text-[5.5px] font-bold mt-0.5" style={{ color: txtSecColor }}>{social}</span>
-                                  </div>
-                                ))}
+                              {/* Save contacts */}
+                              <div className="w-full py-1 rounded-lg text-white text-center text-[7.5px] font-bold cursor-pointer" style={{ backgroundColor: pColor }}>
+                                ذخیره در دفترچه مخاطبین
                               </div>
+
+                              {/* Connections Grid */}
+                              <div className="space-y-1">
+                                <h5 className="text-[7px] font-bold opacity-70">راه‌های ارتباطی</h5>
+                                <div className="grid grid-cols-4 gap-1">
+                                  {editingCard.social_links?.phone && (
+                                    <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                      <Phone className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                      <span className="text-[5.5px]" style={{ color: txtSecColor }}>تلفن</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.mobile && (
+                                    <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                      <Phone className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                      <span className="text-[5.5px]" style={{ color: txtSecColor }}>موبایل</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.whatsapp && (
+                                    <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                      <MessageCircle className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                      <span className="text-[5.5px]" style={{ color: txtSecColor }}>واتساپ</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.telegram && (
+                                    <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                      <Send className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                      <span className="text-[5.5px]" style={{ color: txtSecColor }}>تلگرام</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.instagram && (
+                                    <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                      <Instagram className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                      <span className="text-[5.5px]" style={{ color: txtSecColor }}>اینستا</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.linkedin && (
+                                    <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                      <Linkedin className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                      <span className="text-[5.5px]" style={{ color: txtSecColor }}>لینکدین</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.email && (
+                                    <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                      <Mail className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                      <span className="text-[5.5px]" style={{ color: txtSecColor }}>ایمیل</span>
+                                    </div>
+                                  )}
+                                  {editingCard.social_links?.website && (
+                                    <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                      <Globe className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                      <span className="text-[5.5px]" style={{ color: txtSecColor }}>سایت</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Maps */}
+                              {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
+                                <div className="space-y-1 pt-1.5 border-t" style={{ borderColor: sColor }}>
+                                  <h5 className="text-[7px] font-bold opacity-70">مسیریابی</h5>
+                                  <div className="grid grid-cols-2 gap-1">
+                                    {editingCard.neshan && (
+                                      <div className="p-1 rounded border text-[6.5px] flex items-center gap-1 justify-center" style={{ borderColor: sColor }}>
+                                        <MapPin className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                        <span style={{ color: txtSecColor }}>نشان</span>
+                                      </div>
+                                    )}
+                                    {editingCard.balad && (
+                                      <div className="p-1 rounded border text-[6.5px] flex items-center gap-1 justify-center" style={{ borderColor: sColor }}>
+                                        <MapPin className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                        <span style={{ color: txtSecColor }}>بلد</span>
+                                      </div>
+                                    )}
+                                    {editingCard.waze && (
+                                      <div className="p-1 rounded border text-[6.5px] flex items-center gap-1 justify-center" style={{ borderColor: sColor }}>
+                                        <MapPin className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                        <span style={{ color: txtSecColor }}>ویز</span>
+                                      </div>
+                                    )}
+                                    {editingCard.googlemap && (
+                                      <div className="p-1 rounded border text-[6.5px] flex items-center gap-1 justify-center" style={{ borderColor: sColor }}>
+                                        <MapPin className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                        <span style={{ color: txtSecColor }}>گوگل مپ</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Custom Buttons */}
+                              {editingCard.custom_buttons && editingCard.custom_buttons.length > 0 && (
+                                <div className="space-y-1 pt-1.5 border-t" style={{ borderColor: sColor }}>
+                                  <h5 className="text-[7px] font-bold opacity-70">لینک‌های اختصاصی</h5>
+                                  {editingCard.custom_buttons.map((btn) => (
+                                    <div key={btn.id} className="p-1 rounded flex justify-between items-center text-[7px]" style={{ backgroundColor: sColor, color: pColor }}>
+                                      <span>{btn.label}</span>
+                                      <span>➔</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
                             </div>
                           </div>
                         );

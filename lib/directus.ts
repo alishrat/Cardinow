@@ -160,10 +160,38 @@ export function getImageUrl(idOrUrl: string | null | undefined): string {
   // Check if it is a UUID (Directus file ID)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (uuidRegex.test(idOrUrl)) {
-    const base = getDirectusBaseUrl();
-    return `${base}/assets/${idOrUrl}`;
+    // ALWAYS return the relative proxy path to ensure browser requests go through the HTTPS proxy
+    // and avoid mixed content blockages or raw URL exposure.
+    return `/api/directus/assets/${idOrUrl}`;
   }
   return idOrUrl;
+}
+
+// Helper to sanitize any database error messages, removing Directus technical branding
+export function sanitizeDbError(errMsg: string): string {
+  if (!errMsg) return 'خطای نامشخص در پایگاه داده';
+  
+  // Replace case-insensitive references to Directus/دایرکتوس with "پایگاه داده"
+  let clean = errMsg
+    .replace(/directus/gi, 'پایگاه داده')
+    .replace(/دایرکتوس/gi, 'پایگاه داده');
+
+  // Translate common unique validation failures into user-friendly Persian
+  if (clean.toLowerCase().includes('slug') && (clean.toLowerCase().includes('unique') || clean.toLowerCase().includes('not unique') || clean.toLowerCase().includes('already exists'))) {
+    return 'خطا: این آدرس یکتا (اسلاگ) قبلاً توسط کاربر دیگری ثبت شده است. لطفا آدرس (اسلاگ) دیگری انتخاب کنید.';
+  }
+  if (clean.toLowerCase().includes('email') && (clean.toLowerCase().includes('unique') || clean.toLowerCase().includes('not unique') || clean.toLowerCase().includes('already exists'))) {
+    return 'خطا: حساب کاربری با این آدرس ایمیل قبلاً ثبت شده است.';
+  }
+  if (clean.toLowerCase().includes('phone') && (clean.toLowerCase().includes('unique') || clean.toLowerCase().includes('not unique') || clean.toLowerCase().includes('already exists'))) {
+    return 'خطا: حساب کاربری با این شماره موبایل قبلاً ثبت شده است.';
+  }
+
+  // Remove common Directus JSON structure pollution
+  clean = clean.replace(/"collection":\s*"[^"]*"/gi, '');
+  clean = clean.replace(/"field":\s*"[^"]*"/gi, '');
+  
+  return clean;
 }
 
 // SEED DATA
@@ -792,7 +820,7 @@ export const dbService = {
           errMsg += `: ${txt}`;
         } catch {}
       }
-      throw new Error(errMsg);
+      throw new Error(sanitizeDbError(errMsg));
     }
   },
   deleteCard: async (id: string): Promise<void> => {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
-  dbService, authService, initializeDB, Card, Tenant, Template, Plan, Subscription, Transaction, UserSession, CardAnalytics, toUUID
+  dbService, authService, initializeDB, Card, Tenant, Template, Plan, Subscription, Transaction, UserSession, CardAnalytics, toUUID, sanitizeDbError, getImageUrl
 } from '../../lib/directus';
 import { 
   Plus, Edit2, Trash2, Globe, ExternalLink, Copy, Check, Eye, Save, Search, 
@@ -33,6 +33,17 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserSession | null>(null);
   const [activeTab, setActiveTab] = useState<string>('cards');
+
+  // Toast & Modal Notification states
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(current => current?.message === message ? null : current);
+    }, 5000);
+  };
 
   // Database States
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -99,7 +110,7 @@ function DashboardContent() {
         setEditingCard({ ...editingCard, cover_image: fileId });
       }
     } catch (err: any) {
-      alert('خطا در بارگذاری تصویر: ' + err.message);
+      showToast('خطا در بارگذاری تصویر: ' + err.message, 'error');
     } finally {
       if (type === 'profile') setUploadingProfile(false);
       else setUploadingCover(false);
@@ -211,7 +222,7 @@ function DashboardContent() {
       const session = await authService.login(loginEmail, loginPassword);
       if (session) {
         setUser(session);
-        setActiveTab(session.role === 'customer' ? 'cards' : session.role === 'tenant' ? 'tenant-settings' : 'admin-tenants');
+        setActiveTab(session.role === 'customer' ? 'cards' : session.role === 'tenant' ? 'tenant-settings' : 'admin-cards');
         refreshData();
       } else {
         setAuthError('کاربری با این مشخصات یافت نشد. لطفاً ابتدا ثبت‌نام کنید.');
@@ -260,7 +271,7 @@ function DashboardContent() {
         } else if (user.role === 'tenant') {
           setActiveTab('tenant-settings');
         } else if (user.role === 'admin') {
-          setActiveTab('admin-tenants');
+          setActiveTab('admin-cards');
         }
       };
       setTimeout(determineTab, 0);
@@ -318,7 +329,7 @@ function DashboardContent() {
       setCardSuccess('کارت ویزیت جدید با موفقیت ایجاد شد و وارد حالت ویرایش شدید.');
       await refreshData();
     } catch (err: any) {
-      setCardError('خطا در اتصال به پایگاه داده هنگام ساخت کارت جدید: ' + err.message);
+      setCardError(sanitizeDbError(err.message));
     } finally {
       setIsCreatingCard(false);
     }
@@ -334,8 +345,11 @@ function DashboardContent() {
       setEditingCard(null);
       setCardSuccess('تغییرات کارت ویزیت با موفقیت در دیتابیس ذخیره شد.');
       await refreshData();
+      if (user?.role === 'admin') {
+        setActiveTab('admin-cards');
+      }
     } catch (err: any) {
-      setCardError('خطا در اتصال به سرور هنگام ذخیره‌سازی کارت: ' + err.message);
+      setCardError(sanitizeDbError(err.message));
     } finally {
       setIsSavingCard(false);
     }
@@ -347,8 +361,11 @@ function DashboardContent() {
         await dbService.deleteCard(cardId);
         if (editingCard?.id === cardId) setEditingCard(null);
         await refreshData();
+        if (user?.role === 'admin') {
+          setActiveTab('admin-cards');
+        }
       } catch (err: any) {
-        alert('خطا در اتصال به سرور هنگام حذف کارت: ' + err.message);
+        alert(sanitizeDbError(err.message));
       }
     }
   };
@@ -389,21 +406,23 @@ function DashboardContent() {
 
   // --- SUBSCRIPTION SIMULATOR ---
   const handleInitiatePayment = (plan: Plan) => {
+    setModalError(null);
     setPayingPlan(plan);
   };
 
   const handleProcessSimulatedPayment = () => {
     if (!user || !payingPlan) return;
+    setModalError(null);
     
     const isOffline = simulatedGateway.includes('کارت به کارت') || simulatedGateway.includes('آفلاین');
     
     if (isOffline) {
       if (!offlineRefId.trim()) {
-        alert('لطفاً شماره ارجاع / کد رهگیری تراکنش را وارد نمایید.');
+        setModalError('لطفاً شماره ارجاع / کد رهگیری تراکنش را وارد نمایید.');
         return;
       }
       if (!offlineDepositTime.trim()) {
-        alert('لطفاً تاریخ و زمان واریز تراکنش را وارد نمایید.');
+        setModalError('لطفاً تاریخ و زمان واریز تراکنش را وارد نمایید.');
         return;
       }
     }
@@ -441,7 +460,7 @@ function DashboardContent() {
           setOfflineDepositTime('');
           setOfflineNote('');
           await refreshData();
-          alert(`درخواست فعال‌سازی اشتراک پلن "${payingPlan.title}" با کد رهگیری ${newTx.ref_id} ثبت گردید. پس از بررسی و تایید توسط مدیریت، اشتراک شما فعال خواهد شد.`);
+          showToast(`درخواست فعال‌سازی اشتراک پلن "${payingPlan.title}" با کد رهگیری ${newTx.ref_id} ثبت گردید. پس از بررسی و تایید توسط مدیریت، اشتراک شما فعال خواهد شد.`, 'success');
         } else {
           // 1. Create Transaction
           const newTx: Transaction = {
@@ -476,11 +495,11 @@ function DashboardContent() {
           setIsProcessingPayment(false);
           setPayingPlan(null);
           await refreshData();
-          alert(`پرداخت مبلغ ${payingPlan.price.toLocaleString('fa-IR')} تومان با موفقیت در درگاه شبیه‌سازی شده تراکنش تایید و اشتراک شما فعال گردید!`);
+          showToast(`پرداخت مبلغ ${payingPlan.price.toLocaleString('fa-IR')} تومان با موفقیت در درگاه شبیه‌سازی شده تراکنش تایید و اشتراک شما فعال گردید!`, 'success');
         }
       } catch (err: any) {
         setIsProcessingPayment(false);
-        alert('خطا در ثبت اشتراک و تراکنش در سیستم: ' + err.message);
+        setModalError('خطا در ثبت اشتراک و تراکنش در سیستم: ' + err.message);
       }
     }, 1500);
   };
@@ -920,18 +939,6 @@ function DashboardContent() {
               {user.role === 'admin' && (
                 <>
                   <button
-                    onClick={() => setActiveTab('admin-tenants')}
-                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-2.5 ${
-                      activeTab === 'admin-tenants' 
-                      ? 'bg-amber-600 text-white' 
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                    }`}
-                  >
-                    <Building className="h-4 w-4" />
-                    مدیریت نمایندگان (Tenants)
-                  </button>
-
-                  <button
                     onClick={() => setActiveTab('admin-cards')}
                     className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-2.5 ${
                       activeTab === 'admin-cards' 
@@ -1044,6 +1051,12 @@ function DashboardContent() {
                     ×
                   </button>
                 </div>
+
+                {modalError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs font-semibold leading-relaxed">
+                    {modalError}
+                  </div>
+                )}
 
                 <div className="p-4 bg-slate-950/50 rounded-2xl border border-slate-850 space-y-1.5 text-xs">
                   <div className="flex justify-between items-center">
@@ -1194,15 +1207,20 @@ function DashboardContent() {
           )}
 
           {/* ==============================================
-              CUSTOMER MODE: CARDS TAB
+              CUSTOMER/ADMIN MODE: CARDS TAB
              ============================================== */}
-          {user.role === 'customer' && activeTab === 'cards' && (
+          {(user.role === 'customer' || user.role === 'admin') && activeTab === 'cards' && (
             <CustomerCardsView
               user={user}
               cards={cards}
               templates={templates}
               editingCard={editingCard}
-              setEditingCard={setEditingCard}
+              setEditingCard={(card) => {
+                setEditingCard(card);
+                if (!card && user?.role === 'admin') {
+                  setActiveTab('admin-cards');
+                }
+              }}
               isCreatingCard={isCreatingCard}
               isSavingCard={isSavingCard}
               cardError={cardError}
@@ -1506,65 +1524,7 @@ function DashboardContent() {
             </div>
           )}
 
-          {/* ==============================================
-              ADMIN MODE: ALL TENANTS TAB
-             ============================================== */}
-          {user.role === 'admin' && activeTab === 'admin-tenants' && (
-            <div className="space-y-6">
-              <div className="border-b border-slate-800 pb-5">
-                <h2 className="text-xl font-bold text-white">مدیریت کل نمایندگان و کارمزد سامانه (Tenants Overview)</h2>
-                <p className="text-xs text-slate-400 mt-1">نظارت بر عملکرد پورتال‌ها، تایید نمایندگی‌های جدید و ویرایش کارمزد سامانه.</p>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {tenants.map((ten) => {
-                  const tenantTxs = transactions.filter(t => toUUID(t.tenant_id) === toUUID(ten.id));
-                  const totalRevenue = tenantTxs.reduce((sum, tx) => sum + tx.amount, 0);
-
-                  return (
-                    <div key={ten.id} className="bg-slate-950 border border-slate-850 rounded-2xl p-5 flex flex-col justify-between gap-5">
-                      <div className="space-y-3 text-xs">
-                        <div className="flex justify-between items-center">
-                          <h4 className="font-bold text-white text-sm">{ten.name}</h4>
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                            ten.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-                          }`}>
-                            {ten.status === 'active' ? 'مجاز / فعال' : 'غیرفعال'}
-                          </span>
-                        </div>
-
-                        <div className="space-y-1.5 opacity-80 leading-relaxed">
-                          <p>دامنه پرتال: <span className="font-mono text-blue-400">{ten.custom_domain || 'عدم اتصال'}</span></p>
-                          <p>کارمزد دریافتی پلتفرم شما: <span className="text-amber-400 font-bold">{ten.settings?.commission_rate || 10}٪</span></p>
-                          <p className="font-bold text-white">درآمد کلی پرتال: {totalRevenue.toLocaleString('fa-IR')} تومان</p>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          onClick={async () => {
-                            const newStatus = ten.status === 'active' ? 'inactive' : 'active';
-                            const updated = tenants.map(t => t.id === ten.id ? { ...t, status: newStatus as any } : t);
-                            setTenants(updated);
-                            try {
-                              await dbService.saveTenant({ ...ten, status: newStatus as any });
-                              await refreshData();
-                              alert('وضعیت تایید و دسترسی نماینده تغییر یافت.');
-                            } catch (err: any) {
-                              alert('خطا در ثبت وضعیت نماینده در سیستم: ' + err.message);
-                            }
-                          }}
-                          className="flex-grow py-2 bg-slate-900 hover:bg-slate-850 rounded-xl text-[10px] font-bold border border-slate-800 transition text-amber-400"
-                        >
-                          تغییر لایسنس وضعیت
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* ==============================================
               ADMIN MODE: ALL TRANSACTIONS TAB
@@ -1731,7 +1691,7 @@ function DashboardContent() {
                           <div className="flex items-start gap-3">
                             <div className="h-12 w-12 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden shrink-0">
                               <img 
-                                src={card.profile_image || 'https://picsum.photos/150/150?random=1'} 
+                                src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
                                 alt="avatar" 
                                 className="h-full w-full object-cover"
                               />
@@ -1956,6 +1916,30 @@ function DashboardContent() {
         </main>
 
       </div>
+
+      {/* TOAST NOTIFICATION BANNER */}
+      {toast && (
+        <div className="fixed bottom-5 left-5 z-[999] max-w-sm bg-slate-950 border border-slate-800 p-4 rounded-2xl shadow-2xl flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300" dir="rtl">
+          <div className={`p-1.5 rounded-xl shrink-0 ${
+            toast.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' :
+            toast.type === 'error' ? 'bg-red-500/10 text-red-400' :
+            'bg-blue-500/10 text-blue-400'
+          }`}>
+            {toast.type === 'success' ? <CheckSquare className="h-5 w-5" /> :
+             toast.type === 'error' ? <HelpCircle className="h-5 w-5" /> :
+             <Sparkles className="h-5 w-5" />}
+          </div>
+          <div className="space-y-1 text-right">
+            <p className="text-xs font-bold text-white leading-relaxed">{toast.message}</p>
+            <button 
+              onClick={() => setToast(null)}
+              className="text-[10px] text-slate-500 hover:text-slate-400 font-bold transition block mt-1"
+            >
+              بستن متوجه شدم
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
