@@ -306,47 +306,47 @@ export function CustomerCardsView({
               </button>
             </div>
 
-            {/* Tabs Navigation (Wizard-like/Responsive Tab Bar) */}
-            <div className="flex border-b border-slate-850 overflow-x-auto no-scrollbar gap-1 pt-1 pb-1 text-[11px] font-bold">
+            {/* Tabs Navigation (Grid-based, highly responsive & beautifully compact to avoid horizontal scrolling) */}
+            <div className="grid grid-cols-5 bg-slate-900/40 p-1 rounded-xl gap-1 text-[10px] sm:text-xs font-bold border border-slate-850">
               <button 
                 type="button"
                 onClick={() => setEditorTab('info')}
-                className={`px-3 py-2 rounded-lg transition shrink-0 flex items-center gap-1.5 ${editorTab === 'info' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'}`}
+                className={`py-2 px-1 rounded-lg transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${editorTab === 'info' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'}`}
               >
-                <User className="h-3.5 w-3.5" />
-                <span>اطلاعات اصلی و ظاهر</span>
+                <User className="h-4 w-4 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] truncate">اصلی</span>
               </button>
               <button 
                 type="button"
                 onClick={() => setEditorTab('contact')}
-                className={`px-3 py-2 rounded-lg transition shrink-0 flex items-center gap-1.5 ${editorTab === 'contact' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'}`}
+                className={`py-2 px-1 rounded-lg transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${editorTab === 'contact' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'}`}
               >
-                <Phone className="h-3.5 w-3.5" />
-                <span>ارتباطات و آدرس</span>
+                <Phone className="h-4 w-4 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] truncate">ارتباط</span>
               </button>
               <button 
                 type="button"
                 onClick={() => setEditorTab('maps')}
-                className={`px-3 py-2 rounded-lg transition shrink-0 flex items-center gap-1.5 ${editorTab === 'maps' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'}`}
+                className={`py-2 px-1 rounded-lg transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${editorTab === 'maps' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'}`}
               >
-                <MapPin className="h-3.5 w-3.5" />
-                <span>مسیریابی نقشه</span>
+                <MapPin className="h-4 w-4 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] truncate">نقشه</span>
               </button>
               <button 
                 type="button"
                 onClick={() => setEditorTab('bank')}
-                className={`px-3 py-2 rounded-lg transition shrink-0 flex items-center gap-1.5 ${editorTab === 'bank' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'}`}
+                className={`py-2 px-1 rounded-lg transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${editorTab === 'bank' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'}`}
               >
-                <CreditCard className="h-3.5 w-3.5" />
-                <span>اطلاعات بانکی</span>
+                <CreditCard className="h-4 w-4 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] truncate">بانک</span>
               </button>
               <button 
                 type="button"
                 onClick={() => setEditorTab('advanced')}
-                className={`px-3 py-2 rounded-lg transition shrink-0 flex items-center gap-1.5 ${editorTab === 'advanced' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'}`}
+                className={`py-2 px-1 rounded-lg transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${editorTab === 'advanced' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'}`}
               >
-                <Code className="h-3.5 w-3.5" />
-                <span>دکمه‌ها و پیشرفته</span>
+                <Code className="h-4 w-4 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] truncate">دکمه‌ها</span>
               </button>
             </div>
 
@@ -2092,6 +2092,91 @@ export function CustomerCardsView({
                                       <div className="p-1 rounded border text-[6.5px] flex items-center gap-1 justify-center" style={{ borderColor: sColor }}>
                                         <MapPin className="h-2.5 w-2.5" style={{ color: pColor }} />
                                         <span style={{ color: txtSecColor }}>گوگل مپ</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Extra Phones Section */}
+                              {(editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) && (
+                                <div className="space-y-1 pt-1.5 border-t" style={{ borderColor: sColor }}>
+                                  <span className="text-[7px] font-bold block text-center" style={{ color: txtSecColor }}>تلفن‌های تماس اضافی</span>
+                                  <div className="space-y-1">
+                                    {editingCard.social_links?.mobile && (
+                                      <div className="flex items-center justify-between p-1 rounded border text-[6.5px]" style={{ borderColor: sColor }}>
+                                        <span className="flex items-center gap-1">
+                                          <Phone className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                          <span style={{ color: txtColor }}>موبایل اصلی:</span>
+                                        </span>
+                                        <span className="font-mono font-bold" style={{ color: pColor }}>{editingCard.social_links.mobile}</span>
+                                      </div>
+                                    )}
+                                    {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
+                                      <div key={idx} className="flex items-center justify-between p-1 rounded border text-[6.5px]" style={{ borderColor: sColor }}>
+                                        <span className="flex items-center gap-1">
+                                          <Phone className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                          <span style={{ color: txtColor }}>تلفن جانبی {idx + 1}:</span>
+                                        </span>
+                                        <span className="font-mono font-bold" style={{ color: pColor }}>{ph}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Address Section */}
+                              {editingCard.address && (
+                                <div className="space-y-1 pt-1.5 border-t" style={{ borderColor: sColor }}>
+                                  <span className="text-[7px] font-bold block text-center" style={{ color: txtSecColor }}>نشانی و آدرس حضوری</span>
+                                  <div className="p-1.5 rounded border text-[6.5px] leading-relaxed text-center" style={{ borderColor: sColor, color: txtColor }}>
+                                    {editingCard.address}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Financial Section */}
+                              {(editingCard.bank_card || editingCard.bank_account || editingCard.bank_shaba) && (
+                                <div className="space-y-1 pt-1.5 border-t" style={{ borderColor: sColor }}>
+                                  <span className="text-[7px] font-bold block text-center" style={{ color: txtSecColor }}>اطلاعات حساب و کارت بانکی</span>
+                                  <div className="space-y-1">
+                                    {editingCard.bank_card && (
+                                      <div 
+                                        onClick={() => handlePreviewCopyText(editingCard.bank_card || '', 'bank_card')}
+                                        className="p-1 rounded border flex items-center justify-between text-[6.5px] cursor-pointer transition active:scale-[0.98]" 
+                                        style={{ borderColor: sColor }}
+                                      >
+                                        <div>
+                                          <span className="text-[5.5px] block font-semibold" style={{ color: txtSecColor }}>شماره کارت</span>
+                                          <span className="font-mono font-bold" style={{ color: txtColor }}>{editingCard.bank_card}</span>
+                                        </div>
+                                        <span className="text-[6px] font-bold text-emerald-500">{previewCopiedField === 'bank_card' ? 'کپی شد!' : 'کپی'}</span>
+                                      </div>
+                                    )}
+                                    {editingCard.bank_account && (
+                                      <div 
+                                        onClick={() => handlePreviewCopyText(editingCard.bank_account || '', 'bank_account')}
+                                        className="p-1 rounded border flex items-center justify-between text-[6.5px] cursor-pointer transition active:scale-[0.98]" 
+                                        style={{ borderColor: sColor }}
+                                      >
+                                        <div>
+                                          <span className="text-[5.5px] block font-semibold" style={{ color: txtSecColor }}>شماره حساب</span>
+                                          <span className="font-mono font-bold" style={{ color: txtColor }}>{editingCard.bank_account}</span>
+                                        </div>
+                                        <span className="text-[6px] font-bold text-emerald-500">{previewCopiedField === 'bank_account' ? 'کپی شد!' : 'کپی'}</span>
+                                      </div>
+                                    )}
+                                    {editingCard.bank_shaba && (
+                                      <div 
+                                        onClick={() => handlePreviewCopyText(editingCard.bank_shaba || '', 'bank_shaba')}
+                                        className="p-1 rounded border flex items-center justify-between text-[6.5px] cursor-pointer transition active:scale-[0.98]" 
+                                        style={{ borderColor: sColor }}
+                                      >
+                                        <div>
+                                          <span className="text-[5.5px] block font-semibold" style={{ color: txtSecColor }}>شماره شبا</span>
+                                          <span className="font-mono font-bold" dir="ltr" style={{ color: txtColor }}>{editingCard.bank_shaba}</span>
+                                        </div>
+                                        <span className="text-[6px] font-bold text-emerald-500">{previewCopiedField === 'bank_shaba' ? 'کپی شد!' : 'کپی'}</span>
                                       </div>
                                     )}
                                   </div>

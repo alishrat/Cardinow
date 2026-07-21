@@ -32,11 +32,91 @@ export default function PublicCardPage() {
   const [isVCardGenerated, setIsVCardGenerated] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeShareId, setActiveShareId] = useState<string | null>(null);
 
   const handleCopyText = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(fieldName);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const renderShareDropdown = (id: string, alignLeft: boolean = true) => {
+    if (activeShareId !== id) return null;
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareTitle = card ? `کارت ویزیت هوشمند ${card.first_name} ${card.last_name}` : '';
+    
+    return (
+      <div 
+        className={`absolute mt-2 ${alignLeft ? 'left-0' : 'right-0'} w-48 bg-slate-950/95 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200 text-right`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-[10px] font-bold text-slate-400 px-2.5 py-1 text-center border-b border-slate-800/80 mb-1">
+          اشتراک‌گذاری کارت
+        </div>
+        
+        {/* Copy Link */}
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(shareUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}
+          className="w-full flex items-center justify-between p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white"
+        >
+          <span className="flex items-center gap-2">
+            <Copy className="h-3.5 w-3.5 text-blue-400" />
+            <span>کپی لینک کارت</span>
+          </span>
+          {copied ? (
+            <span className="text-[9px] text-emerald-400 font-bold">کپی شد!</span>
+          ) : (
+            <span className="text-[9px] text-slate-500">کپی</span>
+          )}
+        </button>
+
+        {/* Telegram */}
+        <a
+          href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full flex items-center gap-2 p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white text-right"
+        >
+          <Send className="h-3.5 w-3.5 text-sky-400" />
+          <span>ارسال در تلگرام</span>
+        </a>
+
+        {/* WhatsApp */}
+        <a
+          href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full flex items-center gap-2 p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white text-right"
+        >
+          <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
+          <span>ارسال در واتساپ</span>
+        </a>
+
+        {/* SMS */}
+        <a
+          href={`sms:?body=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
+          className="w-full flex items-center gap-2 p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white text-right"
+        >
+          <Phone className="h-3.5 w-3.5 text-amber-400" />
+          <span>ارسال پیامک (SMS)</span>
+        </a>
+
+        {/* Twitter */}
+        <a
+          href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full flex items-center gap-2 p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white text-right"
+        >
+          <Globe className="h-3.5 w-3.5 text-indigo-400" />
+          <span>اشتراک در Twitter/X</span>
+        </a>
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -216,6 +296,10 @@ export default function PublicCardPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
+      {activeShareId && (
+        <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[1px]" onClick={() => setActiveShareId(null)} />
+      )}
+
       {/* Dynamic Injecting Custom CSS */}
       {card.custom_css && (
         <style dangerouslySetInnerHTML={{ __html: card.custom_css }} />
@@ -248,13 +332,16 @@ export default function PublicCardPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/50"></div>
               
-              {/* Share button */}
-              <button 
-                onClick={handleShare}
-                className="absolute top-4 left-4 p-2.5 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition"
-              >
-                {copied ? <Check className="h-5 w-5 text-emerald-400" /> : <Share2 className="h-5 w-5" />}
-              </button>
+              {/* Share button wrapper */}
+              <div className="absolute top-4 left-4 z-40">
+                <button 
+                  onClick={() => setActiveShareId(activeShareId === 'temp-1' ? null : 'temp-1')}
+                  className="p-2.5 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition active:scale-95"
+                >
+                  <Share2 className="h-5 w-5" />
+                </button>
+                {renderShareDropdown('temp-1', true)}
+              </div>
             </div>
 
             {/* Profile Pic overlapping cover */}
@@ -538,12 +625,15 @@ export default function PublicCardPage() {
                 {card.views_count?.toLocaleString('fa-IR')} بازدید
               </span>
 
-              <button 
-                onClick={handleShare}
-                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-sm transition"
-              >
-                {copied ? <Check className="h-5 w-5 text-emerald-400" /> : <Share2 className="h-5 w-5" />}
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setActiveShareId(activeShareId === 'temp-2' ? null : 'temp-2')}
+                  className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-sm transition active:scale-95"
+                >
+                  <Share2 className="h-5 w-5" />
+                </button>
+                {renderShareDropdown('temp-2', true)}
+              </div>
             </div>
 
             {/* Profile visual */}
@@ -802,12 +892,15 @@ export default function PublicCardPage() {
             {/* Minimalist Top Nav */}
             <div className="flex justify-between items-center">
               <span className="text-xs opacity-50 font-medium">/{card.slug}</span>
-              <button 
-                onClick={handleShare}
-                className="p-1.5 hover:bg-slate-100 rounded-full transition"
-              >
-                {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Share2 className="h-4 w-4" />}
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setActiveShareId(activeShareId === 'temp-3' ? null : 'temp-3')}
+                  className="p-1.5 hover:bg-slate-100 rounded-full transition active:scale-95"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+                {renderShareDropdown('temp-3', true)}
+              </div>
             </div>
 
             {/* Cover photo */}
@@ -1053,12 +1146,15 @@ export default function PublicCardPage() {
                 VIP LUXURY
               </span>
 
-              <button 
-                onClick={handleShare}
-                className="p-2 bg-amber-500/10 hover:bg-amber-500/20 rounded-full text-[#e2b53e] transition"
-              >
-                {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Share2 className="h-4 w-4" />}
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setActiveShareId(activeShareId === 'temp-4' ? null : 'temp-4')}
+                  className="p-2 bg-amber-500/10 hover:bg-amber-500/20 rounded-full text-[#e2b53e] transition active:scale-95"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+                {renderShareDropdown('temp-4', true)}
+              </div>
             </div>
 
             {/* Cover photo */}
@@ -1360,13 +1456,16 @@ export default function PublicCardPage() {
                       <p className="text-[10px]" style={{ color: txtSecColor }}>{card.company}</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={handleShare}
-                    className="p-2 rounded-full transition"
-                    style={{ backgroundColor: sColor, color: pColor }}
-                  >
-                    {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setActiveShareId(activeShareId === 'temp-custom-split' ? null : 'temp-custom-split')}
+                      className="p-2 rounded-full transition active:scale-95"
+                      style={{ backgroundColor: sColor, color: pColor }}
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                    {renderShareDropdown('temp-custom-split', true)}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1374,13 +1473,16 @@ export default function PublicCardPage() {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
                       {matchedTemp?.name || 'قالب اختصاصی'}
                     </span>
-                    <button 
-                      onClick={handleShare}
-                      className="p-2 rounded-full transition"
-                      style={{ backgroundColor: sColor, color: pColor }}
-                    >
-                      {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                    </button>
+                    <div className="relative">
+                      <button 
+                        onClick={() => setActiveShareId(activeShareId === 'temp-custom-center' ? null : 'temp-custom-center')}
+                        className="p-2 rounded-full transition active:scale-95"
+                        style={{ backgroundColor: sColor, color: pColor }}
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                      {renderShareDropdown('temp-custom-center', true)}
+                    </div>
                   </div>
                   
                   <div className="flex flex-col items-center text-center space-y-2">
