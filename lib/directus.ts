@@ -30,9 +30,13 @@ export interface Plan {
   tenant_id?: string | null;
   title: string;
   price: number; // in Toman
-  duration_days: number;
+  duration_days: number; // -1 means unlimited
   features: string[]; // parsed from json or string[]
   is_active: boolean;
+  max_cards?: number; // -1 means unlimited
+  allowed_templates?: string[] | any[];
+  custom_domain?: boolean;
+  remove_branding?: boolean;
 }
 
 export interface Subscription {
@@ -160,8 +164,8 @@ const DIRECTUS_BASE_URL = {
 // Helper to convert Directus File ID (UUID) or relative path to a fully qualified URL
 export function getImageUrl(idOrUrl: string | null | undefined): string {
   if (!idOrUrl) return '';
-  // If it is a full URL, base64 data, or relative path that isn't a simple UUID
-  if (/^https?:\/\//i.test(idOrUrl) || idOrUrl.startsWith('data:') || idOrUrl.startsWith('/') || idOrUrl.includes('?')) {
+  // If it is a full URL, blob URL, base64 data, or relative path that isn't a simple UUID
+  if (/^https?:\/\//i.test(idOrUrl) || idOrUrl.startsWith('blob:') || idOrUrl.startsWith('data:') || idOrUrl.startsWith('/') || idOrUrl.includes('?')) {
     return idOrUrl;
   }
   // Check if it is a UUID (Directus file ID)
@@ -280,7 +284,11 @@ const SEED_PLANS: Plan[] = [
     duration_days: 14,
     features: ['ساخت ۱ کارت ویزیت', 'انتخاب تم کلاسیک', 'آمار بازدید ساده', 'پشتیبانی تیکتی'],
     is_active: true,
-    tenant_id: 't-1'
+    tenant_id: 't-1',
+    max_cards: 1,
+    allowed_templates: ['temp-1'],
+    custom_domain: false,
+    remove_branding: false
   },
   {
     id: 'p-2',
@@ -289,7 +297,11 @@ const SEED_PLANS: Plan[] = [
     duration_days: 90,
     features: ['ساخت ۳ کارت ویزیت فعال', 'دسترسی به تمامی تم‌ها', 'ویرایشگر پیشرفته', 'آمار بازدید نموداری', 'دکمه‌های اختصاصی نامحدود'],
     is_active: true,
-    tenant_id: 't-1'
+    tenant_id: 't-1',
+    max_cards: 3,
+    allowed_templates: ['temp-1', 'temp-2', 'temp-3'],
+    custom_domain: false,
+    remove_branding: true
   },
   {
     id: 'p-3',
@@ -298,7 +310,11 @@ const SEED_PLANS: Plan[] = [
     duration_days: 365,
     features: ['کارت ویزیت نامحدود', 'تمامی تم‌ها + بارگذاری کاور اختصاصی', 'کد نویسی CSS اختصاصی', 'آمار پیشرفته دستگاه و ارجاع‌دهنده', 'اتصال به دامنه اختصاصی کاربر', 'پشتیبانی تلفنی ۲۴ ساعته'],
     is_active: true,
-    tenant_id: 't-1'
+    tenant_id: 't-1',
+    max_cards: -1, // -1 means unlimited
+    allowed_templates: ['temp-1', 'temp-2', 'temp-3', 'temp-4', 'temp-5'],
+    custom_domain: true,
+    remove_branding: true
   },
   {
     id: 'p-4',
@@ -307,7 +323,11 @@ const SEED_PLANS: Plan[] = [
     duration_days: 180,
     features: ['ساخت ۲ کارت ویزیت', 'تمامی تم‌ها فعال', 'پشتیبانی محلی در شیراز', 'آموزش حضوری ساخت کارت'],
     is_active: true,
-    tenant_id: 't-2'
+    tenant_id: 't-2',
+    max_cards: 2,
+    allowed_templates: ['temp-1', 'temp-2', 'temp-3', 'temp-4'],
+    custom_domain: false,
+    remove_branding: true
   }
 ];
 
@@ -578,17 +598,10 @@ export function parseCardFields(card: any): Card {
 export async function ensureValidTenantId(payload: any): Promise<void> {
   if (payload && payload.tenant_id) {
     try {
-      const res = await fetch(`${DIRECTUS_BASE_URL}/items/tenants`, {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/tenants/${payload.tenant_id}`, {
         headers: { ...getAuthHeaders() }
       });
-      if (res.ok) {
-        const json = await res.json();
-        const tenantsList = json?.data || [];
-        const exists = tenantsList.some((t: any) => toUUID(t.id) === payload.tenant_id);
-        if (!exists) {
-          payload.tenant_id = null;
-        }
-      } else {
+      if (!res.ok) {
         payload.tenant_id = null;
       }
     } catch {
@@ -601,17 +614,10 @@ export async function ensureValidTenantId(payload: any): Promise<void> {
 export async function ensureValidUserId(payload: any): Promise<void> {
   if (payload && payload.user_id) {
     try {
-      const res = await fetch(`${DIRECTUS_BASE_URL}/users`, {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/users/${payload.user_id}`, {
         headers: { ...getAuthHeaders() }
       });
-      if (res.ok) {
-        const json = await res.json();
-        const usersList = json?.data || [];
-        const exists = usersList.some((u: any) => u.id === payload.user_id);
-        if (!exists) {
-          payload.user_id = null;
-        }
-      } else {
+      if (!res.ok) {
         payload.user_id = null;
       }
     } catch {
@@ -843,9 +849,9 @@ export const dbService = {
   // ---- PLANS ----
   getPlans: async (tenantId?: string | null): Promise<Plan[]> => {
     try {
-      let url = `${DIRECTUS_BASE_URL}/items/plans`;
+      let url = `${DIRECTUS_BASE_URL}/items/plans?fields=*,allowed_templates.*`;
       if (tenantId) {
-        url += `?filter[tenant_id][_eq]=${toUUID(tenantId)}`;
+        url += `&filter[tenant_id][_eq]=${toUUID(tenantId)}`;
       }
       const res = await fetch(url, {
         headers: { ...getAuthHeaders() }
@@ -869,9 +875,24 @@ export const dbService = {
         if (!Array.isArray(parsedFeatures)) {
           parsedFeatures = [];
         }
+
+        let parsedTemplates: string[] = [];
+        if (Array.isArray(plan.allowed_templates)) {
+          parsedTemplates = plan.allowed_templates.map((t: any) => {
+            if (typeof t === 'string') return t;
+            if (t?.templates_id) return typeof t.templates_id === 'object' ? t.templates_id.id : t.templates_id;
+            if (t?.id) return t.id;
+            return String(t);
+          }).filter(Boolean);
+        }
+
         return {
           ...plan,
-          features: parsedFeatures
+          features: parsedFeatures,
+          allowed_templates: parsedTemplates,
+          max_cards: plan.max_cards !== undefined && plan.max_cards !== null ? Number(plan.max_cards) : -1,
+          custom_domain: Boolean(plan.custom_domain),
+          remove_branding: Boolean(plan.remove_branding)
         };
       });
     } catch {
@@ -1047,16 +1068,46 @@ export const dbService = {
 
   // ---- TRANSACTIONS ----
   getTransactions: async (userId?: string): Promise<Transaction[]> => {
-    let url = `${DIRECTUS_BASE_URL}/items/transactions`;
-    if (userId) {
-      url += `?filter[user_id][_eq]=${toUUID(userId)}`;
+    let remoteTxs: Transaction[] = [];
+    try {
+      let url = `${DIRECTUS_BASE_URL}/items/transactions`;
+      if (userId) {
+        url += `?filter[user_id][_eq]=${toUUID(userId)}`;
+      }
+      const res = await fetch(url, {
+        headers: { ...getAuthHeaders() }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        remoteTxs = json?.data || [];
+      }
+    } catch (e) {
+      console.warn('Failed to fetch remote transactions from Directus:', e);
     }
-    const res = await fetch(url, {
-      headers: { ...getAuthHeaders() }
-    });
-    if (!res.ok) throw new Error('خطا در دریافت تراکنش‌ها از پایگاه داده');
-    const json = await res.json();
-    return json?.data || [];
+
+    let localTxs: Transaction[] = [];
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('local_transactions');
+        if (stored) {
+          localTxs = JSON.parse(stored);
+        }
+      }
+    } catch {}
+
+    const txMap = new Map<string, Transaction>();
+    for (const tx of remoteTxs) {
+      if (tx && tx.id) txMap.set(tx.id, tx);
+    }
+    for (const tx of localTxs) {
+      if (tx && tx.id) txMap.set(tx.id, tx);
+    }
+
+    const all = Array.from(txMap.values());
+    if (userId) {
+      return all.filter(t => !t.user_id || toUUID(t.user_id) === toUUID(userId));
+    }
+    return all;
   },
   saveTransaction: async (tx: Transaction): Promise<void> => {
     const cleanPayload = cleanDataForDirectus(tx);
@@ -1065,10 +1116,7 @@ export const dbService = {
     await ensureValidReceiptImage(cleanPayload);
     const cleanId = toUUID(tx.id);
 
-    // Support both receipt_Image and receipt_image casing
-    if (cleanPayload.receipt_image && !cleanPayload.receipt_Image) {
-      cleanPayload.receipt_Image = cleanPayload.receipt_image;
-    }
+    const receiptValue = cleanPayload.receipt_Image || cleanPayload.receipt_image || null;
 
     const check = await fetch(`${DIRECTUS_BASE_URL}/items/transactions/${cleanId}`, {
       headers: { ...getAuthHeaders() }
@@ -1078,60 +1126,49 @@ export const dbService = {
       ? `${DIRECTUS_BASE_URL}/items/transactions/${cleanId}`
       : `${DIRECTUS_BASE_URL}/items/transactions`;
 
-    // Only map and send fields that strictly exist in the transactions database collection schema
-    const allowedFields = [
-      'id', 'user_id', 'tenant_id', 'amount', 'gateway', 
-      'authority', 'ref_id', 'status', 'payload', 'receipt_Image'
-    ];
-    const finalPayload: any = {};
-    for (const field of allowedFields) {
-      if (cleanPayload[field] !== undefined) {
-        finalPayload[field] = cleanPayload[field];
-      }
-    }
+    const payloadToSend: any = {
+      id: cleanId,
+      user_id: cleanPayload.user_id || null,
+      tenant_id: cleanPayload.tenant_id || null,
+      amount: Number(cleanPayload.amount) || 0,
+      gateway: cleanPayload.gateway || 'کارت به کارت (آفلاین)',
+      authority: cleanPayload.authority || '',
+      ref_id: cleanPayload.ref_id || '',
+      status: cleanPayload.status || 'pending',
+      payload: cleanPayload.payload || null,
+      receipt_Image: receiptValue
+    };
 
-    // Ensure UUID fields are valid or null
-    for (const k of ['user_id', 'tenant_id', 'receipt_Image']) {
-      if (!finalPayload[k] || finalPayload[k] === '') {
-        finalPayload[k] = null;
-      }
-    }
-
-    if (finalPayload.amount !== undefined && finalPayload.amount !== null) {
-      finalPayload.amount = Number(finalPayload.amount) || 0;
-    }
-
-    let res = await fetch(url, {
+    const res = await fetch(url, {
       method,
       headers: { 
         'Content-Type': 'application/json',
         ...getAuthHeaders()
       },
-      body: JSON.stringify(finalPayload)
+      body: JSON.stringify(payloadToSend)
     });
 
-    // If initial request failed due to foreign key or invalid UUID, nullify foreign key fields and retry
     if (!res.ok) {
       const errText = await res.text();
-      console.warn('Initial saveTransaction attempt failed:', errText, 'Retrying with nullified foreign keys...');
-      finalPayload.user_id = null;
-      finalPayload.tenant_id = null;
-      finalPayload.receipt_Image = null;
+      console.error('Directus saveTransaction error:', errText);
+      throw new Error(sanitizeDbError(errText) || `کد خطا: ${res.status}`);
+    }
 
-      res = await fetch(url, {
-        method,
-        headers: { 
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify(finalPayload)
-      });
-
-      if (!res.ok) {
-        const errRetryText = await res.text();
-        console.error('Retry saveTransaction failed in Directus:', errRetryText);
-        throw new Error('خطا در ذخیره‌سازی تراکنش در پایگاه داده');
+    // Save to local storage cache only after successful sync with Directus
+    try {
+      if (typeof window !== 'undefined') {
+        const storedLocal = localStorage.getItem('local_transactions');
+        const list: Transaction[] = storedLocal ? JSON.parse(storedLocal) : [];
+        const existingIdx = list.findIndex(item => item.id === tx.id);
+        if (existingIdx >= 0) {
+          list[existingIdx] = tx;
+        } else {
+          list.push(tx);
+        }
+        localStorage.setItem('local_transactions', JSON.stringify(list));
       }
+    } catch (e) {
+      console.warn('Failed to update local transactions cache:', e);
     }
   },
   getSiteSettings: async (): Promise<{ bank_card?: string; bank_name?: string } | null> => {
@@ -1394,7 +1431,7 @@ export const authService = {
       email: profile.email,
       name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'کاربر کاردینو',
       role: resolvedRole,
-      tenant_id: profile.tenant_id || toUUID('t-1'),
+      tenant_id: profile.tenant_id ? toUUID(profile.tenant_id) : null,
       access_token: accessToken
     };
 
@@ -1468,7 +1505,7 @@ export const authService = {
       email: createdUser.email,
       name: `${createdUser.first_name || ''} ${createdUser.last_name || ''}`.trim() || 'کاربر جدید',
       role: 'customer',
-      tenant_id: toUUID('t-1')
+      tenant_id: null
     };
 
     localStorage.setItem('digital_card_session', JSON.stringify(session));

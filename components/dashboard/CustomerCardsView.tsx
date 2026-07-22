@@ -488,8 +488,8 @@ export function CustomerCardsView({
                       )}
                     </div>
 
-                    {/* Cover Image Direct Upload */}
-                    <div className="space-y-1">
+                    {/* Cover Image Direct Upload & URL */}
+                    <div className="space-y-2">
                       <label className="font-bold text-slate-400">تصویر کاور:</label>
                       <div 
                         onDragOver={(e) => e.preventDefault()}
@@ -533,11 +533,24 @@ export function CustomerCardsView({
                         ) : (
                           <div className="flex flex-col items-center gap-1.5 text-slate-500">
                             <Palette className="h-6 w-6" />
-                            <span className="text-[10px] leading-tight">برای بارگذاری کلیک کنید یا بکشید اینجا</span>
+                            <span className="text-[10px] leading-tight">برای بارگذاری تصویر کلیک کنید یا بکشید اینجا</span>
                             <span className="text-[8px] text-slate-600">فرمت‌های مجاز: JPG, PNG</span>
                           </div>
                         )}
                       </div>
+
+                      {/* Direct URL input for Cover Image */}
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[10px] text-slate-400">یا لینک مستقیم تصویر کاور (URL):</span>
+                        <input 
+                          type="text"
+                          placeholder="https://..."
+                          value={editingCard.cover_image || ''}
+                          onChange={(e) => setEditingCard({ ...editingCard, cover_image: e.target.value })}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-[11px] text-white font-mono dir-ltr text-left"
+                        />
+                      </div>
+
                       {editingCard.cover_image && (
                         <button
                           type="button"
@@ -586,19 +599,84 @@ export function CustomerCardsView({
                   </div>
 
                   {/* CUSTOM COLORS */}
-                  <div className="p-4 bg-slate-900/40 border border-slate-850 rounded-xl space-y-3">
-                    <h5 className="font-bold text-white text-xs flex items-center gap-1.5">
-                      <Palette className="h-4 w-4 text-blue-400" />
-                      تنظیمات رنگ اختصاصی کارت
-                    </h5>
+                  <div className="p-4 bg-slate-900/60 border border-slate-850 rounded-xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h5 className="font-bold text-white text-xs flex items-center gap-1.5">
+                        <Palette className="h-4 w-4 text-blue-400" />
+                        تنظیمات رنگ اختصاصی کارت
+                      </h5>
+                      <span className="text-[9px] text-slate-400">پیش‌نمایش لحظه‌ای در گوشی</span>
+                    </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {/* Palette presets */}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] text-slate-400 font-bold block">پالت‌های آماده با یک کلیک:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setEditingCard({
+                            ...editingCard,
+                            custom_colors: { primary: '#2563eb', secondary: '#3b82f6', text: '#1e293b', card_bg: '#ffffff', background: '#f8fafc' }
+                          })}
+                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-blue-400 hover:border-blue-500 flex items-center gap-1"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                          آبی مدرن
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingCard({
+                            ...editingCard,
+                            custom_colors: { primary: '#10b981', secondary: '#059669', text: '#f1f5f9', card_bg: '#064e3b', background: '#022c22' }
+                          })}
+                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-emerald-400 hover:border-emerald-500 flex items-center gap-1"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                          زمردی تاریک
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingCard({
+                            ...editingCard,
+                            custom_colors: { primary: '#d97706', secondary: '#f59e0b', text: '#fef3c7', card_bg: '#1c1917', background: '#0c0a09' }
+                          })}
+                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-amber-400 hover:border-amber-500 flex items-center gap-1"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                          طلایی لاکچری
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingCard({
+                            ...editingCard,
+                            custom_colors: { primary: '#a855f7', secondary: '#ec4899', text: '#f8fafc', card_bg: '#1e1b4b', background: '#0f172a' }
+                          })}
+                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-purple-400 hover:border-purple-500 flex items-center gap-1"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-purple-500"></span>
+                          نئون بنفش
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingCard({
+                            ...editingCard,
+                            custom_colors: { primary: '#475569', secondary: '#64748b', text: '#0f172a', card_bg: '#f1f5f9', background: '#ffffff' }
+                          })}
+                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-slate-300 hover:border-slate-500 flex items-center gap-1"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-slate-400"></span>
+                          مینیمال روشن
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800/80">
                       <div className="space-y-1">
-                        <span className="text-[10px] text-slate-400 block">رنگ اصلی:</span>
+                        <span className="text-[10px] text-slate-400 block">رنگ اصلی (Primary):</span>
                         <div className="flex gap-1">
                           <input 
                             type="color" 
-                            value={editingCard.custom_colors?.primary || '#3b82f6'} 
+                            value={editingCard.custom_colors?.primary || '#2563eb'} 
                             onChange={(e) => setEditingCard({
                               ...editingCard,
                               custom_colors: { ...(editingCard.custom_colors || {}), primary: e.target.value }
@@ -607,18 +685,66 @@ export function CustomerCardsView({
                           />
                           <input 
                             type="text"
-                            value={editingCard.custom_colors?.primary || '#3b82f6'}
+                            value={editingCard.custom_colors?.primary || '#2563eb'}
                             onChange={(e) => setEditingCard({
                               ...editingCard,
                               custom_colors: { ...(editingCard.custom_colors || {}), primary: e.target.value }
                             })}
-                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white"
+                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-[10px] text-slate-400 block">رنگ پس‌زمینه کارت:</span>
+                        <span className="text-[10px] text-slate-400 block">رنگ ثانویه (Secondary):</span>
+                        <div className="flex gap-1">
+                          <input 
+                            type="color" 
+                            value={editingCard.custom_colors?.secondary || '#3b82f6'} 
+                            onChange={(e) => setEditingCard({
+                              ...editingCard,
+                              custom_colors: { ...(editingCard.custom_colors || {}), secondary: e.target.value }
+                            })}
+                            className="h-7 w-7 rounded bg-transparent cursor-pointer"
+                          />
+                          <input 
+                            type="text"
+                            value={editingCard.custom_colors?.secondary || '#3b82f6'}
+                            onChange={(e) => setEditingCard({
+                              ...editingCard,
+                              custom_colors: { ...(editingCard.custom_colors || {}), secondary: e.target.value }
+                            })}
+                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-slate-400 block">رنگ متن اصلی (Text):</span>
+                        <div className="flex gap-1">
+                          <input 
+                            type="color" 
+                            value={editingCard.custom_colors?.text || '#1e293b'} 
+                            onChange={(e) => setEditingCard({
+                              ...editingCard,
+                              custom_colors: { ...(editingCard.custom_colors || {}), text: e.target.value }
+                            })}
+                            className="h-7 w-7 rounded bg-transparent cursor-pointer"
+                          />
+                          <input 
+                            type="text"
+                            value={editingCard.custom_colors?.text || '#1e293b'}
+                            onChange={(e) => setEditingCard({
+                              ...editingCard,
+                              custom_colors: { ...(editingCard.custom_colors || {}), text: e.target.value }
+                            })}
+                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-slate-400 block">رنگ بدنه کارت (Card):</span>
                         <div className="flex gap-1">
                           <input 
                             type="color" 
@@ -636,13 +762,13 @@ export function CustomerCardsView({
                               ...editingCard,
                               custom_colors: { ...(editingCard.custom_colors || {}), card_bg: e.target.value }
                             })}
-                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white"
+                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-[10px] text-slate-400 block">رنگ کل لندینگ:</span>
+                        <span className="text-[10px] text-slate-400 block">رنگ پس‌زمینه (Background):</span>
                         <div className="flex gap-1">
                           <input 
                             type="color" 
@@ -660,7 +786,7 @@ export function CustomerCardsView({
                               ...editingCard,
                               custom_colors: { ...(editingCard.custom_colors || {}), background: e.target.value }
                             })}
-                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white"
+                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
                           />
                         </div>
                       </div>

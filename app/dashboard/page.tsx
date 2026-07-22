@@ -82,8 +82,16 @@ function DashboardContent() {
 
   const handleFileUpload = async (file: File, type: 'profile' | 'cover') => {
     if (!editingCard) return;
-    if (type === 'profile') setUploadingProfile(true);
-    else setUploadingCover(true);
+
+    // Create immediate local object URL for instant live preview
+    const blobUrl = URL.createObjectURL(file);
+    if (type === 'profile') {
+      setUploadingProfile(true);
+      setEditingCard(prev => prev ? { ...prev, profile_image: blobUrl } : null);
+    } else {
+      setUploadingCover(true);
+      setEditingCard(prev => prev ? { ...prev, cover_image: blobUrl } : null);
+    }
 
     try {
       const formData = new FormData();
@@ -104,11 +112,12 @@ function DashboardContent() {
         throw new Error('شناسه فایل از سرور دیتابیس دریافت نشد.');
       }
 
-      if (type === 'profile') {
-        setEditingCard({ ...editingCard, profile_image: fileId });
-      } else {
-        setEditingCard({ ...editingCard, cover_image: fileId });
-      }
+      setEditingCard(prev => {
+        if (!prev) return null;
+        return type === 'profile' 
+          ? { ...prev, profile_image: fileId }
+          : { ...prev, cover_image: fileId };
+      });
     } catch (err: any) {
       showToast('خطا در بارگذاری تصویر: ' + err.message, 'error');
     } finally {
@@ -335,7 +344,7 @@ function DashboardContent() {
     const newCard: Card = {
       id: 'c-' + Math.random().toString(36).substr(2, 9),
       user_id: user.id,
-      tenant_id: user.tenant_id || 't-1',
+      tenant_id: user.tenant_id || null,
       template_id: defaultTemplate,
       slug: 'my-link-' + Math.floor(Math.random() * 1000),
       status: 'draft',
@@ -535,7 +544,7 @@ function DashboardContent() {
           const newTx: Transaction = {
             id: generateRandomUUID(),
             user_id: user.id,
-            tenant_id: user.tenant_id || 't-1',
+            tenant_id: user.tenant_id || null,
             amount: payingPlan.price,
             gateway: 'کارت به کارت (آفلاین)',
             authority: 'AUTH-OFF-' + Math.random().toString(36).substring(3, 10).toUpperCase(),
@@ -568,7 +577,7 @@ function DashboardContent() {
           const newTx: Transaction = {
             id: generateRandomUUID(),
             user_id: user.id,
-            tenant_id: user.tenant_id || 't-1',
+            tenant_id: user.tenant_id || null,
             amount: payingPlan.price,
             gateway: simulatedGateway,
             authority: 'AUTH-' + Math.random().toString(36).substring(3, 10).toUpperCase(),
@@ -622,7 +631,7 @@ function DashboardContent() {
     if (!user) return;
     const newPlan: Plan = {
       id: 'p-' + Math.random().toString(36).substring(2, 9),
-      tenant_id: user.tenant_id || 't-1',
+      tenant_id: user.tenant_id || null,
       title: 'پلن نمایندگی جدید',
       price: 250000,
       duration_days: 90,

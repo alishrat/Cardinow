@@ -60,7 +60,14 @@ export function CustomerBillingView({
             <div className="space-y-3">
               <div>
                 <h4 className="font-bold text-white text-sm">{plan.title}</h4>
-                <span className="text-[10px] text-slate-500">مدت دوره: {plan.duration_days} روز</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] bg-blue-500/10 text-blue-400 font-bold px-2 py-0.5 rounded">
+                    مدت دوره: {plan.duration_days === -1 ? 'نامحدود (دائمی)' : `${plan.duration_days} روز`}
+                  </span>
+                  <span className="text-[10px] bg-purple-500/10 text-purple-400 font-bold px-2 py-0.5 rounded">
+                    حداکثر کارت: {plan.max_cards === -1 ? 'نامحدود' : `${plan.max_cards} کارت`}
+                  </span>
+                </div>
               </div>
 
               <div className="py-2.5 border-t border-b border-slate-900/60 flex items-baseline gap-1">
@@ -72,6 +79,28 @@ export function CustomerBillingView({
                     <span className="text-[10px] text-slate-400 font-bold">تومان</span>
                   </>
                 )}
+              </div>
+
+              {/* Extended plan attributes */}
+              <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-850 space-y-1.5 text-[10px] text-slate-300">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">قالب‌های مجاز:</span>
+                  <span className="font-bold text-slate-200">
+                    {plan.allowed_templates && plan.allowed_templates.length > 0 ? `${plan.allowed_templates.length} قالب انتخاب‌شده` : 'دسترسی به همه قالب‌ها'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">دامنه اختصاصی:</span>
+                  <span className={`font-bold ${plan.custom_domain ? 'text-emerald-400' : 'text-slate-500'}`}>
+                    {plan.custom_domain ? 'پشتیبانی می‌شود' : 'ندارد'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">حذف برندینگ سامانه:</span>
+                  <span className={`font-bold ${plan.remove_branding ? 'text-emerald-400' : 'text-slate-500'}`}>
+                    {plan.remove_branding ? 'فعال' : 'غیرفعال'}
+                  </span>
+                </div>
               </div>
 
               <ul className="space-y-2 text-[10px] text-slate-400 leading-relaxed font-medium">
