@@ -1,8 +1,84 @@
 import { Card } from './directus';
 
+function formatUrl(url: string | null | undefined): string {
+  if (!url || typeof url !== 'string') return '';
+  let trimmed = url.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+function formatInstagram(val: string | null | undefined): { url: string; handle: string } | null {
+  if (!val || typeof val !== 'string') return null;
+  let clean = val.trim().replace(/^@/, '');
+  if (!clean) return null;
+  if (clean.includes('instagram.com/')) {
+    const parts = clean.split('instagram.com/');
+    const handle = parts[1]?.split('/')[0]?.split('?')[0] || '';
+    const url = /^https?:\/\//i.test(clean) ? clean : `https://${clean}`;
+    return { url, handle: handle || clean };
+  }
+  return { url: `https://instagram.com/${clean}`, handle: clean };
+}
+
+function formatTelegram(val: string | null | undefined): { url: string; handle: string } | null {
+  if (!val || typeof val !== 'string') return null;
+  let clean = val.trim().replace(/^@/, '');
+  if (!clean) return null;
+  if (clean.includes('t.me/')) {
+    const parts = clean.split('t.me/');
+    const handle = parts[1]?.split('/')[0]?.split('?')[0] || '';
+    const url = /^https?:\/\//i.test(clean) ? clean : `https://${clean}`;
+    return { url, handle: handle || clean };
+  }
+  return { url: `https://t.me/${clean}`, handle: clean };
+}
+
+function formatTwitter(val: string | null | undefined): { url: string; handle: string } | null {
+  if (!val || typeof val !== 'string') return null;
+  let clean = val.trim().replace(/^@/, '');
+  if (!clean) return null;
+  if (clean.includes('x.com/') || clean.includes('twitter.com/')) {
+    const url = /^https?:\/\//i.test(clean) ? clean : `https://${clean}`;
+    const handle = clean.replace(/^https?:\/\/(?:x|twitter)\.com\//i, '').split('/')[0] || '';
+    return { url, handle: handle || clean };
+  }
+  return { url: `https://x.com/${clean}`, handle: clean };
+}
+
+function formatLinkedin(val: string | null | undefined): { url: string; handle: string } | null {
+  if (!val || typeof val !== 'string') return null;
+  let clean = val.trim();
+  if (!clean) return null;
+  if (clean.includes('linkedin.com/')) {
+    const url = /^https?:\/\//i.test(clean) ? clean : `https://${clean}`;
+    return { url, handle: clean };
+  }
+  return { url: `https://linkedin.com/in/${clean.replace(/^in\//, '')}`, handle: clean };
+}
+
+function formatWhatsapp(val: string | null | undefined): { url: string; phone: string } | null {
+  if (!val || typeof val !== 'string') return null;
+  let clean = val.trim();
+  if (!clean) return null;
+  if (clean.includes('wa.me/')) {
+    const url = /^https?:\/\//i.test(clean) ? clean : `https://${clean}`;
+    return { url, phone: clean };
+  }
+  const numeric = clean.replace(/[^\d]/g, '');
+  if (numeric) {
+    let intl = numeric;
+    if (intl.startsWith('0')) intl = '98' + intl.substring(1);
+    return { url: `https://wa.me/${intl}`, phone: clean };
+  }
+  return null;
+}
+
 export function createVCardString(card: Card): string {
   if (!card) return '';
-  const { phone, mobile, extra_phones, whatsapp, email, website } = card.social_links || {};
+  const { 
+    phone, mobile, extra_phones, whatsapp, telegram, instagram, linkedin, twitter, website, email 
+  } = card.social_links || {};
   
   const phoneNumbers: { number: string; type: string }[] = [];
 
@@ -49,6 +125,135 @@ export function createVCardString(card: Card): string {
 
   const telLines = phoneNumbers.map(p => `TEL;TYPE=${p.type}:${p.number}`);
 
+  // Base URL for digital card link
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://cardinow.ir';
+  const cardDigitalUrl = card.slug ? `${baseUrl}/${card.slug}` : '';
+
+  // Process social links
+  const instaObj = formatInstagram(instagram);
+  const tgObj = formatTelegram(telegram);
+  const twObj = formatTwitter(twitter);
+  const liObj = formatLinkedin(linkedin);
+  const waObj = formatWhatsapp(whatsapp);
+  const webUrl = formatUrl(website);
+
+  // Process map & navigation links
+  const googlemapUrl = formatUrl(card.googlemap);
+  const neshanUrl = formatUrl(card.neshan);
+  const baladUrl = formatUrl(card.balad);
+  const wazeUrl = formatUrl(card.waze);
+
+  // Build URL and X-SOCIALPROFILE vCard attributes
+  const urlLines: string[] = [];
+  const socialLines: string[] = [];
+  const linkSummaryLines: string[] = [];
+
+  // Cardinow Digital Card Link
+  if (cardDigitalUrl) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=کارت دیجیتال (Cardinow):${cardDigitalUrl}`);
+    linkSummaryLines.push(`• کارت دیجیتال: ${cardDigitalUrl}`);
+  }
+
+  // Main Website
+  if (webUrl) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=وب‌سایت (Website):${webUrl}`);
+    linkSummaryLines.push(`• وب‌سایت: ${webUrl}`);
+  }
+
+  // Instagram
+  if (instaObj) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=اینستاگرام (Instagram):${instaObj.url}`);
+    socialLines.push(`X-SOCIALPROFILE;TYPE=instagram;x-user=${instaObj.handle}:${instaObj.url}`);
+    linkSummaryLines.push(`• اینستاگرام: ${instaObj.url}`);
+  }
+
+  // Telegram
+  if (tgObj) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=تلگرام (Telegram):${tgObj.url}`);
+    socialLines.push(`X-SOCIALPROFILE;TYPE=telegram;x-user=${tgObj.handle}:${tgObj.url}`);
+    linkSummaryLines.push(`• تلگرام: ${tgObj.url}`);
+  }
+
+  // LinkedIn
+  if (liObj) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=لینکدین (LinkedIn):${liObj.url}`);
+    socialLines.push(`X-SOCIALPROFILE;TYPE=linkedin:${liObj.url}`);
+    linkSummaryLines.push(`• لینکدین: ${liObj.url}`);
+  }
+
+  // Twitter / X
+  if (twObj) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=توییتر (X):${twObj.url}`);
+    socialLines.push(`X-SOCIALPROFILE;TYPE=twitter:${twObj.url}`);
+    linkSummaryLines.push(`• توییتر (X): ${twObj.url}`);
+  }
+
+  // WhatsApp
+  if (waObj) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=واتساپ (WhatsApp):${waObj.url}`);
+    socialLines.push(`X-SOCIALPROFILE;TYPE=whatsapp:${waObj.url}`);
+    linkSummaryLines.push(`• واتساپ: ${waObj.url}`);
+  }
+
+  // Custom Buttons / Extra Links
+  if (Array.isArray(card.custom_buttons)) {
+    card.custom_buttons.forEach((btn, idx) => {
+      if (btn && btn.url) {
+        const btnUrl = formatUrl(btn.url);
+        if (btnUrl) {
+          const title = (btn.label || `لینک سفارشی ${idx + 1}`).trim();
+          urlLines.push(`URL;CHARSET=UTF-8;TYPE=${title}:${btnUrl}`);
+          linkSummaryLines.push(`• ${title}: ${btnUrl}`);
+        }
+      }
+    });
+  }
+
+  // Navigation Links
+  if (googlemapUrl) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=گوگل مپ (Google Maps):${googlemapUrl}`);
+    linkSummaryLines.push(`• گوگل مپ: ${googlemapUrl}`);
+  }
+  if (neshanUrl) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=مسیریاب نشان (Neshan):${neshanUrl}`);
+    linkSummaryLines.push(`• نشان: ${neshanUrl}`);
+  }
+  if (baladUrl) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=مسیریاب بلد (Balad):${baladUrl}`);
+    linkSummaryLines.push(`• بلد: ${baladUrl}`);
+  }
+  if (wazeUrl) {
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=مسیریاب ویز (Waze):${wazeUrl}`);
+    linkSummaryLines.push(`• ویز: ${wazeUrl}`);
+  }
+
+  // Construct structured Note
+  const noteSections: string[] = [];
+
+  if (card.bio && card.bio.trim()) {
+    noteSections.push(`📝 بیوگرافی:\n${card.bio.trim()}`);
+  }
+
+  const bankLines: string[] = [];
+  if (card.bank_card && card.bank_card.trim()) {
+    bankLines.push(`• شماره کارت: ${card.bank_card.trim()}`);
+  }
+  if (card.bank_account && card.bank_account.trim()) {
+    bankLines.push(`• شماره حساب: ${card.bank_account.trim()}`);
+  }
+  if (card.bank_shaba && card.bank_shaba.trim()) {
+    bankLines.push(`• شماره شبا: ${card.bank_shaba.trim()}`);
+  }
+  if (bankLines.length > 0) {
+    noteSections.push(`💳 اطلاعات بانکی:\n${bankLines.join('\n')}`);
+  }
+
+  if (linkSummaryLines.length > 0) {
+    noteSections.push(`🔗 لینک‌ها و شبکه‌های اجتماعی:\n${linkSummaryLines.join('\n')}`);
+  }
+
+  const fullNoteText = noteSections.join('\n\n');
+
   const vCardLines = [
     'BEGIN:VCARD',
     'VERSION:3.0',
@@ -58,9 +263,10 @@ export function createVCardString(card: Card): string {
     card.job_title ? `TITLE;CHARSET=UTF-8:${card.job_title}` : '',
     ...telLines,
     email ? `EMAIL;TYPE=PREF,INTERNET:${email}` : '',
-    website ? `URL:${website}` : '',
+    ...urlLines,
+    ...socialLines,
     card.address ? `ADR;TYPE=WORK;CHARSET=UTF-8:;;${card.address};;;;` : '',
-    card.bio ? `NOTE;CHARSET=UTF-8:${card.bio.replace(/\r?\n/g, ' ')}` : '',
+    fullNoteText ? `NOTE;CHARSET=UTF-8:${fullNoteText.replace(/\r?\n/g, '\\n')}` : '',
     'END:VCARD'
   ].filter(Boolean);
 
@@ -82,8 +288,6 @@ export async function saveCardToContacts(card: Card): Promise<boolean> {
   // 1. SPECIFIC HANDLING FOR iOS (Safari / Chrome on iPhone & iPad)
   if (isIOS) {
     try {
-      // On iOS Safari, opening a Blob URL with text/vcard WITHOUT setting the 'download' attribute
-      // instructs Safari to open the native iOS Contacts import modal directly.
       const blob = new Blob([vCardString], { type: 'text/vcard;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       
