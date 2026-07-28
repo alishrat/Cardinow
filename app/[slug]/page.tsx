@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { dbService, Card, Template, getImageUrl, parseCardFields, getSectionOrders } from '../../lib/directus';
+import { dbService, Card, Template, getImageUrl, parseCardFields, getSectionOrders, toUUID } from '../../lib/directus';
 import { saveCardToContacts } from '../../lib/vcard';
 import BrandLogo from '../../components/BrandLogo';
 import { 
@@ -278,6 +278,14 @@ export default function PublicCardPage() {
 
   // Template Renders
   const templateId = card.template_id;
+  const cleanTId = (templateId || '').toLowerCase();
+  const cleanTUuid = toUUID(templateId);
+
+  const isClassic = !templateId || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
+  const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
+  const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
+  const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+  const isCustomTemplate = !isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
@@ -303,7 +311,7 @@ export default function PublicCardPage() {
       <div className="w-full max-w-md bg-transparent relative overflow-hidden">
         
         {/* TEMPLATE 1: CLASSIC (DEFAULT) */}
-        {(templateId === 'temp-1' || !templateId) && (
+        {isClassic && (
           <div 
             className="rounded-none sm:rounded-3xl shadow-xl overflow-hidden border border-slate-200 transition-all"
             style={{ backgroundColor: cardBgColor, color: textCol }}
@@ -591,7 +599,7 @@ export default function PublicCardPage() {
         )}
 
         {/* TEMPLATE 2: NEON GLASS (DARK FUTURISTIC) */}
-        {templateId === 'temp-2' && (
+        {isNeonGlass && (
           <div 
             className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl border transition-all text-white p-6 space-y-6"
             style={{ 
@@ -651,222 +659,230 @@ export default function PublicCardPage() {
               </div>
             </div>
 
-            {card.bio && (
-              <div className="p-4 bg-white/5 rounded-2xl text-xs leading-relaxed border border-white/10 text-slate-300">
-                {card.bio}
-              </div>
-            )}
-
-            {/* VCF download */}
-            <button 
-              onClick={handleDownloadVCard}
-              className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 shadow-lg shadow-cyan-500/20 transition-all text-sm text-slate-950"
-              style={{ backgroundImage: `linear-gradient(to left, ${primaryColor}, ${secondaryColor})` }}
-            >
-              {isVCardGenerated ? <Check className="h-5 w-5 text-slate-950" /> : <Download className="h-5 w-5" />}
-              <span className="font-extrabold">{isVCardGenerated ? 'ذخیره شد' : 'ذخیره مستقیم شماره تلفن'}</span>
-            </button>
-
-            {/* Social Channels */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">راه‌های ارتباطی سریع</h3>
-              <div className="grid grid-cols-4 gap-3">
-                {phone && (
-                  <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
-                    <Phone className="h-5 w-5 text-cyan-400 mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-slate-400">تماس</span>
-                  </a>
-                )}
-                {email && (
-                  <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
-                    <Mail className="h-5 w-5 text-amber-400 mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-slate-400">ایمیل</span>
-                  </a>
-                )}
-                {telegram && (
-                  <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
-                    <Send className="h-5 w-5 text-sky-400 mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-slate-400">تلگرام</span>
-                  </a>
-                )}
-                {whatsapp && (
-                  <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
-                    <MessageCircle className="h-5 w-5 text-emerald-400 mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-slate-400">واتساپ</span>
-                  </a>
-                )}
-                {instagram && (
-                  <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
-                    <Instagram className="h-5 w-5 text-pink-400 mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-slate-400">اینستا</span>
-                  </a>
-                )}
-                {linkedin && (
-                  <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
-                    <Linkedin className="h-5 w-5 text-indigo-400 mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-slate-400">لینکدین</span>
-                  </a>
-                )}
-                {website && (
-                  <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
-                    <Globe className="h-5 w-5 text-violet-400 mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-slate-400">وبسایت</span>
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Custom buttons */}
-            {card.custom_buttons && card.custom_buttons.length > 0 && (
-              <div className="space-y-2.5">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">شبکه‌های تخصصی</h3>
-                {card.custom_buttons.map((btn) => (
-                  <a
-                    key={btn.id}
-                    href={btn.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-3.5 px-4 rounded-xl border border-white/10 hover:bg-white/10 flex items-center justify-between font-semibold transition text-sm bg-white/5"
-                  >
-                    <span className="flex items-center gap-2">
-                      <LinkIcon className="h-4 w-4" style={{ color: btn.color || primaryColor }} />
-                      {btn.label}
-                    </span>
-                    <ChevronLeft className="h-4 w-4 opacity-50" />
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {/* Maps Links */}
-            {(card.neshan || card.balad || card.waze || card.googlemap) && (
-              <div className="space-y-3 pt-4 border-t border-white/10">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">مسیریابی روی نقشه</h3>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {card.neshan && (
-                    <a href={card.neshan} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs font-bold text-white">
-                      <MapPin className="h-4 w-4 text-emerald-400 shrink-0" />
-                      <span>نقشه نشان</span>
-                    </a>
-                  )}
-                  {card.balad && (
-                    <a href={card.balad} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs font-bold text-white">
-                      <MapPin className="h-4 w-4 text-cyan-400 shrink-0" />
-                      <span>نقشه بلد</span>
-                    </a>
-                  )}
-                  {card.waze && (
-                    <a href={card.waze} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs font-bold text-white">
-                      <MapPin className="h-4 w-4 text-amber-400 shrink-0" />
-                      <span>مسیریاب ویز</span>
-                    </a>
-                  )}
-                  {card.googlemap && (
-                    <a href={card.googlemap} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs font-bold text-white">
-                      <MapPin className="h-4 w-4 text-red-400 shrink-0" />
-                      <span>گوگل مپ</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Multiple Contacts */}
-            {(mobile || (extra_phones && extra_phones.length > 0)) && (
-              <div className="space-y-3 pt-4 border-t border-white/10">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">شماره تماس‌های دیگر</h3>
-                <div className="space-y-2">
-                  {mobile && (
-                    <a href={`tel:${mobile}`} className="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs text-white">
-                      <span className="flex items-center gap-2 font-semibold text-slate-300">
-                        <Phone className="h-4 w-4 text-cyan-400" />
-                        تلفن همراه (موبایل):
-                      </span>
-                      <span className="font-mono font-bold text-cyan-400">{mobile}</span>
-                    </a>
-                  )}
-                  {extra_phones && extra_phones.map((ph: string, idx: number) => (
-                    <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs text-white">
-                      <span className="flex items-center gap-2 font-semibold text-slate-300">
-                        <Phone className="h-4 w-4 text-slate-400" />
-                        شماره تماس جانبی {idx + 1}:
-                      </span>
-                      <span className="font-mono font-bold text-slate-300">{ph}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Address Section */}
-            {card.address && (
-              <div className="space-y-2 pt-4 border-t border-white/10">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-cyan-400" />
-                  <span>نشانی و آدرس حضوری</span>
-                </h3>
-                <div className="p-4 bg-white/5 rounded-2xl text-xs leading-relaxed border border-white/5 font-medium text-slate-300">
-                  {card.address}
-                </div>
-              </div>
-            )}
-
-            {/* Financial Section */}
-            {(card.bank_card || card.bank_account || card.bank_shaba) && (
-              <div className="space-y-3 pt-4 border-t border-white/10">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <CreditCard className="h-4 w-4 text-cyan-400" />
-                  <span>اطلاعات حساب و کارت بانکی</span>
-                </h3>
-                <div className="space-y-2.5">
-                  {card.bank_card && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_card || '', 'bank_card')}
-                      className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
+            {getSectionOrders(card).map((secKey) => {
+              switch (secKey) {
+                case 'save_contact':
+                  return (
+                    <button 
+                      key="sec_temp2_save"
+                      onClick={handleDownloadVCard}
+                      className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 shadow-lg shadow-cyan-500/20 transition-all text-sm text-slate-950"
+                      style={{ backgroundImage: `linear-gradient(to left, ${primaryColor}, ${secondaryColor})` }}
                     >
-                      <div>
-                        <span className="text-[10px] text-slate-500 block mb-1 font-semibold">شماره کارت</span>
-                        <span className="font-mono font-bold tracking-widest text-white">{card.bank_card}</span>
-                      </div>
-                      <div className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1">
-                        {copiedField === 'bank_card' ? <span className="text-[10px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                      {isVCardGenerated ? <Check className="h-5 w-5 text-slate-950" /> : <Download className="h-5 w-5" />}
+                      <span className="font-extrabold">{isVCardGenerated ? 'ذخیره شد' : 'ذخیره مستقیم شماره تلفن'}</span>
+                    </button>
+                  );
+                case 'bio':
+                  return card.bio ? (
+                    <div key="sec_temp2_bio" className="p-4 bg-white/5 rounded-2xl text-xs leading-relaxed border border-white/10 text-slate-300">
+                      {card.bio}
+                    </div>
+                  ) : null;
+                case 'primary_actions':
+                  return (mobile || (extra_phones && extra_phones.length > 0)) ? (
+                    <div key="sec_temp2_primary" className="space-y-3 pt-4 border-t border-white/10">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">شماره تماس‌های دیگر</h3>
+                      <div className="space-y-2">
+                        {mobile && (
+                          <a href={`tel:${mobile}`} className="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs text-white">
+                            <span className="flex items-center gap-2 font-semibold text-slate-300">
+                              <Phone className="h-4 w-4 text-cyan-400" />
+                              تلفن همراه (موبایل):
+                            </span>
+                            <span className="font-mono font-bold text-cyan-400">{mobile}</span>
+                          </a>
+                        )}
+                        {extra_phones && extra_phones.map((ph: string, idx: number) => (
+                          <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs text-white">
+                            <span className="flex items-center gap-2 font-semibold text-slate-300">
+                              <Phone className="h-4 w-4 text-slate-400" />
+                              شماره تماس جانبی {idx + 1}:
+                            </span>
+                            <span className="font-mono font-bold text-slate-300">{ph}</span>
+                          </a>
+                        ))}
                       </div>
                     </div>
-                  )}
-                  {card.bank_account && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_account || '', 'bank_account')}
-                      className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
-                    >
-                      <div>
-                        <span className="text-[10px] text-slate-500 block mb-1 font-semibold">شماره حساب</span>
-                        <span className="font-mono font-bold text-white">{card.bank_account}</span>
-                      </div>
-                      <div className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1">
-                        {copiedField === 'bank_account' ? <span className="text-[10px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                  ) : null;
+                case 'social_links':
+                  return (
+                    <div key="sec_temp2_social" className="space-y-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">راه‌های ارتباطی سریع</h3>
+                      <div className="grid grid-cols-4 gap-3">
+                        {phone && (
+                          <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                            <Phone className="h-5 w-5 text-cyan-400 mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-slate-400">تماس</span>
+                          </a>
+                        )}
+                        {email && (
+                          <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                            <Mail className="h-5 w-5 text-amber-400 mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-slate-400">ایمیل</span>
+                          </a>
+                        )}
+                        {telegram && (
+                          <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                            <Send className="h-5 w-5 text-sky-400 mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-slate-400">تلگرام</span>
+                          </a>
+                        )}
+                        {whatsapp && (
+                          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                            <MessageCircle className="h-5 w-5 text-emerald-400 mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-slate-400">واتساپ</span>
+                          </a>
+                        )}
+                        {instagram && (
+                          <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                            <Instagram className="h-5 w-5 text-pink-400 mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-slate-400">اینستا</span>
+                          </a>
+                        )}
+                        {linkedin && (
+                          <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                            <Linkedin className="h-5 w-5 text-indigo-400 mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-slate-400">لینکدین</span>
+                          </a>
+                        )}
+                        {website && (
+                          <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                            <Globe className="h-5 w-5 text-violet-400 mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-slate-400">وبسایت</span>
+                          </a>
+                        )}
                       </div>
                     </div>
-                  )}
-                  {card.bank_shaba && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_shaba || '', 'bank_shaba')}
-                      className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
-                    >
-                      <div>
-                        <span className="text-[10px] text-slate-500 block mb-1 font-semibold">شماره شبا (IR)</span>
-                        <span className="font-mono font-bold text-white text-left" dir="ltr">{card.bank_shaba}</span>
-                      </div>
-                      <div className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1">
-                        {copiedField === 'bank_shaba' ? <span className="text-[10px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                  );
+                case 'custom_buttons':
+                  return card.custom_buttons && card.custom_buttons.length > 0 ? (
+                    <div key="sec_temp2_custom" className="space-y-2.5">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">شبکه‌های تخصصی</h3>
+                      {card.custom_buttons.map((btn) => (
+                        <a
+                          key={btn.id}
+                          href={btn.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full py-3.5 px-4 rounded-xl border border-white/10 hover:bg-white/10 flex items-center justify-between font-semibold transition text-sm bg-white/5"
+                        >
+                          <span className="flex items-center gap-2">
+                            <LinkIcon className="h-4 w-4" style={{ color: btn.color || primaryColor }} />
+                            {btn.label}
+                          </span>
+                          <ChevronLeft className="h-4 w-4 opacity-50" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null;
+                case 'location':
+                  return (card.neshan || card.balad || card.waze || card.googlemap || card.address) ? (
+                    <div key="sec_temp2_loc" className="space-y-3 pt-4 border-t border-white/10">
+                      {(card.neshan || card.balad || card.waze || card.googlemap) && (
+                        <>
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">مسیریابی روی نقشه</h3>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {card.neshan && (
+                              <a href={card.neshan} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs font-bold text-white">
+                                <MapPin className="h-4 w-4 text-emerald-400 shrink-0" />
+                                <span>نقشه نشان</span>
+                              </a>
+                            )}
+                            {card.balad && (
+                              <a href={card.balad} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs font-bold text-white">
+                                <MapPin className="h-4 w-4 text-cyan-400 shrink-0" />
+                                <span>نقشه بلد</span>
+                              </a>
+                            )}
+                            {card.waze && (
+                              <a href={card.waze} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs font-bold text-white">
+                                <MapPin className="h-4 w-4 text-amber-400 shrink-0" />
+                                <span>مسیریاب ویز</span>
+                              </a>
+                            )}
+                            {card.googlemap && (
+                              <a href={card.googlemap} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 text-xs font-bold text-white">
+                                <MapPin className="h-4 w-4 text-red-400 shrink-0" />
+                                <span>گوگل مپ</span>
+                              </a>
+                            )}
+                          </div>
+                        </>
+                      )}
+                      {card.address && (
+                        <div className="space-y-2 pt-2">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <MapPin className="h-4 w-4 text-cyan-400" />
+                            <span>نشانی و آدرس حضوری</span>
+                          </h3>
+                          <div className="p-4 bg-white/5 rounded-2xl text-xs leading-relaxed border border-white/5 font-medium text-slate-300">
+                            {card.address}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null;
+                case 'bank_info':
+                  return (card.bank_card || card.bank_account || card.bank_shaba) ? (
+                    <div key="sec_temp2_bank" className="space-y-3 pt-4 border-t border-white/10">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <CreditCard className="h-4 w-4 text-cyan-400" />
+                        <span>اطلاعات حساب و کارت بانکی</span>
+                      </h3>
+                      <div className="space-y-2.5">
+                        {card.bank_card && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_card || '', 'bank_card')}
+                            className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[10px] text-slate-500 block mb-1 font-semibold">شماره کارت</span>
+                              <span className="font-mono font-bold tracking-widest text-white">{card.bank_card}</span>
+                            </div>
+                            <div className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1">
+                              {copiedField === 'bank_card' ? <span className="text-[10px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                            </div>
+                          </div>
+                        )}
+                        {card.bank_account && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_account || '', 'bank_account')}
+                            className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[10px] text-slate-500 block mb-1 font-semibold">شماره حساب</span>
+                              <span className="font-mono font-bold text-white">{card.bank_account}</span>
+                            </div>
+                            <div className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1">
+                              {copiedField === 'bank_account' ? <span className="text-[10px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                            </div>
+                          </div>
+                        )}
+                        {card.bank_shaba && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_shaba || '', 'bank_shaba')}
+                            className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[10px] text-slate-500 block mb-1 font-semibold">شماره شبا (IR)</span>
+                              <span className="font-mono font-bold text-white text-left" dir="ltr">{card.bank_shaba}</span>
+                            </div>
+                            <div className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1">
+                              {copiedField === 'bank_shaba' ? <span className="text-[10px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
+                  ) : null;
+                default:
+                  return null;
+              }
+            })}
 
             {/* Footer */}
             <div className="text-center pt-8 opacity-30 text-[10px]">
@@ -876,7 +892,7 @@ export default function PublicCardPage() {
         )}
 
         {/* TEMPLATE 3: MINIMAL (CLEAN MODERN ART) */}
-        {templateId === 'temp-3' && (
+        {isMinimal && (
           <div 
             className="rounded-none sm:rounded-3xl shadow-lg overflow-hidden border border-slate-100 transition-all text-slate-900 p-8 space-y-8"
             style={{ backgroundColor: cardBgColor, color: textCol }}
@@ -920,200 +936,208 @@ export default function PublicCardPage() {
               </div>
             </div>
 
-            {card.bio && (
-              <p className="text-xs leading-relaxed opacity-75 border-r-2 border-slate-200 pr-3 font-normal">
-                {card.bio}
-              </p>
-            )}
-
-            {/* Minimal Contact List */}
-            <div className="space-y-4">
-              <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40">تماس و شبکه‌های اجتماعی</h3>
-              <div className="space-y-2">
-                {phone && (
-                  <a href={`tel:${phone}`} className="flex items-center gap-3.5 py-1.5 hover:opacity-80 transition text-sm">
-                    <span className="p-2 bg-slate-50 rounded-lg"><Phone className="h-4 w-4 text-slate-600" /></span>
-                    <span className="font-mono text-xs">{phone}</span>
-                  </a>
-                )}
-                {email && (
-                  <a href={`mailto:${email}`} className="flex items-center gap-3.5 py-1.5 hover:opacity-80 transition text-sm">
-                    <span className="p-2 bg-slate-50 rounded-lg"><Mail className="h-4 w-4 text-slate-600" /></span>
-                    <span className="text-xs">{email}</span>
-                  </a>
-                )}
-                {website && (
-                  <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex items-center gap-3.5 py-1.5 hover:opacity-80 transition text-sm">
-                    <span className="p-2 bg-slate-50 rounded-lg"><Globe className="h-4 w-4 text-slate-600" /></span>
-                    <span className="text-xs">{website}</span>
-                  </a>
-                )}
-                {telegram && (
-                  <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex items-center gap-3.5 py-1.5 hover:opacity-80 transition text-sm">
-                    <span className="p-2 bg-slate-50 rounded-lg"><Send className="h-4 w-4 text-slate-600" /></span>
-                    <span className="text-xs">@{telegram}</span>
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Downloader Button (Minimal styling) */}
-            <button 
-              onClick={handleDownloadVCard}
-              className="w-full py-3 rounded-xl border border-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all text-xs"
-            >
-              <Download className="h-4 w-4" />
-              <span>{isVCardGenerated ? 'ذخیره شد' : 'ذخیره شماره در لیست مخاطبین'}</span>
-            </button>
-
-            {/* Custom Links */}
-            {card.custom_buttons && card.custom_buttons.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40">دکمه‌های اختصاصی</h3>
-                {card.custom_buttons.map((btn) => (
-                  <a
-                    key={btn.id}
-                    href={btn.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-2.5 flex items-center justify-between font-medium hover:opacity-70 transition border-b border-slate-100 text-xs"
-                  >
-                    <span>{btn.label}</span>
-                    <ChevronLeft className="h-3 w-3" />
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {/* Maps Links */}
-            {(card.neshan || card.balad || card.waze || card.googlemap) && (
-              <div className="space-y-2.5 pt-2">
-                <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40">موقعیت روی نقشه</h3>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {card.neshan && (
-                    <a href={card.neshan} target="_blank" rel="noreferrer" className="flex items-center gap-2 py-2 px-3 bg-slate-50 hover:bg-slate-100 rounded border border-slate-100 text-slate-700">
-                      <MapPin className="h-3.5 w-3.5 text-slate-500" />
-                      <span>نشان</span>
-                    </a>
-                  )}
-                  {card.balad && (
-                    <a href={card.balad} target="_blank" rel="noreferrer" className="flex items-center gap-2 py-2 px-3 bg-slate-50 hover:bg-slate-100 rounded border border-slate-100 text-slate-700">
-                      <MapPin className="h-3.5 w-3.5 text-slate-500" />
-                      <span>بلد</span>
-                    </a>
-                  )}
-                  {card.waze && (
-                    <a href={card.waze} target="_blank" rel="noreferrer" className="flex items-center gap-2 py-2 px-3 bg-slate-50 hover:bg-slate-100 rounded border border-slate-100 text-slate-700">
-                      <MapPin className="h-3.5 w-3.5 text-slate-500" />
-                      <span>ویز</span>
-                    </a>
-                  )}
-                  {card.googlemap && (
-                    <a href={card.googlemap} target="_blank" rel="noreferrer" className="flex items-center gap-2 py-2 px-3 bg-slate-50 hover:bg-slate-100 rounded border border-slate-100 text-slate-700">
-                      <MapPin className="h-3.5 w-3.5 text-slate-500" />
-                      <span>گوگل‌مپ</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Multiple Contacts */}
-            {(mobile || (extra_phones && extra_phones.length > 0)) && (
-              <div className="space-y-2 pt-2">
-                <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40">تماس‌های دیگر</h3>
-                <div className="space-y-1.5">
-                  {mobile && (
-                    <a href={`tel:${mobile}`} className="flex items-center justify-between py-2 border-b border-slate-100 text-xs text-slate-800">
-                      <span className="flex items-center gap-2">
-                        <Phone className="h-3.5 w-3.5 text-slate-400" />
-                        تلفن همراه:
-                      </span>
-                      <span className="font-mono font-bold">{mobile}</span>
-                    </a>
-                  )}
-                  {extra_phones && extra_phones.map((ph: string, idx: number) => (
-                    <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between py-2 border-b border-slate-100 text-xs text-slate-800">
-                      <span className="flex items-center gap-2">
-                        <Phone className="h-3.5 w-3.5 text-slate-400" />
-                        تلفن جانبی {idx + 1}:
-                      </span>
-                      <span className="font-mono font-semibold text-slate-600">{ph}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Address Section */}
-            {card.address && (
-              <div className="space-y-2 pt-2">
-                <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40 flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-slate-500" />
-                  <span>نشانی و آدرس حضوری</span>
-                </h3>
-                <div className="p-3 bg-slate-50 rounded-xl text-xs leading-relaxed border border-slate-100 font-medium text-slate-700">
-                  {card.address}
-                </div>
-              </div>
-            )}
-
-            {/* Financial Section */}
-            {(card.bank_card || card.bank_account || card.bank_shaba) && (
-              <div className="space-y-2 pt-2">
-                <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40 flex items-center gap-1.5">
-                  <CreditCard className="h-3.5 w-3.5 text-slate-500" />
-                  <span>اطلاعات حساب و کارت بانکی</span>
-                </h3>
-                <div className="space-y-2">
-                  {card.bank_card && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_card || '', 'bank_card')}
-                      className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
+            {getSectionOrders(card).map((secKey) => {
+              switch (secKey) {
+                case 'save_contact':
+                  return (
+                    <button 
+                      key="sec_temp3_save"
+                      onClick={handleDownloadVCard}
+                      className="w-full py-3 rounded-xl border border-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all text-xs"
                     >
-                      <div>
-                        <span className="text-[9px] text-slate-400 block mb-0.5 font-semibold">شماره کارت</span>
-                        <span className="font-mono font-bold tracking-widest text-slate-700">{card.bank_card}</span>
-                      </div>
-                      <div className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-750 transition flex items-center gap-1">
-                        {copiedField === 'bank_card' ? <span className="text-[9px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-3.5 w-3.5" />}
+                      <Download className="h-4 w-4" />
+                      <span>{isVCardGenerated ? 'ذخیره شد' : 'ذخیره شماره در لیست مخاطبین'}</span>
+                    </button>
+                  );
+                case 'bio':
+                  return card.bio ? (
+                    <p key="sec_temp3_bio" className="text-xs leading-relaxed opacity-75 border-r-2 border-slate-200 pr-3 font-normal">
+                      {card.bio}
+                    </p>
+                  ) : null;
+                case 'primary_actions':
+                  return (mobile || (extra_phones && extra_phones.length > 0)) ? (
+                    <div key="sec_temp3_primary" className="space-y-2 pt-2">
+                      <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40">تماس‌های دیگر</h3>
+                      <div className="space-y-1.5">
+                        {mobile && (
+                          <a href={`tel:${mobile}`} className="flex items-center justify-between py-2 border-b border-slate-100 text-xs text-slate-800">
+                            <span className="flex items-center gap-2">
+                              <Phone className="h-3.5 w-3.5 text-slate-400" />
+                              تلفن همراه:
+                            </span>
+                            <span className="font-mono font-bold">{mobile}</span>
+                          </a>
+                        )}
+                        {extra_phones && extra_phones.map((ph: string, idx: number) => (
+                          <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between py-2 border-b border-slate-100 text-xs text-slate-800">
+                            <span className="flex items-center gap-2">
+                              <Phone className="h-3.5 w-3.5 text-slate-400" />
+                              تلفن جانبی {idx + 1}:
+                            </span>
+                            <span className="font-mono font-semibold text-slate-600">{ph}</span>
+                          </a>
+                        ))}
                       </div>
                     </div>
-                  )}
-                  {card.bank_account && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_account || '', 'bank_account')}
-                      className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
-                    >
-                      <div>
-                        <span className="text-[9px] text-slate-400 block mb-0.5 font-semibold">شماره حساب</span>
-                        <span className="font-mono font-bold text-slate-700">{card.bank_account}</span>
-                      </div>
-                      <div className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-750 transition flex items-center gap-1">
-                        {copiedField === 'bank_account' ? <span className="text-[9px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-3.5 w-3.5" />}
+                  ) : null;
+                case 'social_links':
+                  return (
+                    <div key="sec_temp3_social" className="space-y-4">
+                      <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40">تماس و شبکه‌های اجتماعی</h3>
+                      <div className="space-y-2">
+                        {phone && (
+                          <a href={`tel:${phone}`} className="flex items-center gap-3.5 py-1.5 hover:opacity-80 transition text-sm">
+                            <span className="p-2 bg-slate-50 rounded-lg"><Phone className="h-4 w-4 text-slate-600" /></span>
+                            <span className="font-mono text-xs">{phone}</span>
+                          </a>
+                        )}
+                        {email && (
+                          <a href={`mailto:${email}`} className="flex items-center gap-3.5 py-1.5 hover:opacity-80 transition text-sm">
+                            <span className="p-2 bg-slate-50 rounded-lg"><Mail className="h-4 w-4 text-slate-600" /></span>
+                            <span className="text-xs">{email}</span>
+                          </a>
+                        )}
+                        {website && (
+                          <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex items-center gap-3.5 py-1.5 hover:opacity-80 transition text-sm">
+                            <span className="p-2 bg-slate-50 rounded-lg"><Globe className="h-4 w-4 text-slate-600" /></span>
+                            <span className="text-xs">{website}</span>
+                          </a>
+                        )}
+                        {telegram && (
+                          <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex items-center gap-3.5 py-1.5 hover:opacity-80 transition text-sm">
+                            <span className="p-2 bg-slate-50 rounded-lg"><Send className="h-4 w-4 text-slate-600" /></span>
+                            <span className="text-xs">@{telegram}</span>
+                          </a>
+                        )}
                       </div>
                     </div>
-                  )}
-                  {card.bank_shaba && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_shaba || '', 'bank_shaba')}
-                      className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
-                    >
-                      <div>
-                        <span className="text-[9px] text-slate-400 block mb-0.5 font-semibold">شماره شبا (IR)</span>
-                        <span className="font-mono font-bold text-slate-700 text-left" dir="ltr">{card.bank_shaba}</span>
-                      </div>
-                      <div className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-750 transition flex items-center gap-1">
-                        {copiedField === 'bank_shaba' ? <span className="text-[9px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-3.5 w-3.5" />}
+                  );
+                case 'custom_buttons':
+                  return card.custom_buttons && card.custom_buttons.length > 0 ? (
+                    <div key="sec_temp3_custom" className="space-y-2">
+                      <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40">دکمه‌های اختصاصی</h3>
+                      {card.custom_buttons.map((btn) => (
+                        <a
+                          key={btn.id}
+                          href={btn.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full py-2.5 flex items-center justify-between font-medium hover:opacity-70 transition border-b border-slate-100 text-xs"
+                        >
+                          <span>{btn.label}</span>
+                          <ChevronLeft className="h-3 w-3" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null;
+                case 'location':
+                  return (card.neshan || card.balad || card.waze || card.googlemap || card.address) ? (
+                    <div key="sec_temp3_loc" className="space-y-2.5 pt-2">
+                      {(card.neshan || card.balad || card.waze || card.googlemap) && (
+                        <>
+                          <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40">موقعیت روی نقشه</h3>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            {card.neshan && (
+                              <a href={card.neshan} target="_blank" rel="noreferrer" className="flex items-center gap-2 py-2 px-3 bg-slate-50 hover:bg-slate-100 rounded border border-slate-100 text-slate-700">
+                                <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                                <span>نشان</span>
+                              </a>
+                            )}
+                            {card.balad && (
+                              <a href={card.balad} target="_blank" rel="noreferrer" className="flex items-center gap-2 py-2 px-3 bg-slate-50 hover:bg-slate-100 rounded border border-slate-100 text-slate-700">
+                                <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                                <span>بلد</span>
+                              </a>
+                            )}
+                            {card.waze && (
+                              <a href={card.waze} target="_blank" rel="noreferrer" className="flex items-center gap-2 py-2 px-3 bg-slate-50 hover:bg-slate-100 rounded border border-slate-100 text-slate-700">
+                                <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                                <span>ویز</span>
+                              </a>
+                            )}
+                            {card.googlemap && (
+                              <a href={card.googlemap} target="_blank" rel="noreferrer" className="flex items-center gap-2 py-2 px-3 bg-slate-50 hover:bg-slate-100 rounded border border-slate-100 text-slate-700">
+                                <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                                <span>گوگل‌مپ</span>
+                              </a>
+                            )}
+                          </div>
+                        </>
+                      )}
+                      {card.address && (
+                        <div className="space-y-2 pt-2">
+                          <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40 flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                            <span>نشانی و آدرس حضوری</span>
+                          </h3>
+                          <div className="p-3 bg-slate-50 rounded-xl text-xs leading-relaxed border border-slate-100 font-medium text-slate-700">
+                            {card.address}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null;
+                case 'bank_info':
+                  return (card.bank_card || card.bank_account || card.bank_shaba) ? (
+                    <div key="sec_temp3_bank" className="space-y-2 pt-2">
+                      <h3 className="text-[11px] font-bold tracking-wider uppercase opacity-40 flex items-center gap-1.5">
+                        <CreditCard className="h-3.5 w-3.5 text-slate-500" />
+                        <span>اطلاعات حساب و کارت بانکی</span>
+                      </h3>
+                      <div className="space-y-2">
+                        {card.bank_card && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_card || '', 'bank_card')}
+                            className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5 font-semibold">شماره کارت</span>
+                              <span className="font-mono font-bold tracking-widest text-slate-700">{card.bank_card}</span>
+                            </div>
+                            <div className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-750 transition flex items-center gap-1">
+                              {copiedField === 'bank_card' ? <span className="text-[9px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-3.5 w-3.5" />}
+                            </div>
+                          </div>
+                        )}
+                        {card.bank_account && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_account || '', 'bank_account')}
+                            className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5 font-semibold">شماره حساب</span>
+                              <span className="font-mono font-bold text-slate-700">{card.bank_account}</span>
+                            </div>
+                            <div className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-750 transition flex items-center gap-1">
+                              {copiedField === 'bank_account' ? <span className="text-[9px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-3.5 w-3.5" />}
+                            </div>
+                          </div>
+                        )}
+                        {card.bank_shaba && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_shaba || '', 'bank_shaba')}
+                            className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5 font-semibold">شماره شبا (IR)</span>
+                              <span className="font-mono font-bold text-slate-700 text-left" dir="ltr">{card.bank_shaba}</span>
+                            </div>
+                            <div className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-750 transition flex items-center gap-1">
+                              {copiedField === 'bank_shaba' ? <span className="text-[9px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-3.5 w-3.5" />}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
+                  ) : null;
+                default:
+                  return null;
+              }
+            })}
 
             {/* Footer */}
             <div className="text-center pt-8 opacity-20 text-[9px] uppercase tracking-wider font-mono">
@@ -1123,7 +1147,7 @@ export default function PublicCardPage() {
         )}
 
         {/* TEMPLATE 4: LUXURY GOLD (GOLD AND BLACK) */}
-        {templateId === 'temp-4' && (
+        {isLuxuryDark && (
           <div 
             className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden border transition-all text-amber-100 p-8 space-y-8"
             style={{ 
@@ -1175,222 +1199,230 @@ export default function PublicCardPage() {
               </div>
             </div>
 
-            {card.bio && (
-              <div className="p-4 bg-stone-900 rounded-xl text-xs leading-relaxed border border-amber-500/10 text-stone-300 text-center relative">
-                <span className="absolute -top-3 right-4 bg-[#0c0a09] px-2 text-[10px] text-[#e2b53e] font-bold">درباره من</span>
-                {card.bio}
-              </div>
-            )}
-
-            {/* Download Gold Button */}
-            <button 
-              onClick={handleDownloadVCard}
-              className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs bg-gradient-to-l from-[#f59e0b] to-[#d97706] text-black hover:opacity-95 shadow-md shadow-amber-500/10"
-            >
-              <Download className="h-4 w-4" />
-              <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره مستقیم در مخاطبان'}</span>
-            </button>
-
-            {/* Gold Icons Grid */}
-            <div className="space-y-3">
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">کانال‌های ارتباطی لوکس</h3>
-              <div className="grid grid-cols-4 gap-3">
-                {phone && (
-                  <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
-                    <Phone className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-stone-400">تماس</span>
-                  </a>
-                )}
-                {email && (
-                  <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
-                    <Mail className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-stone-400">ایمیل</span>
-                  </a>
-                )}
-                {telegram && (
-                  <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
-                    <Send className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-stone-400">تلگرام</span>
-                  </a>
-                )}
-                {whatsapp && (
-                  <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
-                    <MessageCircle className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-stone-400">واتساپ</span>
-                  </a>
-                )}
-                {instagram && (
-                  <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
-                    <Instagram className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-stone-400">اینستا</span>
-                  </a>
-                )}
-                {linkedin && (
-                  <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
-                    <Linkedin className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-stone-400">لینکدین</span>
-                  </a>
-                )}
-                {website && (
-                  <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
-                    <Globe className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[10px] text-stone-400">وبسایت</span>
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Luxury Custom Buttons */}
-            {card.custom_buttons && card.custom_buttons.length > 0 && (
-              <div className="space-y-2.5">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">لینک‌های برتر</h3>
-                {card.custom_buttons.map((btn) => (
-                  <a
-                    key={btn.id}
-                    href={btn.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-3.5 px-4 rounded-xl border border-amber-500/10 hover:border-amber-500/30 bg-stone-900/60 flex items-center justify-between font-semibold transition text-xs"
-                  >
-                    <span className="flex items-center gap-2">
-                      <LinkIcon className="h-3.5 w-3.5 text-[#e2b53e]" />
-                      <span className="text-white">{btn.label}</span>
-                    </span>
-                    <ChevronLeft className="h-4 w-4 text-[#e2b53e]" />
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {/* Maps Links */}
-            {(card.neshan || card.balad || card.waze || card.googlemap) && (
-              <div className="space-y-3 pt-4 border-t border-amber-500/15">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">مسیریابی مجلل</h3>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {card.neshan && (
-                    <a href={card.neshan} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs text-amber-100 font-semibold">
-                      <MapPin className="h-4 w-4 text-[#e2b53e]" />
-                      <span>نقشه نشان</span>
-                    </a>
-                  )}
-                  {card.balad && (
-                    <a href={card.balad} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs text-amber-100 font-semibold">
-                      <MapPin className="h-4 w-4 text-[#e2b53e]" />
-                      <span>نقشه بلد</span>
-                    </a>
-                  )}
-                  {card.waze && (
-                    <a href={card.waze} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs text-amber-100 font-semibold">
-                      <MapPin className="h-4 w-4 text-[#e2b53e]" />
-                      <span>مسیریاب ویز</span>
-                    </a>
-                  )}
-                  {card.googlemap && (
-                    <a href={card.googlemap} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs text-amber-100 font-semibold">
-                      <MapPin className="h-4 w-4 text-[#e2b53e]" />
-                      <span>گوگل مپ VIP</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Multiple Contacts */}
-            {(mobile || (extra_phones && extra_phones.length > 0)) && (
-              <div className="space-y-3 pt-4 border-t border-amber-500/15">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">راه‌های ارتباطی ثانویه</h3>
-                <div className="space-y-2">
-                  {mobile && (
-                    <a href={`tel:${mobile}`} className="flex items-center justify-between p-3.5 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs">
-                      <span className="flex items-center gap-2 text-stone-300">
-                        <Phone className="h-4 w-4 text-[#e2b53e]" />
-                        تلفن همراه (موبایل):
-                      </span>
-                      <span className="font-mono text-[#e2b53e] font-bold">{mobile}</span>
-                    </a>
-                  )}
-                  {extra_phones && extra_phones.map((ph: string, idx: number) => (
-                    <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between p-3.5 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs">
-                      <span className="flex items-center gap-2 text-stone-300">
-                        <Phone className="h-4 w-4 text-stone-400" />
-                        شماره تماس کمکی {idx + 1}:
-                      </span>
-                      <span className="font-mono text-stone-200 font-semibold">{ph}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Address Section */}
-            {card.address && (
-              <div className="space-y-2 pt-4 border-t border-amber-500/15">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center flex items-center justify-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-[#e2b53e]" />
-                  <span>نشانی و دفتر مرکزی</span>
-                </h3>
-                <div className="p-4 bg-stone-900/60 rounded-2xl text-xs leading-relaxed border border-amber-500/10 text-stone-200 text-center">
-                  {card.address}
-                </div>
-              </div>
-            )}
-
-            {/* Financial Section */}
-            {(card.bank_card || card.bank_account || card.bank_shaba) && (
-              <div className="space-y-3 pt-4 border-t border-amber-500/15">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center flex items-center justify-center gap-1.5">
-                  <CreditCard className="h-4 w-4 text-[#e2b53e]" />
-                  <span>شماره حساب و کارت VIP</span>
-                </h3>
-                <div className="space-y-2.5">
-                  {card.bank_card && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_card || '', 'bank_card')}
-                      className="p-3 bg-stone-900/60 hover:bg-stone-900/95 rounded-xl border border-amber-500/10 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
+            {getSectionOrders(card).map((secKey) => {
+              switch (secKey) {
+                case 'save_contact':
+                  return (
+                    <button 
+                      key="sec_temp4_save"
+                      onClick={handleDownloadVCard}
+                      className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs bg-gradient-to-l from-[#f59e0b] to-[#d97706] text-black hover:opacity-95 shadow-md shadow-amber-500/10"
                     >
-                      <div>
-                        <span className="text-[9px] text-stone-500 block mb-0.5 font-bold uppercase tracking-wider">شماره کارت</span>
-                        <span className="font-mono font-bold tracking-widest text-[#e2b53e]">{card.bank_card}</span>
-                      </div>
-                      <div className="p-1.5 bg-amber-500/10 hover:bg-amber-500/25 rounded-lg text-[#e2b53e] transition flex items-center gap-1">
-                        {copiedField === 'bank_card' ? <span className="text-[9px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                      <Download className="h-4 w-4" />
+                      <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره مستقیم در مخاطبان'}</span>
+                    </button>
+                  );
+                case 'bio':
+                  return card.bio ? (
+                    <div key="sec_temp4_bio" className="p-4 bg-stone-900 rounded-xl text-xs leading-relaxed border border-amber-500/10 text-stone-300 text-center relative">
+                      <span className="absolute -top-3 right-4 bg-[#0c0a09] px-2 text-[10px] text-[#e2b53e] font-bold">درباره من</span>
+                      {card.bio}
+                    </div>
+                  ) : null;
+                case 'primary_actions':
+                  return (mobile || (extra_phones && extra_phones.length > 0)) ? (
+                    <div key="sec_temp4_primary" className="space-y-3 pt-4 border-t border-amber-500/15">
+                      <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">راه‌های ارتباطی ثانویه</h3>
+                      <div className="space-y-2">
+                        {mobile && (
+                          <a href={`tel:${mobile}`} className="flex items-center justify-between p-3.5 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs">
+                            <span className="flex items-center gap-2 text-stone-300">
+                              <Phone className="h-4 w-4 text-[#e2b53e]" />
+                              تلفن همراه (موبایل):
+                            </span>
+                            <span className="font-mono text-[#e2b53e] font-bold">{mobile}</span>
+                          </a>
+                        )}
+                        {extra_phones && extra_phones.map((ph: string, idx: number) => (
+                          <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between p-3.5 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs">
+                            <span className="flex items-center gap-2 text-stone-300">
+                              <Phone className="h-4 w-4 text-stone-400" />
+                              شماره تماس کمکی {idx + 1}:
+                            </span>
+                            <span className="font-mono text-stone-200 font-semibold">{ph}</span>
+                          </a>
+                        ))}
                       </div>
                     </div>
-                  )}
-                  {card.bank_account && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_account || '', 'bank_account')}
-                      className="p-3 bg-stone-900/60 hover:bg-stone-900/95 rounded-xl border border-amber-500/10 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
-                    >
-                      <div>
-                        <span className="text-[9px] text-stone-500 block mb-0.5 font-bold uppercase tracking-wider">شماره حساب</span>
-                        <span className="font-mono font-bold text-[#e2b53e]">{card.bank_account}</span>
-                      </div>
-                      <div className="p-1.5 bg-amber-500/10 hover:bg-amber-500/25 rounded-lg text-[#e2b53e] transition flex items-center gap-1">
-                        {copiedField === 'bank_account' ? <span className="text-[9px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                  ) : null;
+                case 'social_links':
+                  return (
+                    <div key="sec_temp4_social" className="space-y-3">
+                      <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">کانال‌های ارتباطی لوکس</h3>
+                      <div className="grid grid-cols-4 gap-3">
+                        {phone && (
+                          <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                            <Phone className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-stone-400">تماس</span>
+                          </a>
+                        )}
+                        {email && (
+                          <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                            <Mail className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-stone-400">ایمیل</span>
+                          </a>
+                        )}
+                        {telegram && (
+                          <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                            <Send className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-stone-400">تلگرام</span>
+                          </a>
+                        )}
+                        {whatsapp && (
+                          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                            <MessageCircle className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-stone-400">واتساپ</span>
+                          </a>
+                        )}
+                        {instagram && (
+                          <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                            <Instagram className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-stone-400">اینستا</span>
+                          </a>
+                        )}
+                        {linkedin && (
+                          <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                            <Linkedin className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-stone-400">لینکدین</span>
+                          </a>
+                        )}
+                        {website && (
+                          <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                            <Globe className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
+                            <span className="text-[10px] text-stone-400">وبسایت</span>
+                          </a>
+                        )}
                       </div>
                     </div>
-                  )}
-                  {card.bank_shaba && (
-                    <div 
-                      onClick={() => handleCopyText(card.bank_shaba || '', 'bank_shaba')}
-                      className="p-3 bg-stone-900/60 hover:bg-stone-900/95 rounded-xl border border-amber-500/10 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
-                      title="کلیک برای کپی آسان"
-                    >
-                      <div>
-                        <span className="text-[9px] text-stone-500 block mb-0.5 font-bold uppercase tracking-wider">شماره شبا (IR)</span>
-                        <span className="font-mono font-bold text-[#e2b53e] text-left" dir="ltr">{card.bank_shaba}</span>
-                      </div>
-                      <div className="p-1.5 bg-amber-500/10 hover:bg-amber-500/25 rounded-lg text-[#e2b53e] transition flex items-center gap-1">
-                        {copiedField === 'bank_shaba' ? <span className="text-[9px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                  );
+                case 'custom_buttons':
+                  return card.custom_buttons && card.custom_buttons.length > 0 ? (
+                    <div key="sec_temp4_custom" className="space-y-2.5">
+                      <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">لینک‌های برتر</h3>
+                      {card.custom_buttons.map((btn) => (
+                        <a
+                          key={btn.id}
+                          href={btn.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full py-3.5 px-4 rounded-xl border border-amber-500/10 hover:border-amber-500/30 bg-stone-900/60 flex items-center justify-between font-semibold transition text-xs"
+                        >
+                          <span className="flex items-center gap-2">
+                            <LinkIcon className="h-3.5 w-3.5 text-[#e2b53e]" />
+                            <span className="text-white">{btn.label}</span>
+                          </span>
+                          <ChevronLeft className="h-4 w-4 text-[#e2b53e]" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null;
+                case 'location':
+                  return (card.neshan || card.balad || card.waze || card.googlemap || card.address) ? (
+                    <div key="sec_temp4_loc" className="space-y-3 pt-4 border-t border-amber-500/15">
+                      {(card.neshan || card.balad || card.waze || card.googlemap) && (
+                        <>
+                          <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">مسیریابی مجلل</h3>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {card.neshan && (
+                              <a href={card.neshan} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs text-amber-100 font-semibold">
+                                <MapPin className="h-4 w-4 text-[#e2b53e]" />
+                                <span>نقشه نشان</span>
+                              </a>
+                            )}
+                            {card.balad && (
+                              <a href={card.balad} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs text-amber-100 font-semibold">
+                                <MapPin className="h-4 w-4 text-[#e2b53e]" />
+                                <span>نقشه بلد</span>
+                              </a>
+                            )}
+                            {card.waze && (
+                              <a href={card.waze} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs text-amber-100 font-semibold">
+                                <MapPin className="h-4 w-4 text-[#e2b53e]" />
+                                <span>مسیریاب ویز</span>
+                              </a>
+                            )}
+                            {card.googlemap && (
+                              <a href={card.googlemap} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 text-xs text-amber-100 font-semibold">
+                                <MapPin className="h-4 w-4 text-[#e2b53e]" />
+                                <span>گوگل مپ VIP</span>
+                              </a>
+                            )}
+                          </div>
+                        </>
+                      )}
+                      {card.address && (
+                        <div className="space-y-2 pt-2">
+                          <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center flex items-center justify-center gap-1.5">
+                            <MapPin className="h-4 w-4 text-[#e2b53e]" />
+                            <span>نشانی و دفتر مرکزی</span>
+                          </h3>
+                          <div className="p-4 bg-stone-900/60 rounded-2xl text-xs leading-relaxed border border-amber-500/10 text-stone-200 text-center">
+                            {card.address}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null;
+                case 'bank_info':
+                  return (card.bank_card || card.bank_account || card.bank_shaba) ? (
+                    <div key="sec_temp4_bank" className="space-y-3 pt-4 border-t border-amber-500/15">
+                      <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center flex items-center justify-center gap-1.5">
+                        <CreditCard className="h-4 w-4 text-[#e2b53e]" />
+                        <span>شماره حساب و کارت VIP</span>
+                      </h3>
+                      <div className="space-y-2.5">
+                        {card.bank_card && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_card || '', 'bank_card')}
+                            className="p-3 bg-stone-900/60 hover:bg-stone-900/95 rounded-xl border border-amber-500/10 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[9px] text-stone-500 block mb-0.5 font-bold uppercase tracking-wider">شماره کارت</span>
+                              <span className="font-mono font-bold tracking-widest text-[#e2b53e]">{card.bank_card}</span>
+                            </div>
+                            <div className="p-1.5 bg-amber-500/10 hover:bg-amber-500/25 rounded-lg text-[#e2b53e] transition flex items-center gap-1">
+                              {copiedField === 'bank_card' ? <span className="text-[9px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                            </div>
+                          </div>
+                        )}
+                        {card.bank_account && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_account || '', 'bank_account')}
+                            className="p-3 bg-stone-900/60 hover:bg-stone-900/95 rounded-xl border border-amber-500/10 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[9px] text-stone-500 block mb-0.5 font-bold uppercase tracking-wider">شماره حساب</span>
+                              <span className="font-mono font-bold text-[#e2b53e]">{card.bank_account}</span>
+                            </div>
+                            <div className="p-1.5 bg-amber-500/10 hover:bg-amber-500/25 rounded-lg text-[#e2b53e] transition flex items-center gap-1">
+                              {copiedField === 'bank_account' ? <span className="text-[9px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                            </div>
+                          </div>
+                        )}
+                        {card.bank_shaba && (
+                          <div 
+                            onClick={() => handleCopyText(card.bank_shaba || '', 'bank_shaba')}
+                            className="p-3 bg-stone-900/60 hover:bg-stone-900/95 rounded-xl border border-amber-500/10 flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98]"
+                            title="کلیک برای کپی آسان"
+                          >
+                            <div>
+                              <span className="text-[9px] text-stone-500 block mb-0.5 font-bold uppercase tracking-wider">شماره شبا (IR)</span>
+                              <span className="font-mono font-bold text-[#e2b53e] text-left" dir="ltr">{card.bank_shaba}</span>
+                            </div>
+                            <div className="p-1.5 bg-amber-500/10 hover:bg-amber-500/25 rounded-lg text-[#e2b53e] transition flex items-center gap-1">
+                              {copiedField === 'bank_shaba' ? <span className="text-[9px] font-bold text-emerald-400">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
+                  ) : null;
+                default:
+                  return null;
+              }
+            })}
 
             {/* Footer */}
             <div className="text-center pt-8 opacity-20 text-[9px] uppercase tracking-wider font-mono">
@@ -1400,7 +1432,7 @@ export default function PublicCardPage() {
         )}
 
         {/* DYNAMIC FALLBACK FOR CUSTOM DIRECTUS TEMPLATES */}
-        {templateId && !['temp-1', 'temp-2', 'temp-3', 'temp-4'].includes(templateId) && (() => {
+        {isCustomTemplate && (() => {
           const matchedTemp = templates.find(t => t.id === templateId || t.slug === templateId);
           const tSchema = matchedTemp?.schema || {};
           
@@ -1495,231 +1527,240 @@ export default function PublicCardPage() {
                 </div>
               )}
 
-              {/* Bio Section */}
-              {card.bio && (
-                <div 
-                  className="p-3.5 rounded-2xl text-xs leading-relaxed text-center relative border"
-                  style={{ 
-                    borderColor: sColor, 
-                    backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-                    fontSize: tTypography.body_size || '14px'
-                  }}
-                >
-                  {card.bio}
-                </div>
-              )}
-
-              {/* Action Button */}
-              <button 
-                onClick={handleDownloadVCard}
-                className="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs"
-                style={{ backgroundColor: pColor, color: '#ffffff' }}
-              >
-                <Download className="h-4 w-4" />
-                <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره مستقیم در مخاطبان'}</span>
-              </button>
-
-              {/* Contact Channels */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>اطلاعات تماس</span>
-                <div className="grid grid-cols-4 gap-2.5">
-                  {phone && (
-                    <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                      <Phone className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                      <span className="text-[9px]" style={{ color: txtSecColor }}>تماس</span>
-                    </a>
-                  )}
-                  {email && (
-                    <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                      <Mail className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                      <span className="text-[9px]" style={{ color: txtSecColor }}>ایمیل</span>
-                    </a>
-                  )}
-                  {telegram && (
-                    <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                      <Send className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                      <span className="text-[9px]" style={{ color: txtSecColor }}>تلگرام</span>
-                    </a>
-                  )}
-                  {whatsapp && (
-                    <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                      <MessageCircle className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                      <span className="text-[9px]" style={{ color: txtSecColor }}>واتساپ</span>
-                    </a>
-                  )}
-                  {instagram && (
-                    <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                      <Instagram className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                      <span className="text-[9px]" style={{ color: txtSecColor }}>اینستا</span>
-                    </a>
-                  )}
-                  {linkedin && (
-                    <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                      <Linkedin className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                      <span className="text-[9px]" style={{ color: txtSecColor }}>لینکدین</span>
-                    </a>
-                  )}
-                  {website && (
-                    <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                      <Globe className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                      <span className="text-[9px]" style={{ color: txtSecColor }}>سایت</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              {/* Custom Buttons */}
-              {card.custom_buttons && card.custom_buttons.length > 0 && (
-                <div className="space-y-2">
-                  <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>لینک‌های برتر</span>
-                  {card.custom_buttons.map((btn) => (
-                    <a
-                      key={btn.id}
-                      href={btn.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full py-3 px-4 rounded-xl border flex items-center justify-between font-semibold transition text-xs hover:scale-[1.01]"
-                      style={{ 
-                        borderColor: sColor, 
-                        backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-                      }}
-                    >
-                      <span className="flex items-center gap-2">
-                        <LinkIcon className="h-3.5 w-3.5" style={{ color: pColor }} />
-                        <span style={{ color: txtColor }}>{btn.label}</span>
-                      </span>
-                      <ChevronLeft className="h-4 w-4" style={{ color: pColor }} />
-                    </a>
-                  ))}
-                </div>
-              )}
-
-              {/* Maps Section */}
-              {(card.neshan || card.balad || card.waze || card.googlemap) && (
-                <div className="space-y-2 pt-4 border-t" style={{ borderColor: sColor }}>
-                  <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>مسیریاب و موقعیت مکانی</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {card.neshan && (
-                      <a href={card.neshan} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                        <MapPin className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span className="text-[10px] font-bold" style={{ color: txtColor }}>مسیریاب نشان</span>
-                      </a>
-                    )}
-                    {card.balad && (
-                      <a href={card.balad} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                        <MapPin className="h-4 w-4 text-blue-500 shrink-0" />
-                        <span className="text-[10px] font-bold" style={{ color: txtColor }}>مسیریاب بلد</span>
-                      </a>
-                    )}
-                    {card.waze && (
-                      <a href={card.waze} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                        <MapPin className="h-4 w-4 text-amber-500 shrink-0" />
-                        <span className="text-[10px] font-bold" style={{ color: txtColor }}>مسیریاب ویز</span>
-                      </a>
-                    )}
-                    {card.googlemap && (
-                      <a href={card.googlemap} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                        <MapPin className="h-4 w-4 text-red-500 shrink-0" />
-                        <span className="text-[10px] font-bold" style={{ color: txtColor }}>گوگل مپ</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Extra Phones Section */}
-              {(mobile || (extra_phones && extra_phones.length > 0)) && (
-                <div className="space-y-2 pt-4 border-t" style={{ borderColor: sColor }}>
-                  <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>تلفن‌های تماس اضافی</span>
-                  <div className="space-y-2">
-                    {mobile && (
-                      <a href={`tel:${mobile}`} className="flex items-center justify-between p-3 rounded-xl border transition text-xs hover:scale-[1.01]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                        <span className="flex items-center gap-2 font-semibold">
-                          <Phone className="h-4 w-4" style={{ color: pColor }} />
-                          <span style={{ color: txtColor }}>تلفن همراه (موبایل):</span>
-                        </span>
-                        <span className="font-mono font-bold" style={{ color: pColor }}>{mobile}</span>
-                      </a>
-                    )}
-                    {extra_phones && extra_phones.map((ph: string, idx: number) => (
-                      <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between p-3 rounded-xl border transition text-xs hover:scale-[1.01]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                        <span className="flex items-center gap-2 font-semibold">
-                          <Phone className="h-4 w-4" style={{ color: pColor }} />
-                          <span style={{ color: txtColor }}>شماره تماس جانبی {idx + 1}:</span>
-                        </span>
-                        <span className="font-mono font-bold" style={{ color: pColor }}>{ph}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Address Section */}
-              {card.address && (
-                <div className="space-y-2 pt-4 border-t" style={{ borderColor: sColor }}>
-                  <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>نشانی و آدرس حضوری</span>
-                  <div className="p-3.5 rounded-xl border text-xs leading-relaxed font-medium text-center" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)', color: txtColor }}>
-                    {card.address}
-                  </div>
-                </div>
-              )}
-
-              {/* Financial Section */}
-              {(card.bank_card || card.bank_account || card.bank_shaba) && (
-                <div className="space-y-2.5 pt-4 border-t" style={{ borderColor: sColor }}>
-                  <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>اطلاعات حساب و کارت بانکی</span>
-                  <div className="space-y-2">
-                    {card.bank_card && (
-                      <div 
-                        onClick={() => handleCopyText(card.bank_card || '', 'bank_card')}
-                        className="p-3 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98] hover:scale-[1.01]" 
-                        style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}
-                        title="کلیک برای کپی آسان"
+              {/* DYNAMIC SECTIONS ORDERING FOR CUSTOM TEMPLATE */}
+              {getSectionOrders(card).map((secKey) => {
+                switch (secKey) {
+                  case 'save_contact':
+                    return (
+                      <button 
+                        key="sec_cust_save"
+                        onClick={handleDownloadVCard}
+                        className="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs"
+                        style={{ backgroundColor: pColor, color: '#ffffff' }}
                       >
-                        <div>
-                          <span className="text-[10px] block mb-1 font-semibold" style={{ color: txtSecColor }}>شماره کارت</span>
-                          <span className="font-mono font-bold tracking-widest" style={{ color: txtColor }}>{card.bank_card}</span>
-                        </div>
-                        <div className="p-1.5 rounded-lg transition flex items-center gap-1" style={{ color: pColor }}>
-                          {copiedField === 'bank_card' ? <span className="text-[10px] font-bold text-emerald-500">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                        <Download className="h-4 w-4" />
+                        <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره مستقیم در مخاطبان'}</span>
+                      </button>
+                    );
+                  case 'bio':
+                    return card.bio ? (
+                      <div 
+                        key="sec_cust_bio"
+                        className="p-3.5 rounded-2xl text-xs leading-relaxed text-center relative border"
+                        style={{ 
+                          borderColor: sColor, 
+                          backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                          fontSize: tTypography.body_size || '14px'
+                        }}
+                      >
+                        {card.bio}
+                      </div>
+                    ) : null;
+                  case 'primary_actions':
+                    return (mobile || (extra_phones && extra_phones.length > 0)) ? (
+                      <div key="sec_cust_primary" className="space-y-2 pt-4 border-t" style={{ borderColor: sColor }}>
+                        <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>تلفن‌های تماس اضافی</span>
+                        <div className="space-y-2">
+                          {mobile && (
+                            <a href={`tel:${mobile}`} className="flex items-center justify-between p-3 rounded-xl border transition text-xs hover:scale-[1.01]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <span className="flex items-center gap-2 font-semibold">
+                                <Phone className="h-4 w-4" style={{ color: pColor }} />
+                                <span style={{ color: txtColor }}>تلفن همراه (موبایل):</span>
+                              </span>
+                              <span className="font-mono font-bold" style={{ color: pColor }}>{mobile}</span>
+                            </a>
+                          )}
+                          {extra_phones && extra_phones.map((ph: string, idx: number) => (
+                            <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between p-3 rounded-xl border transition text-xs hover:scale-[1.01]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <span className="flex items-center gap-2 font-semibold">
+                                <Phone className="h-4 w-4" style={{ color: pColor }} />
+                                <span style={{ color: txtColor }}>شماره تماس جانبی {idx + 1}:</span>
+                              </span>
+                              <span className="font-mono font-bold" style={{ color: pColor }}>{ph}</span>
+                            </a>
+                          ))}
                         </div>
                       </div>
-                    )}
-                    {card.bank_account && (
-                      <div 
-                        onClick={() => handleCopyText(card.bank_account || '', 'bank_account')}
-                        className="p-3 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98] hover:scale-[1.01]" 
-                        style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}
-                        title="کلیک برای کپی آسان"
-                      >
-                        <div>
-                          <span className="text-[10px] block mb-1 font-semibold" style={{ color: txtSecColor }}>شماره حساب</span>
-                          <span className="font-mono font-bold" style={{ color: txtColor }}>{card.bank_account}</span>
-                        </div>
-                        <div className="p-1.5 rounded-lg transition flex items-center gap-1" style={{ color: pColor }}>
-                          {copiedField === 'bank_account' ? <span className="text-[10px] font-bold text-emerald-500">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                    ) : null;
+                  case 'social_links':
+                    return (
+                      <div key="sec_cust_social" className="space-y-2">
+                        <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>اطلاعات تماس</span>
+                        <div className="grid grid-cols-4 gap-2.5">
+                          {phone && (
+                            <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <Phone className="h-4 w-4 mb-1" style={{ color: pColor }} />
+                              <span className="text-[9px]" style={{ color: txtSecColor }}>تماس</span>
+                            </a>
+                          )}
+                          {email && (
+                            <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <Mail className="h-4 w-4 mb-1" style={{ color: pColor }} />
+                              <span className="text-[9px]" style={{ color: txtSecColor }}>ایمیل</span>
+                            </a>
+                          )}
+                          {telegram && (
+                            <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <Send className="h-4 w-4 mb-1" style={{ color: pColor }} />
+                              <span className="text-[9px]" style={{ color: txtSecColor }}>تلگرام</span>
+                            </a>
+                          )}
+                          {whatsapp && (
+                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <MessageCircle className="h-4 w-4 mb-1" style={{ color: pColor }} />
+                              <span className="text-[9px]" style={{ color: txtSecColor }}>واتساپ</span>
+                            </a>
+                          )}
+                          {instagram && (
+                            <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <Instagram className="h-4 w-4 mb-1" style={{ color: pColor }} />
+                              <span className="text-[9px]" style={{ color: txtSecColor }}>اینستا</span>
+                            </a>
+                          )}
+                          {linkedin && (
+                            <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <Linkedin className="h-4 w-4 mb-1" style={{ color: pColor }} />
+                              <span className="text-[9px]" style={{ color: txtSecColor }}>لینکدین</span>
+                            </a>
+                          )}
+                          {website && (
+                            <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                              <Globe className="h-4 w-4 mb-1" style={{ color: pColor }} />
+                              <span className="text-[9px]" style={{ color: txtSecColor }}>سایت</span>
+                            </a>
+                          )}
                         </div>
                       </div>
-                    )}
-                    {card.bank_shaba && (
-                      <div 
-                        onClick={() => handleCopyText(card.bank_shaba || '', 'bank_shaba')}
-                        className="p-3 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98] hover:scale-[1.01]" 
-                        style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}
-                        title="کلیک برای کپی آسان"
-                      >
-                        <div>
-                          <span className="text-[10px] block mb-1 font-semibold" style={{ color: txtSecColor }}>شماره شبا (IR)</span>
-                          <span className="font-mono font-bold text-left" dir="ltr" style={{ color: txtColor }}>{card.bank_shaba}</span>
-                        </div>
-                        <div className="p-1.5 rounded-lg transition flex items-center gap-1" style={{ color: pColor }}>
-                          {copiedField === 'bank_shaba' ? <span className="text-[10px] font-bold text-emerald-500">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                    );
+                  case 'custom_buttons':
+                    return card.custom_buttons && card.custom_buttons.length > 0 ? (
+                      <div key="sec_cust_custom" className="space-y-2">
+                        <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>لینک‌های برتر</span>
+                        {card.custom_buttons.map((btn) => (
+                          <a
+                            key={btn.id}
+                            href={btn.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full py-3 px-4 rounded-xl border flex items-center justify-between font-semibold transition text-xs hover:scale-[1.01]"
+                            style={{ 
+                              borderColor: sColor, 
+                              backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                            }}
+                          >
+                            <span className="flex items-center gap-2">
+                              <LinkIcon className="h-3.5 w-3.5" style={{ color: pColor }} />
+                              <span style={{ color: txtColor }}>{btn.label}</span>
+                            </span>
+                            <ChevronLeft className="h-4 w-4" style={{ color: pColor }} />
+                          </a>
+                        ))}
+                      </div>
+                    ) : null;
+                  case 'location':
+                    return (card.neshan || card.balad || card.waze || card.googlemap || card.address) ? (
+                      <div key="sec_cust_loc" className="space-y-2 pt-4 border-t" style={{ borderColor: sColor }}>
+                        {(card.neshan || card.balad || card.waze || card.googlemap) && (
+                          <>
+                            <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>مسیریاب و موقعیت مکانی</span>
+                            <div className="grid grid-cols-2 gap-2">
+                              {card.neshan && (
+                                <a href={card.neshan} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                  <MapPin className="h-4 w-4 text-emerald-500 shrink-0" />
+                                  <span className="text-[10px] font-bold" style={{ color: txtColor }}>مسیریاب نشان</span>
+                                </a>
+                              )}
+                              {card.balad && (
+                                <a href={card.balad} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                  <MapPin className="h-4 w-4 text-blue-500 shrink-0" />
+                                  <span className="text-[10px] font-bold" style={{ color: txtColor }}>مسیریاب بلد</span>
+                                </a>
+                              )}
+                              {card.waze && (
+                                <a href={card.waze} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                  <MapPin className="h-4 w-4 text-amber-500 shrink-0" />
+                                  <span className="text-[10px] font-bold" style={{ color: txtColor }}>مسیریاب ویز</span>
+                                </a>
+                              )}
+                              {card.googlemap && (
+                                <a href={card.googlemap} target="_blank" rel="noreferrer" className="flex items-center gap-2 p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                  <MapPin className="h-4 w-4 text-red-500 shrink-0" />
+                                  <span className="text-[10px] font-bold" style={{ color: txtColor }}>گوگل مپ</span>
+                                </a>
+                              )}
+                            </div>
+                          </>
+                        )}
+                        {card.address && (
+                          <div className="space-y-2 pt-2">
+                            <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>نشانی و آدرس حضوری</span>
+                            <div className="p-3.5 rounded-xl border text-xs leading-relaxed font-medium text-center" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)', color: txtColor }}>
+                              {card.address}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : null;
+                  case 'bank_info':
+                    return (card.bank_card || card.bank_account || card.bank_shaba) ? (
+                      <div key="sec_cust_bank" className="space-y-2.5 pt-4 border-t" style={{ borderColor: sColor }}>
+                        <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>اطلاعات حساب و کارت بانکی</span>
+                        <div className="space-y-2">
+                          {card.bank_card && (
+                            <div 
+                              onClick={() => handleCopyText(card.bank_card || '', 'bank_card')}
+                              className="p-3 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98] hover:scale-[1.01]" 
+                              style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}
+                              title="کلیک برای کپی آسان"
+                            >
+                              <div>
+                                <span className="text-[10px] block mb-1 font-semibold" style={{ color: txtSecColor }}>شماره کارت</span>
+                                <span className="font-mono font-bold tracking-widest" style={{ color: txtColor }}>{card.bank_card}</span>
+                              </div>
+                              <div className="p-1.5 rounded-lg transition flex items-center gap-1" style={{ color: pColor }}>
+                                {copiedField === 'bank_card' ? <span className="text-[10px] font-bold text-emerald-500">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                              </div>
+                            </div>
+                          )}
+                          {card.bank_account && (
+                            <div 
+                              onClick={() => handleCopyText(card.bank_account || '', 'bank_account')}
+                              className="p-3 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98] hover:scale-[1.01]" 
+                              style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}
+                              title="کلیک برای کپی آسان"
+                            >
+                              <div>
+                                <span className="text-[10px] block mb-1 font-semibold" style={{ color: txtSecColor }}>شماره حساب</span>
+                                <span className="font-mono font-bold" style={{ color: txtColor }}>{card.bank_account}</span>
+                              </div>
+                              <div className="p-1.5 rounded-lg transition flex items-center gap-1" style={{ color: pColor }}>
+                                {copiedField === 'bank_account' ? <span className="text-[10px] font-bold text-emerald-500">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                              </div>
+                            </div>
+                          )}
+                          {card.bank_shaba && (
+                            <div 
+                              onClick={() => handleCopyText(card.bank_shaba || '', 'bank_shaba')}
+                              className="p-3 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition active:scale-[0.98] hover:scale-[1.01]" 
+                              style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}
+                              title="کلیک برای کپی آسان"
+                            >
+                              <div>
+                                <span className="text-[10px] block mb-1 font-semibold" style={{ color: txtSecColor }}>شماره شبا (IR)</span>
+                                <span className="font-mono font-bold text-left block" dir="ltr" style={{ color: txtColor }}>{card.bank_shaba}</span>
+                              </div>
+                              <div className="p-1.5 rounded-lg transition flex items-center gap-1" style={{ color: pColor }}>
+                                {copiedField === 'bank_shaba' ? <span className="text-[10px] font-bold text-emerald-500">کپی شد!</span> : <Copy className="h-4 w-4" />}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
+                    ) : null;
+                  default:
+                    return null;
+                }
+              })}
 
               {/* Footer */}
               <div className="text-center pt-4 opacity-35 text-[8px] uppercase tracking-wider font-mono" style={{ color: txtSecColor }}>
