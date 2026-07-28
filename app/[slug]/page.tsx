@@ -465,45 +465,45 @@ export default function PublicCardPage() {
                         <h3 className="text-xs font-bold uppercase tracking-wider opacity-60">راه‌های ارتباطی</h3>
                         <div className="grid grid-cols-4 gap-3">
                           {phone && (
-                            <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-100">
-                              <Phone className="h-5 w-5 text-blue-600 mb-1" />
-                              <span className="text-[10px] font-medium text-slate-500">تماس</span>
+                            <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
+                              <Phone className="h-5 w-5 mb-1" style={{ color: primaryColor }} />
+                              <span className="text-[10px] font-medium opacity-80">تماس</span>
                             </a>
                           )}
                           {email && (
-                            <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-100">
+                            <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Mail className="h-5 w-5 text-amber-500 mb-1" />
-                              <span className="text-[10px] font-medium text-slate-500">ایمیل</span>
+                              <span className="text-[10px] font-medium opacity-80">ایمیل</span>
                             </a>
                           )}
                           {telegram && (
-                            <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-100">
+                            <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Send className="h-5 w-5 text-sky-500 mb-1" />
-                              <span className="text-[10px] font-medium text-slate-500">تلگرام</span>
+                              <span className="text-[10px] font-medium opacity-80">تلگرام</span>
                             </a>
                           )}
                           {whatsapp && (
-                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-100">
+                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <MessageCircle className="h-5 w-5 text-emerald-500 mb-1" />
-                              <span className="text-[10px] font-medium text-slate-500">واتساپ</span>
+                              <span className="text-[10px] font-medium opacity-80">واتساپ</span>
                             </a>
                           )}
                           {instagram && (
-                            <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-100">
+                            <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Instagram className="h-5 w-5 text-pink-500 mb-1" />
-                              <span className="text-[10px] font-medium text-slate-500">اینستا</span>
+                              <span className="text-[10px] font-medium opacity-80">اینستا</span>
                             </a>
                           )}
                           {linkedin && (
-                            <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-100">
+                            <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Linkedin className="h-5 w-5 text-indigo-600 mb-1" />
-                              <span className="text-[10px] font-medium text-slate-500">لینکدین</span>
+                              <span className="text-[10px] font-medium opacity-80">لینکدین</span>
                             </a>
                           )}
                           {website && (
-                            <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-100">
+                            <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Globe className="h-5 w-5 text-violet-600 mb-1" />
-                              <span className="text-[10px] font-medium text-slate-500">وبسایت</span>
+                              <span className="text-[10px] font-medium opacity-80">وبسایت</span>
                             </a>
                           )}
                         </div>
@@ -648,10 +648,11 @@ export default function PublicCardPage() {
         {/* TEMPLATE 2: NEON GLASS (DARK FUTURISTIC) */}
         {isNeonGlass && (
           <div 
-            className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl border transition-all text-white p-6 space-y-6"
+            className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl border transition-all p-6 space-y-6"
             style={{ 
-              backgroundColor: 'rgba(15, 23, 42, 0.85)', 
-              borderColor: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: cardBgColor || 'rgba(15, 23, 42, 0.85)', 
+              borderColor: `${primaryColor}40`,
+              color: textCol || '#ffffff',
               boxShadow: `0 10px 40px -10px ${primaryColor}40`
             }}
           >
@@ -1196,11 +1197,12 @@ export default function PublicCardPage() {
         {/* TEMPLATE 4: LUXURY GOLD (GOLD AND BLACK) */}
         {isLuxuryDark && (
           <div 
-            className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden border transition-all text-amber-100 p-8 space-y-8"
+            className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden border transition-all p-8 space-y-8"
             style={{ 
-              backgroundColor: '#0c0a09', // rich stone dark
-              borderColor: '#e2b53e', // gold border
-              boxShadow: '0 10px 50px -15px rgba(226, 181, 62, 0.25)'
+              backgroundColor: cardBgColor || '#0c0a09',
+              borderColor: primaryColor || '#e2b53e',
+              color: textCol || '#fef3c7',
+              boxShadow: `0 10px 50px -15px ${primaryColor}40`
             }}
           >
             {/* Top Share & Stats */}
@@ -1489,13 +1491,13 @@ export default function PublicCardPage() {
           const tTypography = tSchema.typography || {};
           const tLayout = tSchema.layout || {};
 
-          // Color palette with defaults from user's schema sample
-          const pColor = tColors.primary || '#8d5b4c';
-          const sColor = tColors.secondary || '#f4ece1';
-          const bColor = tColors.background || '#faf6f0';
-          const txtColor = tColors.text || '#2d221e';
-          const txtSecColor = tColors.text_secondary || '#6e5a53';
-          const cardBg = isDarkTheme ? '#18181b' : '#ffffff';
+          // Color palette: User custom colors override template schema colors
+          const pColor = primaryColor;
+          const sColor = secondaryColor;
+          const bColor = bgColor;
+          const txtColor = textCol;
+          const txtSecColor = tColors.text_secondary || secondaryColor;
+          const cardBg = cardBgColor;
 
           // Layout properties
           const isCircleAvatar = (tLayout.avatar_shape || 'circle') === 'circle';
