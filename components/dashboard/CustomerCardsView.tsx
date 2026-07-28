@@ -13,6 +13,65 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { Card, Template, toUUID, getImageUrl, dbService, toJalaliDate, SECTION_DEFINITIONS, getSectionOrders, DEFAULT_SECTION_ORDERS } from '../../lib/directus';
 import { saveCardToContacts } from '../../lib/vcard';
 
+export function getTemplateDefaultColors(templateId?: string | null, templatesList: Template[] = []) {
+  const cleanTId = (templateId || '').toLowerCase();
+  const cleanTUuid = toUUID(templateId);
+
+  const isClassic = !templateId || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
+  const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
+  const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
+  const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+
+  if (isLuxuryDark) {
+    return {
+      primary: '#f59e0b',
+      secondary: '#d97706',
+      background: '#0c0a09',
+      card_bg: '#1c1917',
+      text: '#fef3c7',
+    };
+  }
+  if (isNeonGlass) {
+    return {
+      primary: '#06b6d4',
+      secondary: '#3b82f6',
+      background: '#0f172a',
+      card_bg: '#0f172a',
+      text: '#ffffff',
+    };
+  }
+  if (isMinimal) {
+    return {
+      primary: '#0f172a',
+      secondary: '#475569',
+      background: '#f8fafc',
+      card_bg: '#ffffff',
+      text: '#0f172a',
+    };
+  }
+  if (!isClassic) {
+    const activeT = templatesList.find(t => toUUID(t.id) === cleanTUuid || (t.slug && t.slug.toLowerCase() === cleanTId));
+    const schemaColors = activeT?.schema?.default_colors || activeT?.schema?.colors || (activeT as any)?.default_colors;
+    if (schemaColors) {
+      return {
+        primary: schemaColors.primary || '#2563eb',
+        secondary: schemaColors.secondary || '#3b82f6',
+        background: schemaColors.background || '#f1f5f9',
+        card_bg: schemaColors.card_bg || '#ffffff',
+        text: schemaColors.text || '#1e293b',
+      };
+    }
+  }
+
+  return {
+    primary: '#2563eb',
+    secondary: '#3b82f6',
+    background: '#f1f5f9',
+    card_bg: '#ffffff',
+    text: '#1e293b',
+  };
+}
+
 export interface CustomerCardsViewProps {
   user: any;
   cards: Card[];
@@ -841,199 +900,218 @@ export function CustomerCardsView({
                   </div>
 
                   {/* CUSTOM COLORS */}
-                  <div className="p-4 bg-slate-900/60 border border-slate-850 rounded-xl space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-bold text-white text-xs flex items-center gap-1.5">
-                        <Palette className="h-4 w-4 text-blue-400" />
-                        تنظیمات رنگ اختصاصی کارت
-                      </h5>
-                      <span className="text-[9px] text-slate-400">پیش‌نمایش لحظه‌ای در گوشی</span>
-                    </div>
+                  {(() => {
+                    const activeDefaults = getTemplateDefaultColors(editingCard.template_id, templates);
+                    const curPrimary = editingCard.custom_colors?.primary?.trim() ? editingCard.custom_colors.primary : activeDefaults.primary;
+                    const curSecondary = editingCard.custom_colors?.secondary?.trim() ? editingCard.custom_colors.secondary : activeDefaults.secondary;
+                    const curText = editingCard.custom_colors?.text?.trim() ? editingCard.custom_colors.text : activeDefaults.text;
+                    const curCardBg = editingCard.custom_colors?.card_bg?.trim() ? editingCard.custom_colors.card_bg : activeDefaults.card_bg;
+                    const curBg = editingCard.custom_colors?.background?.trim() ? editingCard.custom_colors.background : activeDefaults.background;
 
-                    {/* Palette presets */}
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] text-slate-400 font-bold block">پالت‌های آماده با یک کلیک:</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setEditingCard({
-                            ...editingCard,
-                            custom_colors: { primary: '#2563eb', secondary: '#3b82f6', text: '#1e293b', card_bg: '#ffffff', background: '#f8fafc' }
-                          })}
-                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-blue-400 hover:border-blue-500 flex items-center gap-1"
-                        >
-                          <span className="h-2 w-2 rounded-full bg-blue-600"></span>
-                          آبی مدرن
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingCard({
-                            ...editingCard,
-                            custom_colors: { primary: '#10b981', secondary: '#059669', text: '#f1f5f9', card_bg: '#064e3b', background: '#022c22' }
-                          })}
-                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-emerald-400 hover:border-emerald-500 flex items-center gap-1"
-                        >
-                          <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                          زمردی تاریک
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingCard({
-                            ...editingCard,
-                            custom_colors: { primary: '#d97706', secondary: '#f59e0b', text: '#fef3c7', card_bg: '#1c1917', background: '#0c0a09' }
-                          })}
-                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-amber-400 hover:border-amber-500 flex items-center gap-1"
-                        >
-                          <span className="h-2 w-2 rounded-full bg-amber-500"></span>
-                          طلایی لاکچری
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingCard({
-                            ...editingCard,
-                            custom_colors: { primary: '#a855f7', secondary: '#ec4899', text: '#f8fafc', card_bg: '#1e1b4b', background: '#0f172a' }
-                          })}
-                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-purple-400 hover:border-purple-500 flex items-center gap-1"
-                        >
-                          <span className="h-2 w-2 rounded-full bg-purple-500"></span>
-                          نئون بنفش
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingCard({
-                            ...editingCard,
-                            custom_colors: { primary: '#475569', secondary: '#64748b', text: '#0f172a', card_bg: '#f1f5f9', background: '#ffffff' }
-                          })}
-                          className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-slate-300 hover:border-slate-500 flex items-center gap-1"
-                        >
-                          <span className="h-2 w-2 rounded-full bg-slate-400"></span>
-                          مینیمال روشن
-                        </button>
-                      </div>
-                    </div>
+                    return (
+                      <div className="p-4 bg-slate-900/60 border border-slate-850 rounded-xl space-y-4">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <h5 className="font-bold text-white text-xs flex items-center gap-1.5">
+                            <Palette className="h-4 w-4 text-blue-400" />
+                            تنظیمات رنگ اختصاصی کارت
+                          </h5>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCard({ ...editingCard, custom_colors: {} })}
+                            className="text-[10px] text-amber-400 hover:text-amber-300 font-medium hover:underline flex items-center gap-1 transition"
+                            title="بازنشانی رنگ‌ها به حالت اولیه قالب"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            <span>بازنشانی به رنگ‌های اصلی قالب</span>
+                          </button>
+                        </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800/80">
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-slate-400 block">رنگ اصلی (Primary):</span>
-                        <div className="flex gap-1">
-                          <input 
-                            type="color" 
-                            value={editingCard.custom_colors?.primary || '#2563eb'} 
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), primary: e.target.value }
-                            })}
-                            className="h-7 w-7 rounded bg-transparent cursor-pointer"
-                          />
-                          <input 
-                            type="text"
-                            value={editingCard.custom_colors?.primary || '#2563eb'}
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), primary: e.target.value }
-                            })}
-                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
-                          />
+                        {/* Palette presets */}
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] text-slate-400 font-bold block">پالت‌های آماده با یک کلیک:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setEditingCard({
+                                ...editingCard,
+                                custom_colors: { primary: '#2563eb', secondary: '#3b82f6', text: '#1e293b', card_bg: '#ffffff', background: '#f8fafc' }
+                              })}
+                              className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-blue-400 hover:border-blue-500 flex items-center gap-1"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                              آبی مدرن
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingCard({
+                                ...editingCard,
+                                custom_colors: { primary: '#10b981', secondary: '#059669', text: '#f1f5f9', card_bg: '#064e3b', background: '#022c22' }
+                              })}
+                              className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-emerald-400 hover:border-emerald-500 flex items-center gap-1"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                              زمردی تاریک
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingCard({
+                                ...editingCard,
+                                custom_colors: { primary: '#d97706', secondary: '#f59e0b', text: '#fef3c7', card_bg: '#1c1917', background: '#0c0a09' }
+                              })}
+                              className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-amber-400 hover:border-amber-500 flex items-center gap-1"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                              طلایی لاکچری
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingCard({
+                                ...editingCard,
+                                custom_colors: { primary: '#a855f7', secondary: '#ec4899', text: '#f8fafc', card_bg: '#1e1b4b', background: '#0f172a' }
+                              })}
+                              className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-purple-400 hover:border-purple-500 flex items-center gap-1"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-purple-500"></span>
+                              نئون بنفش
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingCard({
+                                ...editingCard,
+                                custom_colors: { primary: '#475569', secondary: '#64748b', text: '#0f172a', card_bg: '#f1f5f9', background: '#ffffff' }
+                              })}
+                              className="px-2 py-1 bg-slate-950 border border-slate-800 rounded text-[9px] font-bold text-slate-300 hover:border-slate-500 flex items-center gap-1"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-slate-400"></span>
+                              مینیمال روشن
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800/80">
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 block">رنگ اصلی (Primary):</span>
+                            <div className="flex gap-1">
+                              <input 
+                                type="color" 
+                                value={curPrimary} 
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), primary: e.target.value }
+                                })}
+                                className="h-7 w-7 rounded bg-transparent cursor-pointer"
+                              />
+                              <input 
+                                type="text"
+                                value={curPrimary}
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), primary: e.target.value }
+                                })}
+                                className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 block">رنگ ثانویه (Secondary):</span>
+                            <div className="flex gap-1">
+                              <input 
+                                type="color" 
+                                value={curSecondary} 
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), secondary: e.target.value }
+                                })}
+                                className="h-7 w-7 rounded bg-transparent cursor-pointer"
+                              />
+                              <input 
+                                type="text"
+                                value={curSecondary}
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), secondary: e.target.value }
+                                })}
+                                className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 block">رنگ متن اصلی (Text):</span>
+                            <div className="flex gap-1">
+                              <input 
+                                type="color" 
+                                value={curText} 
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), text: e.target.value }
+                                })}
+                                className="h-7 w-7 rounded bg-transparent cursor-pointer"
+                              />
+                              <input 
+                                type="text"
+                                value={curText}
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), text: e.target.value }
+                                })}
+                                className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 block">رنگ بدنه کارت (Card):</span>
+                            <div className="flex gap-1">
+                              <input 
+                                type="color" 
+                                value={curCardBg} 
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), card_bg: e.target.value }
+                                })}
+                                className="h-7 w-7 rounded bg-transparent cursor-pointer"
+                              />
+                              <input 
+                                type="text"
+                                value={curCardBg}
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), card_bg: e.target.value }
+                                })}
+                                className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 block">رنگ پس‌زمینه (Background):</span>
+                            <div className="flex gap-1">
+                              <input 
+                                type="color" 
+                                value={curBg} 
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), background: e.target.value }
+                                })}
+                                className="h-7 w-7 rounded bg-transparent cursor-pointer"
+                              />
+                              <input 
+                                type="text"
+                                value={curBg}
+                                onChange={(e) => setEditingCard({
+                                  ...editingCard,
+                                  custom_colors: { ...(editingCard.custom_colors || {}), background: e.target.value }
+                                })}
+                                className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-slate-400 block">رنگ ثانویه (Secondary):</span>
-                        <div className="flex gap-1">
-                          <input 
-                            type="color" 
-                            value={editingCard.custom_colors?.secondary || '#3b82f6'} 
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), secondary: e.target.value }
-                            })}
-                            className="h-7 w-7 rounded bg-transparent cursor-pointer"
-                          />
-                          <input 
-                            type="text"
-                            value={editingCard.custom_colors?.secondary || '#3b82f6'}
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), secondary: e.target.value }
-                            })}
-                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-slate-400 block">رنگ متن اصلی (Text):</span>
-                        <div className="flex gap-1">
-                          <input 
-                            type="color" 
-                            value={editingCard.custom_colors?.text || '#1e293b'} 
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), text: e.target.value }
-                            })}
-                            className="h-7 w-7 rounded bg-transparent cursor-pointer"
-                          />
-                          <input 
-                            type="text"
-                            value={editingCard.custom_colors?.text || '#1e293b'}
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), text: e.target.value }
-                            })}
-                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-slate-400 block">رنگ بدنه کارت (Card):</span>
-                        <div className="flex gap-1">
-                          <input 
-                            type="color" 
-                            value={editingCard.custom_colors?.card_bg || '#ffffff'} 
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), card_bg: e.target.value }
-                            })}
-                            className="h-7 w-7 rounded bg-transparent cursor-pointer"
-                          />
-                          <input 
-                            type="text"
-                            value={editingCard.custom_colors?.card_bg || '#ffffff'}
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), card_bg: e.target.value }
-                            })}
-                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-slate-400 block">رنگ پس‌زمینه (Background):</span>
-                        <div className="flex gap-1">
-                          <input 
-                            type="color" 
-                            value={editingCard.custom_colors?.background || '#f1f5f9'} 
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), background: e.target.value }
-                            })}
-                            className="h-7 w-7 rounded bg-transparent cursor-pointer"
-                          />
-                          <input 
-                            type="text"
-                            value={editingCard.custom_colors?.background || '#f1f5f9'}
-                            onChange={(e) => setEditingCard({
-                              ...editingCard,
-                              custom_colors: { ...(editingCard.custom_colors || {}), background: e.target.value }
-                            })}
-                            className="w-full px-1 py-0.5 bg-slate-950 text-[10px] font-mono rounded text-white dir-ltr text-center"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -1513,33 +1591,34 @@ export function CustomerCardsView({
                 <div className="h-1 w-8 rounded-full bg-slate-900"></div>
               </div>
 
-              <div className="flex-grow overflow-y-auto flex flex-col font-sans select-none transition-colors duration-200" dir="rtl" style={{ backgroundColor: editingCard.custom_colors?.background || '#f1f5f9', color: editingCard.custom_colors?.text || '#1e293b' }}>
-                {(() => {
-                  const templateId = editingCard.template_id;
-                  const cleanTId = (templateId || '').toLowerCase();
-                  const cleanTUuid = toUUID(templateId);
+              {(() => {
+                const templateId = editingCard.template_id;
+                const cleanTId = (templateId || '').toLowerCase();
+                const cleanTUuid = toUUID(templateId);
 
-                  const isClassic = !templateId || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
-                  const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
-                  const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
-                  const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+                const isClassic = !templateId || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
+                const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
+                const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
+                const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
 
-                  const primaryColor = editingCard.custom_colors?.primary || '#2563eb';
-                  const secondaryColor = editingCard.custom_colors?.secondary || '#3b82f6';
-                  const cardBg = editingCard.custom_colors?.card_bg || '#ffffff';
-                  const textColor = editingCard.custom_colors?.text || '#1e293b';
-                  const bgColor = editingCard.custom_colors?.background || '#f1f5f9';
+                const tmplDefaults = getTemplateDefaultColors(templateId, templates);
 
-                  // Check if it is a custom template from Directus (not one of the 4 hardcoded)
-                  const isCustomTemplate = !isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark;
-                  const activeTemplate = templates.find(t => toUUID(t.id) === toUUID(templateId));
+                const primaryColor = editingCard.custom_colors?.primary?.trim() ? editingCard.custom_colors.primary : tmplDefaults.primary;
+                const secondaryColor = editingCard.custom_colors?.secondary?.trim() ? editingCard.custom_colors.secondary : tmplDefaults.secondary;
+                const cardBg = editingCard.custom_colors?.card_bg?.trim() ? editingCard.custom_colors.card_bg : tmplDefaults.card_bg;
+                const textColor = editingCard.custom_colors?.text?.trim() ? editingCard.custom_colors.text : tmplDefaults.text;
+                const bgColor = editingCard.custom_colors?.background?.trim() ? editingCard.custom_colors.background : tmplDefaults.background;
 
-                  return (
-                    <>
-                      {/* Inject user's custom CSS live inside preview */}
-                      {editingCard.custom_css && (
-                        <style dangerouslySetInnerHTML={{ __html: editingCard.custom_css }} />
-                      )}
+                // Check if it is a custom template from Directus (not one of the 4 hardcoded)
+                const isCustomTemplate = !isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark;
+                const activeTemplate = templates.find(t => toUUID(t.id) === toUUID(templateId));
+
+                return (
+                  <div className="flex-grow overflow-y-auto flex flex-col font-sans select-none transition-colors duration-200" dir="rtl" style={{ backgroundColor: bgColor, color: textColor }}>
+                    {/* Inject user's custom CSS live inside preview */}
+                    {editingCard.custom_css && (
+                      <style dangerouslySetInnerHTML={{ __html: editingCard.custom_css }} />
+                    )}
 
                       {/* Classic Style */}
                       {isClassic && (
@@ -2792,10 +2871,9 @@ export function CustomerCardsView({
                           </div>
                         );
                       })()}
-                    </>
-                  );
-                })()}
-              </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 

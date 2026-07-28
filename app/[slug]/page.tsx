@@ -269,13 +269,6 @@ export default function PublicCardPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Custom styling variables override
-  const primaryColor = card.custom_colors?.primary || '#3b82f6';
-  const secondaryColor = card.custom_colors?.secondary || '#1d4ed8';
-  const bgColor = card.custom_colors?.background || '#f1f5f9';
-  const textCol = card.custom_colors?.text || '#1e293b';
-  const cardBgColor = card.custom_colors?.card_bg || '#ffffff';
-
   // Template Renders
   const templateId = card.template_id;
   const cleanTId = (templateId || '').toLowerCase();
@@ -286,6 +279,60 @@ export default function PublicCardPage() {
   const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
   const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
   const isCustomTemplate = !isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark;
+
+  // Template Default Colors Fallback
+  let tmplDefaults = {
+    primary: '#3b82f6',
+    secondary: '#1d4ed8',
+    background: '#f1f5f9',
+    card_bg: '#ffffff',
+    text: '#1e293b',
+  };
+
+  if (isLuxuryDark) {
+    tmplDefaults = {
+      primary: '#f59e0b',
+      secondary: '#d97706',
+      background: '#0c0a09',
+      card_bg: '#1c1917',
+      text: '#fef3c7',
+    };
+  } else if (isNeonGlass) {
+    tmplDefaults = {
+      primary: '#06b6d4',
+      secondary: '#3b82f6',
+      background: '#0f172a',
+      card_bg: '#0f172a',
+      text: '#ffffff',
+    };
+  } else if (isMinimal) {
+    tmplDefaults = {
+      primary: '#0f172a',
+      secondary: '#475569',
+      background: '#f8fafc',
+      card_bg: '#ffffff',
+      text: '#0f172a',
+    };
+  } else if (isCustomTemplate) {
+    const matchedTemp = templates.find(t => toUUID(t.id) === cleanTUuid || (t.slug && t.slug.toLowerCase() === cleanTId));
+    const schemaColors = matchedTemp?.schema?.default_colors || matchedTemp?.schema?.colors || (matchedTemp as any)?.default_colors;
+    if (schemaColors) {
+      tmplDefaults = {
+        primary: schemaColors.primary || tmplDefaults.primary,
+        secondary: schemaColors.secondary || tmplDefaults.secondary,
+        background: schemaColors.background || tmplDefaults.background,
+        card_bg: schemaColors.card_bg || tmplDefaults.card_bg,
+        text: schemaColors.text || tmplDefaults.text,
+      };
+    }
+  }
+
+  // Priority logic: User's custom_colors overrides template defaults
+  const primaryColor = card.custom_colors?.primary?.trim() ? card.custom_colors.primary : tmplDefaults.primary;
+  const secondaryColor = card.custom_colors?.secondary?.trim() ? card.custom_colors.secondary : tmplDefaults.secondary;
+  const bgColor = card.custom_colors?.background?.trim() ? card.custom_colors.background : tmplDefaults.background;
+  const textCol = card.custom_colors?.text?.trim() ? card.custom_colors.text : tmplDefaults.text;
+  const cardBgColor = card.custom_colors?.card_bg?.trim() ? card.custom_colors.card_bg : tmplDefaults.card_bg;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
