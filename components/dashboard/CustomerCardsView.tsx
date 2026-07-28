@@ -6,9 +6,11 @@ import {
   Settings, User, LayoutGrid, CreditCard, BarChart2, ShieldCheck, 
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
-  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, Linkedin, Download, QrCode
+  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, Linkedin, Download, QrCode,
+  GripVertical, MoveUp, MoveDown, Layers, RotateCcw, AlignRight, Share2
 } from 'lucide-react';
-import { Card, Template, toUUID, getImageUrl, dbService, toJalaliDate } from '../../lib/directus';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { Card, Template, toUUID, getImageUrl, dbService, toJalaliDate, SECTION_DEFINITIONS, getSectionOrders, DEFAULT_SECTION_ORDERS } from '../../lib/directus';
 import { saveCardToContacts } from '../../lib/vcard';
 
 export interface CustomerCardsViewProps {
@@ -78,8 +80,46 @@ export function CustomerCardsView({
   userPlan,
   onNavigateToBilling
 }: CustomerCardsViewProps) {
-  const [editorTab, setEditorTab] = React.useState<'info' | 'contact' | 'maps' | 'bank' | 'advanced'>('info');
+  const [editorTab, setEditorTab] = React.useState<'info' | 'contact' | 'maps' | 'bank' | 'advanced' | 'layout'>('info');
   const [previewCopiedField, setPreviewCopiedField] = React.useState<string | null>(null);
+
+  // Drag and drop reordering handlers for card builder
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination || !editingCard) return;
+    const currentOrders = getSectionOrders(editingCard);
+    const items = Array.from(currentOrders);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setEditingCard({
+      ...editingCard,
+      section_orders: items
+    });
+  };
+
+  const handleMoveSection = (index: number, direction: 'up' | 'down') => {
+    if (!editingCard) return;
+    const currentOrders = getSectionOrders(editingCard);
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= currentOrders.length) return;
+
+    const items = Array.from(currentOrders);
+    const [moved] = items.splice(index, 1);
+    items.splice(targetIndex, 0, moved);
+
+    setEditingCard({
+      ...editingCard,
+      section_orders: items
+    });
+  };
+
+  const handleResetSectionOrders = () => {
+    if (!editingCard) return;
+    setEditingCard({
+      ...editingCard,
+      section_orders: DEFAULT_SECTION_ORDERS
+    });
+  };
 
   // QR Code Modal State
   const [selectedQrCard, setSelectedQrCard] = React.useState<Card | null>(null);
@@ -433,7 +473,7 @@ export function CustomerCardsView({
             </div>
 
             {/* Tabs Navigation (Grid-based, highly responsive & beautifully compact to avoid horizontal scrolling) */}
-            <div className="grid grid-cols-5 bg-slate-900/40 p-1 rounded-xl gap-1 text-[10px] sm:text-xs font-bold border border-slate-850">
+            <div className="grid grid-cols-6 bg-slate-900/40 p-1 rounded-xl gap-1 text-[10px] sm:text-xs font-bold border border-slate-850">
               <button 
                 type="button"
                 onClick={() => setEditorTab('info')}
@@ -473,6 +513,14 @@ export function CustomerCardsView({
               >
                 <Code className="h-4 w-4 shrink-0" />
                 <span className="text-[9px] sm:text-[11px] truncate">دکمه‌ها</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => setEditorTab('layout')}
+                className={`py-2 px-1 rounded-lg transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${editorTab === 'layout' ? 'bg-blue-600 text-white shadow shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'}`}
+              >
+                <GripVertical className="h-4 w-4 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] truncate">چیدمان</span>
               </button>
             </div>
 
@@ -1321,6 +1369,133 @@ export function CustomerCardsView({
                 </div>
               )}
 
+              {editorTab === 'layout' && (
+                <div className="space-y-4 pt-2">
+                  <div className="p-4 bg-slate-900/40 border border-slate-850 rounded-xl space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h5 className="font-bold text-white text-xs flex items-center gap-1.5">
+                          <GripVertical className="h-4 w-4 text-amber-400" />
+                          مدیریت چیدمان و اولویت بخش‌ها (Drag & Drop Builder)
+                        </h5>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          با جابه‌جایی آیکون یا دکمه‌های بالا/پایین، چیدمان دقیق کارت خود را شخصی‌سازی کنید.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleResetSectionOrders}
+                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-medium flex items-center gap-1 transition"
+                        title="بازنشانی چیدمان به حالت پیش‌فرض"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5 text-amber-400" />
+                        <span>بازنشانی پیش‌فرض</span>
+                      </button>
+                    </div>
+
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                      <Droppable droppableId="card-sections-droppable">
+                        {(provided, snapshot) => (
+                          <div
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            className={`space-y-2.5 p-1 rounded-xl transition ${
+                              snapshot.isDraggingOver ? 'bg-blue-950/20 border border-blue-500/30' : ''
+                            }`}
+                          >
+                            {getSectionOrders(editingCard).map((secId, index) => {
+                              const def = SECTION_DEFINITIONS.find((d) => d.id === secId) || {
+                                id: secId,
+                                title: secId,
+                                description: 'بخش سفارشی کارت',
+                                icon: 'Layers',
+                              };
+
+                              const renderIcon = () => {
+                                switch (secId) {
+                                  case 'save_contact':
+                                    return <Download className="h-4 w-4 text-amber-400 shrink-0" />;
+                                  case 'bio':
+                                    return <AlignRight className="h-4 w-4 text-sky-400 shrink-0" />;
+                                  case 'primary_actions':
+                                    return <Phone className="h-4 w-4 text-emerald-400 shrink-0" />;
+                                  case 'social_links':
+                                    return <Share2 className="h-4 w-4 text-pink-400 shrink-0" />;
+                                  case 'custom_buttons':
+                                    return <ExternalLink className="h-4 w-4 text-violet-400 shrink-0" />;
+                                  case 'location':
+                                    return <MapPin className="h-4 w-4 text-red-400 shrink-0" />;
+                                  case 'bank_info':
+                                    return <CreditCard className="h-4 w-4 text-amber-500 shrink-0" />;
+                                  default:
+                                    return <Layers className="h-4 w-4 text-blue-400 shrink-0" />;
+                                }
+                              };
+
+                              return (
+                                <Draggable key={secId} draggableId={secId} index={index}>
+                                  {(draggableProvided, draggableSnapshot) => (
+                                    <div
+                                      ref={draggableProvided.innerRef}
+                                      {...draggableProvided.draggableProps}
+                                      className={`p-3 bg-slate-950 border rounded-xl flex items-center justify-between gap-3 transition ${
+                                        draggableSnapshot.isDragging
+                                          ? 'border-blue-500 shadow-2xl shadow-blue-500/20 scale-[1.02] bg-slate-900 z-50'
+                                          : 'border-slate-800 hover:border-slate-700'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        <div
+                                          {...draggableProvided.dragHandleProps}
+                                          className="p-1.5 text-slate-500 hover:text-amber-400 cursor-grab active:cursor-grabbing rounded-lg hover:bg-slate-900 transition"
+                                          title="برای جابه‌جایی بکشید"
+                                        >
+                                          <GripVertical className="h-5 w-5" />
+                                        </div>
+                                        <div className="p-2 bg-slate-900 border border-slate-800 rounded-lg">
+                                          {renderIcon()}
+                                        </div>
+                                        <div className="min-w-0 text-right">
+                                          <h6 className="text-xs font-bold text-white truncate">{def.title}</h6>
+                                          <p className="text-[10px] text-slate-400 truncate">{def.description}</p>
+                                        </div>
+                                      </div>
+
+                                      {/* Quick Up/Down Buttons */}
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleMoveSection(index, 'up')}
+                                          disabled={index === 0}
+                                          className="p-1.5 text-slate-400 hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 hover:bg-slate-900 rounded-lg transition"
+                                          title="انتقال به بالا"
+                                        >
+                                          <MoveUp className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleMoveSection(index, 'down')}
+                                          disabled={index === getSectionOrders(editingCard).length - 1}
+                                          className="p-1.5 text-slate-400 hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 hover:bg-slate-900 rounded-lg transition"
+                                          title="انتقال به پایین"
+                                        >
+                                          <MoveDown className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </Draggable>
+                              );
+                            })}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
 
@@ -1391,7 +1566,7 @@ export function CustomerCardsView({
                             </span>
                           </div>
 
-                          {/* Info */}
+                          {/* Info & Dynamic Ordered Sections */}
                           <div className="p-3 space-y-3 flex-grow overflow-y-auto">
                             <div>
                               <h4 className="text-xs font-black" style={{ color: textColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
@@ -1399,202 +1574,210 @@ export function CustomerCardsView({
                               <p className="text-[8px] opacity-70" style={{ color: textColor }}>{editingCard.company || 'نام برند یا شرکت'}</p>
                             </div>
 
-                            {editingCard.bio && (
-                              <div className="p-2 bg-white/60 rounded-xl text-[8px] leading-relaxed border border-slate-200/50 opacity-90" style={{ color: textColor }}>
-                                {editingCard.bio}
-                              </div>
-                            )}
-
-                            {/* Download contact mockup */}
-                            <div 
-                              onClick={() => editingCard && saveCardToContacts(editingCard)}
-                              className="w-full py-1.5 rounded-lg text-white flex items-center justify-center gap-1 text-[8px] font-bold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition" 
-                              style={{ backgroundColor: primaryColor }}
-                            >
-                              <Download className="h-2.5 w-2.5" />
-                              <span>ذخیره در مخاطبین گوشی</span>
-                            </div>
-
-                            {/* Social Contact links Grid */}
-                            <div className="space-y-1">
-                              <h5 className="text-[7.5px] font-bold opacity-60">راه‌های ارتباطی</h5>
-                              <div className="grid grid-cols-4 gap-1">
-                                {editingCard.social_links?.phone && (
-                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
-                                    <Phone className="h-3 w-3 text-blue-500 mb-0.5" />
-                                    <span>تماس</span>
-                                  </div>
-                                )}
-                                {editingCard.social_links?.mobile && (
-                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
-                                    <Phone className="h-3 w-3 text-emerald-500 mb-0.5" />
-                                    <span>موبایل</span>
-                                  </div>
-                                )}
-                                {editingCard.social_links?.email && (
-                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
-                                    <Mail className="h-3 w-3 text-blue-400 mb-0.5" />
-                                    <span>ایمیل</span>
-                                  </div>
-                                )}
-                                {editingCard.social_links?.telegram && (
-                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
-                                    <Send className="h-3 w-3 text-sky-500 mb-0.5" />
-                                    <span>تلگرام</span>
-                                  </div>
-                                )}
-                                {editingCard.social_links?.whatsapp && (
-                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
-                                    <MessageCircle className="h-3 w-3 text-emerald-500 mb-0.5" />
-                                    <span>واتساپ</span>
-                                  </div>
-                                )}
-                                {editingCard.social_links?.instagram && (
-                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
-                                    <Instagram className="h-3 w-3 text-pink-500 mb-0.5" />
-                                    <span>اینستا</span>
-                                  </div>
-                                )}
-                                {editingCard.social_links?.linkedin && (
-                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
-                                    <Linkedin className="h-3 w-3 text-indigo-600 mb-0.5" />
-                                    <span>لینکدین</span>
-                                  </div>
-                                )}
-                                {editingCard.social_links?.website && (
-                                  <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
-                                    <Globe className="h-3 w-3 text-violet-600 mb-0.5" />
-                                    <span>وبسایت</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Map links */}
-                            {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
-                              <div className="space-y-1 pt-1.5 border-t border-slate-200/50">
-                                <h5 className="text-[7.5px] font-bold opacity-60">مسیریابی روی نقشه</h5>
-                                <div className="grid grid-cols-2 gap-1">
-                                  {editingCard.neshan && (
-                                    <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
-                                      <MapPin className="h-2.5 w-2.5 text-emerald-500 shrink-0" />
-                                      <span>نشان</span>
-                                    </div>
-                                  )}
-                                  {editingCard.balad && (
-                                    <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
-                                      <MapPin className="h-2.5 w-2.5 text-blue-500 shrink-0" />
-                                      <span>بلد</span>
-                                    </div>
-                                  )}
-                                  {editingCard.waze && (
-                                    <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
-                                      <MapPin className="h-2.5 w-2.5 text-amber-500 shrink-0" />
-                                      <span>ویز</span>
-                                    </div>
-                                  )}
-                                  {editingCard.googlemap && (
-                                    <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
-                                      <MapPin className="h-2.5 w-2.5 text-red-500 shrink-0" />
-                                      <span>گوگل مپ</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Additional custom button links */}
-                            {editingCard.custom_buttons && editingCard.custom_buttons.length > 0 && (
-                              <div className="space-y-1 pt-1.5 border-t border-slate-200/50">
-                                <h5 className="text-[7.5px] font-bold opacity-60">لینک‌های کاربردی</h5>
-                                {editingCard.custom_buttons.map((btn) => (
-                                  <div 
-                                    key={btn.id}
-                                    className="p-1 bg-white border border-slate-200 rounded-lg flex items-center justify-between text-[7.5px] font-bold shadow-sm"
-                                    style={{ borderRightColor: primaryColor, borderRightWidth: '3px', color: textColor }}
-                                  >
-                                    <span>{btn.label}</span>
-                                    <span className="opacity-40">➔</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Extra/multiple contacts */}
-                            {(editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) && (
-                              <div className="space-y-1 pt-1.5 border-t border-slate-200/50">
-                                <h5 className="text-[7.5px] font-bold opacity-60">تلفن‌های همراه</h5>
-                                <div className="space-y-1">
-                                  {editingCard.social_links?.mobile && (
-                                    <div className="flex items-center justify-between p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
-                                      <span>موبایل اصلی:</span>
-                                      <span className="font-mono text-slate-500">{editingCard.social_links.mobile}</span>
-                                    </div>
-                                  )}
-                                  {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
-                                    <div key={idx} className="flex items-center justify-between p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
-                                      <span>تلفن جانبی {idx + 1}:</span>
-                                      <span className="font-mono text-slate-500">{ph}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Address Section */}
-                            {editingCard.address && (
-                              <div className="space-y-1 pt-1.5 border-t border-slate-200/50">
-                                <h5 className="text-[7.5px] font-bold opacity-60 flex items-center gap-1">
-                                  <MapPin className="h-3 w-3 text-emerald-500 shrink-0" />
-                                  <span>نشانی و دفتر مرکزی</span>
-                                </h5>
-                                <p className="p-2 bg-white/80 border border-slate-200/40 rounded-lg text-[7px] text-slate-700 leading-relaxed text-center">
-                                  {editingCard.address}
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Financial Section */}
-                            {(editingCard.bank_card || editingCard.bank_account || editingCard.bank_shaba) && (
-                              <div className="space-y-1.5 pt-1.5 border-t border-slate-200/50">
-                                <h5 className="text-[7.5px] font-bold opacity-60 flex items-center gap-1">
-                                  <CreditCard className="h-3 w-3 text-[#e2b53e] shrink-0" />
-                                  <span>شماره حساب و کارت</span>
-                                </h5>
-                                <div className="space-y-1">
-                                  {editingCard.bank_card && (
+                            {getSectionOrders(editingCard).map((secKey) => {
+                              switch (secKey) {
+                                case 'save_contact':
+                                  return (
                                     <div 
-                                      onClick={() => handlePreviewCopyText(editingCard.bank_card || '', 'bank_card')}
-                                      className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
-                                      title="کپی"
+                                      key="sec_classic_save"
+                                      onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                      className="w-full py-1.5 rounded-lg text-white flex items-center justify-center gap-1 text-[8px] font-bold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition" 
+                                      style={{ backgroundColor: primaryColor }}
                                     >
-                                      <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_card' ? 'کپی شد!' : 'کارت:'}</span>
-                                      <span className="font-mono font-bold text-slate-700">{editingCard.bank_card}</span>
+                                      <Download className="h-2.5 w-2.5" />
+                                      <span>ذخیره در مخاطبین گوشی</span>
                                     </div>
-                                  )}
-                                  {editingCard.bank_account && (
-                                    <div 
-                                      onClick={() => handlePreviewCopyText(editingCard.bank_account || '', 'bank_account')}
-                                      className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
-                                      title="کپی"
-                                    >
-                                      <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_account' ? 'کپی شد!' : 'حساب:'}</span>
-                                      <span className="font-mono font-bold text-slate-700">{editingCard.bank_account}</span>
+                                  );
+                                case 'bio':
+                                  return editingCard.bio ? (
+                                    <div key="sec_classic_bio" className="p-2 bg-white/60 rounded-xl text-[8px] leading-relaxed border border-slate-200/50 opacity-90" style={{ color: textColor }}>
+                                      {editingCard.bio}
                                     </div>
-                                  )}
-                                  {editingCard.bank_shaba && (
-                                    <div 
-                                      onClick={() => handlePreviewCopyText(editingCard.bank_shaba || '', 'bank_shaba')}
-                                      className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
-                                      title="کپی"
-                                    >
-                                      <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_shaba' ? 'کپی شد!' : 'شبا:'}</span>
-                                      <span className="font-mono font-bold text-slate-700" dir="ltr">{editingCard.bank_shaba}</span>
+                                  ) : null;
+                                case 'primary_actions':
+                                  return (editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) ? (
+                                    <div key="sec_classic_primary" className="space-y-1 pt-1.5 border-t border-slate-200/50">
+                                      <h5 className="text-[7.5px] font-bold opacity-60">تلفن‌های همراه</h5>
+                                      <div className="space-y-1">
+                                        {editingCard.social_links?.mobile && (
+                                          <div className="flex items-center justify-between p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                            <span>موبایل اصلی:</span>
+                                            <span className="font-mono text-slate-500">{editingCard.social_links.mobile}</span>
+                                          </div>
+                                        )}
+                                        {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
+                                          <div key={idx} className="flex items-center justify-between p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                            <span>تلفن جانبی {idx + 1}:</span>
+                                            <span className="font-mono text-slate-500">{ph}</span>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                                  ) : null;
+                                case 'social_links':
+                                  return (
+                                    <div key="sec_classic_social" className="space-y-1">
+                                      <h5 className="text-[7.5px] font-bold opacity-60">راه‌های ارتباطی</h5>
+                                      <div className="grid grid-cols-4 gap-1">
+                                        {editingCard.social_links?.phone && (
+                                          <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                            <Phone className="h-3 w-3 text-blue-500 mb-0.5" />
+                                            <span>تماس</span>
+                                          </div>
+                                        )}
+                                        {editingCard.social_links?.mobile && (
+                                          <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                            <Phone className="h-3 w-3 text-emerald-500 mb-0.5" />
+                                            <span>موبایل</span>
+                                          </div>
+                                        )}
+                                        {editingCard.social_links?.email && (
+                                          <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                            <Mail className="h-3 w-3 text-blue-400 mb-0.5" />
+                                            <span>ایمیل</span>
+                                          </div>
+                                        )}
+                                        {editingCard.social_links?.telegram && (
+                                          <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                            <Send className="h-3 w-3 text-sky-500 mb-0.5" />
+                                            <span>تلگرام</span>
+                                          </div>
+                                        )}
+                                        {editingCard.social_links?.whatsapp && (
+                                          <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                            <MessageCircle className="h-3 w-3 text-emerald-500 mb-0.5" />
+                                            <span>واتساپ</span>
+                                          </div>
+                                        )}
+                                        {editingCard.social_links?.instagram && (
+                                          <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                            <Instagram className="h-3 w-3 text-pink-500 mb-0.5" />
+                                            <span>اینستا</span>
+                                          </div>
+                                        )}
+                                        {editingCard.social_links?.linkedin && (
+                                          <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                            <Linkedin className="h-3 w-3 text-indigo-600 mb-0.5" />
+                                            <span>لینکدین</span>
+                                          </div>
+                                        )}
+                                        {editingCard.social_links?.website && (
+                                          <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
+                                            <Globe className="h-3 w-3 text-violet-600 mb-0.5" />
+                                            <span>وبسایت</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                case 'custom_buttons':
+                                  return (editingCard.custom_buttons && editingCard.custom_buttons.length > 0) ? (
+                                    <div key="sec_classic_custom" className="space-y-1 pt-1.5 border-t border-slate-200/50">
+                                      <h5 className="text-[7.5px] font-bold opacity-60">لینک‌های کاربردی</h5>
+                                      {editingCard.custom_buttons.map((btn) => (
+                                        <div 
+                                          key={btn.id}
+                                          className="p-1 bg-white border border-slate-200 rounded-lg flex items-center justify-between text-[7.5px] font-bold shadow-sm"
+                                          style={{ borderRightColor: primaryColor, borderRightWidth: '3px', color: textColor }}
+                                        >
+                                          <span>{btn.label}</span>
+                                          <span className="opacity-40">➔</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : null;
+                                case 'location':
+                                  return (editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap || editingCard.address) ? (
+                                    <div key="sec_classic_loc" className="space-y-1 pt-1.5 border-t border-slate-200/50">
+                                      {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
+                                        <>
+                                          <h5 className="text-[7.5px] font-bold opacity-60">مسیریابی روی نقشه</h5>
+                                          <div className="grid grid-cols-2 gap-1 mb-1">
+                                            {editingCard.neshan && (
+                                              <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                                <MapPin className="h-2.5 w-2.5 text-emerald-500 shrink-0" />
+                                                <span>نشان</span>
+                                              </div>
+                                            )}
+                                            {editingCard.balad && (
+                                              <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                                <MapPin className="h-2.5 w-2.5 text-blue-500 shrink-0" />
+                                                <span>بلد</span>
+                                              </div>
+                                            )}
+                                            {editingCard.waze && (
+                                              <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                                <MapPin className="h-2.5 w-2.5 text-amber-500 shrink-0" />
+                                                <span>ویز</span>
+                                              </div>
+                                            )}
+                                            {editingCard.googlemap && (
+                                              <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
+                                                <MapPin className="h-2.5 w-2.5 text-red-500 shrink-0" />
+                                                <span>گوگل مپ</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </>
+                                      )}
+                                      {editingCard.address && (
+                                        <>
+                                          <h5 className="text-[7.5px] font-bold opacity-60 flex items-center gap-1">
+                                            <MapPin className="h-3 w-3 text-emerald-500 shrink-0" />
+                                            <span>نشانی و دفتر مرکزی</span>
+                                          </h5>
+                                          <p className="p-2 bg-white/80 border border-slate-200/40 rounded-lg text-[7px] text-slate-700 leading-relaxed text-center">
+                                            {editingCard.address}
+                                          </p>
+                                        </>
+                                      )}
+                                    </div>
+                                  ) : null;
+                                case 'bank_info':
+                                  return (editingCard.bank_card || editingCard.bank_account || editingCard.bank_shaba) ? (
+                                    <div key="sec_classic_bank" className="space-y-1.5 pt-1.5 border-t border-slate-200/50">
+                                      <h5 className="text-[7.5px] font-bold opacity-60 flex items-center gap-1">
+                                        <CreditCard className="h-3 w-3 text-[#e2b53e] shrink-0" />
+                                        <span>شماره حساب و کارت</span>
+                                      </h5>
+                                      <div className="space-y-1">
+                                        {editingCard.bank_card && (
+                                          <div 
+                                            onClick={() => handlePreviewCopyText(editingCard.bank_card || '', 'bank_card')}
+                                            className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
+                                            title="کپی"
+                                          >
+                                            <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_card' ? 'کپی شد!' : 'کارت:'}</span>
+                                            <span className="font-mono font-bold text-slate-700">{editingCard.bank_card}</span>
+                                          </div>
+                                        )}
+                                        {editingCard.bank_account && (
+                                          <div 
+                                            onClick={() => handlePreviewCopyText(editingCard.bank_account || '', 'bank_account')}
+                                            className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
+                                            title="کپی"
+                                          >
+                                            <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_account' ? 'کپی شد!' : 'حساب:'}</span>
+                                            <span className="font-mono font-bold text-slate-700">{editingCard.bank_account}</span>
+                                          </div>
+                                        )}
+                                        {editingCard.bank_shaba && (
+                                          <div 
+                                            onClick={() => handlePreviewCopyText(editingCard.bank_shaba || '', 'bank_shaba')}
+                                            className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
+                                            title="کپی"
+                                          >
+                                            <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_shaba' ? 'کپی شد!' : 'شبا:'}</span>
+                                            <span className="font-mono font-bold text-slate-700" dir="ltr">{editingCard.bank_shaba}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : null;
+                                default:
+                                  return null;
+                              }
+                            })}
 
                           </div>
                         </div>

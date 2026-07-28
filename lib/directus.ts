@@ -110,6 +110,7 @@ export interface Card {
     text?: string;
     card_bg?: string;
   } | null;
+  section_orders?: string[] | string | null;
   custom_css?: string | null;
   views_count: number;
   expiry_date?: string | null;
@@ -615,7 +616,61 @@ export function parseCardFields(card: any): Card {
     }
   }
 
+  if (typeof parsed.section_orders === 'string') {
+    try {
+      parsed.section_orders = JSON.parse(parsed.section_orders);
+    } catch (e) {
+      console.warn("Failed to parse section_orders", e);
+    }
+  }
+
   return parsed;
+}
+
+export const DEFAULT_SECTION_ORDERS = [
+  'save_contact',
+  'bio',
+  'primary_actions',
+  'social_links',
+  'custom_buttons',
+  'location',
+  'bank_info'
+];
+
+export const SECTION_DEFINITIONS = [
+  { id: 'save_contact', title: 'دکمه ذخیره مخاطب (vCard)', description: 'دکمه ذخیره مستقیم اطلاعات تماس در دفترچه تلفن گوشی', icon: 'Download' },
+  { id: 'bio', title: 'بیوگرافی و درباره من', description: 'خلاصه سوابق کاری، متن معرفی و شرح خدمات شما', icon: 'AlignRight' },
+  { id: 'primary_actions', title: 'دکمه‌های سریع ارتباطی', description: 'کلیدهای میانبر تلفن ثابت، همراه، ایمیل و وب‌سایت', icon: 'Phone' },
+  { id: 'social_links', title: 'شبکه‌های اجتماعی', description: 'آیکون‌های اینستاگرام، تلگرام، واتساپ، لینکدین و توییتر', icon: 'Share2' },
+  { id: 'custom_buttons', title: 'دکمه‌های لینک سفارشی', description: 'کلیدها و لینک‌های اختصاصی تعریف‌شده توسط شما', icon: 'ExternalLink' },
+  { id: 'location', title: 'آدرس و مسیریاب‌ها', description: 'آدرس دفتر و دکمه‌های مسیریابی (گوگل مپ، نشان، بلد، ویز)', icon: 'MapPin' },
+  { id: 'bank_info', title: 'اطلاعات حساب و کارت بانکی', description: 'شماره کارت، شماره حساب و شماره شبا جهت دریافت وجه', icon: 'CreditCard' }
+];
+
+export function getSectionOrders(card?: Partial<Card> | null): string[] {
+  if (!card || !card.section_orders) return DEFAULT_SECTION_ORDERS;
+
+  let orders: string[] = [];
+  if (Array.isArray(card.section_orders)) {
+    orders = card.section_orders;
+  } else if (typeof card.section_orders === 'string') {
+    try {
+      orders = JSON.parse(card.section_orders);
+    } catch {
+      orders = DEFAULT_SECTION_ORDERS;
+    }
+  }
+
+  if (!Array.isArray(orders) || orders.length === 0) return DEFAULT_SECTION_ORDERS;
+
+  const result = [...orders];
+  DEFAULT_SECTION_ORDERS.forEach(sec => {
+    if (!result.includes(sec)) {
+      result.push(sec);
+    }
+  });
+
+  return result;
 }
 
 // Ensure the tenant_id in the payload is valid in Directus DB, otherwise set it to null to avoid foreign key violations

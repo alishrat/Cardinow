@@ -1,0 +1,25 @@
+{
+  "name": "کاردینو | کارت ویزیت دیجیتال هوشمند",
+  "short_name": "کاردینو",
+  "description": "سامانه مدیریت و اشتراک‌گذاری سریع کارت ویزیت هوشمند دیجیتال",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
