@@ -62,9 +62,7 @@ export default function PublicCardPage() {
         throw new Error(json.error || 'خطا در ارسال کد تایید');
       }
       setSubscribeMessage(json.message || 'کد تایید پیامکی ارسال شد.');
-      if (json.dev_code) {
-        setSubscribeCode(json.dev_code);
-      }
+      setSubscribeCode('');
       setSubscribeStep('code');
     } catch (err: any) {
       setSubscribeError(err.message);

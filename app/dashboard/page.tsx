@@ -90,9 +90,7 @@ function DashboardContent() {
         throw new Error(json.error || 'خطا در ارسال کد تایید');
       }
       setOtpMessage(json.message || 'کد تایید پیامکی ارسال شد.');
-      if (json.dev_code) {
-        setOtpCode(json.dev_code);
-      }
+      setOtpCode('');
       setOtpStep('code');
     } catch (err: any) {
       setAuthError(err.message);

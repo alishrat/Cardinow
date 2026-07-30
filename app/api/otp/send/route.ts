@@ -78,36 +78,89 @@ export async function POST(req: NextRequest) {
     let smsSent = false;
     let smsMessage = '';
 
-    if (ippanelApi && ippanelPattern) {
-      // Attempt to send pattern SMS via IPPanel REST API
+    const cleanErrorDetail = (text: string): string => {
+      if (!text) return 'پاسخ نامعتبر پنل';
+      if (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('502 Bad Gateway')) {
+        return 'سرور سامانه پیامک موقتاً در دسترس نیست (خطای 502/Gateway)';
+      }
       try {
-        const ippanelRes = await fetch('https://api2.ippanel.com/api/v1/sms/pattern/normal/send', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': ippanelApi
-          },
+        const parsed = JSON.parse(text);
+        if (parsed.message) return String(parsed.message);
+        if (parsed.error) return typeof parsed.error === 'string' ? parsed.error : JSON.stringify(parsed.error);
+      } catch (e) {
+        // Strip HTML tags if present
+        const stripped = text.replace(/<[^>]*>?/gm, '').trim();
+        if (stripped.length > 0 && stripped.length < 150) return stripped;
+      }
+      return 'خطا در ارتباط با سامانه پیامک';
+    };
+
+    if (ippanelApi && ippanelPattern) {
+      const trimmedApi = ippanelApi.trim();
+      const trimmedPattern = ippanelPattern.trim();
+      const authHeader = trimmedApi.startsWith('ApiKey ') ? trimmedApi : `ApiKey ${trimmedApi}`;
+
+      // Try multiple IPPanel endpoints in sequence
+      const endpoints = [
+        {
+          url: 'https://api2.ippanel.com/api/v1/sms/pattern/normal/send',
+          headers: { 'Content-Type': 'application/json', 'Authorization': trimmedApi },
           body: JSON.stringify({
-            code: ippanelPattern,
+            code: trimmedPattern,
             sender: '+983000505',
             recipient: mobile,
-            variable: {
-              code: code
-            }
+            variable: { code: code, verification_code: code, otp: code }
           })
-        });
-
-        if (ippanelRes.ok) {
-          smsSent = true;
-          smsMessage = 'کد تایید با موفقیت از طریق پیامک ارسال شد.';
-        } else {
-          const errText = await ippanelRes.text();
-          console.warn('IPPanel send error:', errText);
-          smsMessage = 'کد تایید صادر شد (ارسال پیامکی با خطا مواجه شد).';
+        },
+        {
+          url: 'https://edge.ippanel.com/api/v1/sms/pattern/normal/send',
+          headers: { 'Content-Type': 'application/json', 'Authorization': trimmedApi },
+          body: JSON.stringify({
+            code: trimmedPattern,
+            sender: '+983000505',
+            recipient: mobile,
+            variable: { code: code, verification_code: code, otp: code }
+          })
+        },
+        {
+          url: 'https://rest.ippanel.com/v1/messages/patterns/send',
+          headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+          body: JSON.stringify({
+            pattern_code: trimmedPattern,
+            originator: '+983000505',
+            recipient: mobile,
+            values: { code: code, verification_code: code, otp: code }
+          })
         }
-      } catch (smsErr: any) {
-        console.warn('IPPanel fetch failed:', smsErr);
-        smsMessage = 'کد تایید صادر شد.';
+      ];
+
+      let lastErrText = '';
+
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep.url, {
+            method: 'POST',
+            headers: ep.headers,
+            body: ep.body
+          });
+
+          if (res.ok) {
+            smsSent = true;
+            smsMessage = 'کد تایید با موفقیت از طریق پیامک ارسال شد.';
+            break;
+          } else {
+            const rawText = await res.text();
+            console.warn(`IPPanel endpoint (${ep.url}) failed status ${res.status}:`, rawText);
+            lastErrText = cleanErrorDetail(rawText);
+          }
+        } catch (fetchErr: any) {
+          console.warn(`IPPanel endpoint (${ep.url}) fetch exception:`, fetchErr.message);
+          lastErrText = `خطای شبکه: ${fetchErr.message}`;
+        }
+      }
+
+      if (!smsSent) {
+        smsMessage = `کد تایید صادر شد (ارسال پیامک با خطا مواجه شد: ${lastErrText}).`;
       }
     } else {
       smsMessage = 'کد تایید صادر شد. (جهت ارسال پیامک واقعی، کلید IPPanel را در تنظیمات وارد کنید)';
@@ -115,10 +168,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      smsSent: smsSent,
       message: smsMessage,
       mobile: mobile,
-      // For testing / dev convenience if SMS panel key not set:
-      dev_code: (!ippanelApi) ? code : undefined
+      dev_code: (!smsSent) ? code : undefined
     });
   } catch (err: any) {
     console.error('OTP send route error:', err);

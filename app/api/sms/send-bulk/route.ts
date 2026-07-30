@@ -63,33 +63,76 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Call IPPanel send API
+    // Call IPPanel send API with multiple endpoint fallbacks
     let successCount = 0;
-    try {
-      // Send single / bulk SMS request to IPPanel REST API
-      const ippanelRes = await fetch('https://api2.ippanel.com/api/v1/sms/send/panel/single', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': ippanelApi
-        },
-        body: JSON.stringify({
-          sender: '+983000505',
-          recipient: mobiles,
-          message: message
-        })
-      });
+    let smsError = '';
 
-      if (ippanelRes.ok) {
-        successCount = mobiles.length;
-      } else {
-        const errText = await ippanelRes.text();
-        console.warn('IPPanel bulk send response:', errText);
-        successCount = mobiles.length; // Assume sent request logged
+    const cleanErrorDetail = (text: string): string => {
+      if (!text) return 'پاسخ نامعتبر پنل';
+      if (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('502 Bad Gateway')) {
+        return 'سرور سامانه پیامک موقتاً در دسترس نیست (خطای Gateway 502)';
       }
-    } catch (apiErr) {
-      console.warn('IPPanel bulk request failed:', apiErr);
-      successCount = mobiles.length;
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.message) return String(parsed.message);
+        if (parsed.error) return typeof parsed.error === 'string' ? parsed.error : JSON.stringify(parsed.error);
+      } catch (e) {
+        const stripped = text.replace(/<[^>]*>?/gm, '').trim();
+        if (stripped.length > 0 && stripped.length < 150) return stripped;
+      }
+      return 'خطا در ارتباط با سامانه پیامک';
+    };
+
+    const trimmedApi = ippanelApi.trim();
+    const authHeader = trimmedApi.startsWith('ApiKey ') ? trimmedApi : `ApiKey ${trimmedApi}`;
+
+    const endpoints = [
+      {
+        url: 'https://api2.ippanel.com/api/v1/sms/send/panel/single',
+        headers: { 'Content-Type': 'application/json', 'Authorization': trimmedApi },
+        body: JSON.stringify({ sender: '+983000505', recipient: mobiles, message: message })
+      },
+      {
+        url: 'https://edge.ippanel.com/api/v1/sms/send/panel/single',
+        headers: { 'Content-Type': 'application/json', 'Authorization': trimmedApi },
+        body: JSON.stringify({ sender: '+983000505', recipient: mobiles, message: message })
+      },
+      {
+        url: 'https://rest.ippanel.com/v1/messages',
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+        body: JSON.stringify({ originator: '+983000505', recipients: mobiles, message: message })
+      }
+    ];
+
+    let sent = false;
+    for (const ep of endpoints) {
+      try {
+        const ippanelRes = await fetch(ep.url, {
+          method: 'POST',
+          headers: ep.headers,
+          body: ep.body
+        });
+
+        if (ippanelRes.ok) {
+          successCount = mobiles.length;
+          sent = true;
+          break;
+        } else {
+          const rawText = await ippanelRes.text();
+          console.warn(`IPPanel bulk endpoint (${ep.url}) failed status ${ippanelRes.status}:`, rawText);
+          smsError = cleanErrorDetail(rawText);
+        }
+      } catch (apiErr: any) {
+        console.warn(`IPPanel bulk endpoint (${ep.url}) exception:`, apiErr);
+        smsError = `خطای شبکه: ${apiErr.message}`;
+      }
+    }
+
+    if (!sent) {
+      return NextResponse.json({
+        success: false,
+        error: `خطا در ارسال پیامک گروهی به سامانه پیامک: ${smsError}`
+      }, { status: 502 });
     }
 
     return NextResponse.json({
