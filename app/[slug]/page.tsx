@@ -1339,14 +1339,22 @@ export default function PublicCardPage() {
               switch (secKey) {
                 case 'save_contact':
                   return (
-                    <button 
-                      key="sec_temp4_save"
-                      onClick={handleDownloadVCard}
-                      className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs bg-gradient-to-l from-[#f59e0b] to-[#d97706] text-black hover:opacity-95 shadow-md shadow-amber-500/10"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره مستقیم در مخاطبان'}</span>
-                    </button>
+                    <div key="sec_temp4_save" className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button 
+                        onClick={handleDownloadVCard}
+                        className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs bg-gradient-to-l from-[#f59e0b] to-[#d97706] text-black hover:opacity-95 shadow-md shadow-amber-500/10"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره در مخاطبان'}</span>
+                      </button>
+                      <button 
+                        onClick={() => { setShowSubscribeModal(true); setSubscribeStep('mobile'); setSubscribeError(null); setSubscribeMessage(null); }}
+                        className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs bg-amber-500/10 hover:bg-amber-500/20 text-[#e2b53e] border border-amber-500/30"
+                      >
+                        <Bell className="h-4 w-4 text-[#e2b53e]" />
+                        <span>عضویت در خبرنامه</span>
+                      </button>
+                    </div>
                   );
                 case 'bio':
                   return card.bio ? (
@@ -1668,15 +1676,24 @@ export default function PublicCardPage() {
                 switch (secKey) {
                   case 'save_contact':
                     return (
-                      <button 
-                        key="sec_cust_save"
-                        onClick={handleDownloadVCard}
-                        className="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs"
-                        style={{ backgroundColor: pColor, color: '#ffffff' }}
-                      >
-                        <Download className="h-4 w-4" />
-                        <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره مستقیم در مخاطبان'}</span>
-                      </button>
+                      <div key="sec_cust_save" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button 
+                          onClick={handleDownloadVCard}
+                          className="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs"
+                          style={{ backgroundColor: pColor, color: '#ffffff' }}
+                        >
+                          <Download className="h-4 w-4" />
+                          <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره در مخاطبان'}</span>
+                        </button>
+                        <button 
+                          onClick={() => { setShowSubscribeModal(true); setSubscribeStep('mobile'); setSubscribeError(null); setSubscribeMessage(null); }}
+                          className="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs border"
+                          style={{ borderColor: pColor, color: pColor, backgroundColor: 'rgba(0,0,0,0.02)' }}
+                        >
+                          <Bell className="h-4 w-4" />
+                          <span>عضویت در خبرنامه</span>
+                        </button>
+                      </div>
                     );
                   case 'bio':
                     return card.bio ? (

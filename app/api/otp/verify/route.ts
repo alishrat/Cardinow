@@ -28,7 +28,7 @@ function normalizeDigits(input: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { mobile: rawMobile, code: rawCode, purpose = 'login', card_id } = await req.json();
+    const { mobile: rawMobile, code: rawCode, purpose = 'login', card_id, first_name, last_name, email: userEmail, password, registerComplete } = await req.json();
     const mobile = normalizeMobile(rawMobile);
     const code = normalizeDigits(rawCode);
 
@@ -137,13 +137,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Purpose 2: Card Owner Mobile Login
+    // Purpose 2: Card Owner Mobile Login / Registration
     if (purpose === 'login') {
       // Find matching user in directus_users
       let userObj: any = null;
 
       try {
-        // Filter by user_phone or location
+        // Filter by user_phone or location or email
         const userRes = await fetch(`${DIRECTUS_URL}/users?filter[_or][0][user_phone][_eq]=${encodeURIComponent(mobile)}&filter[_or][1][location][_eq]=${encodeURIComponent(mobile)}`);
         if (userRes.ok) {
           const userJson = await userRes.json();
@@ -155,52 +155,69 @@ export async function POST(req: NextRequest) {
         console.warn('Error fetching user by phone:', uErr);
       }
 
-      // If user does not exist, auto-register the new card owner
+      // If user does not exist yet:
       if (!userObj) {
-        const newEmail = `${mobile}@cardinow.local`;
-        const newUser = {
-          first_name: 'صاحب کارت',
-          last_name: mobile.slice(-4),
+        // If registration info (first_name or registerComplete) is NOT provided, notify frontend to show Registration Form
+        if (!first_name && !registerComplete) {
+          return NextResponse.json({
+            success: true,
+            userExists: false,
+            mobile: mobile,
+            message: 'کد تایید شد. کاربر جدید هستید؛ لطفاً مشخصات خود را وارد کنید.'
+          });
+        }
+
+        // Create new user with provided details
+        const newEmail = userEmail?.trim() || `${mobile}@cardinow.local`;
+        const newUserBody: any = {
+          first_name: first_name?.trim() || 'کاربر',
+          last_name: last_name?.trim() || '',
           email: newEmail,
           user_phone: mobile,
           location: mobile,
           role: '05826f60-e759-4348-b4c2-6f085cd5e425', // customer role
           status: 'active'
         };
+        if (password) {
+          newUserBody.password = password;
+        }
 
         try {
           const createRes = await fetch(`${DIRECTUS_URL}/users`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newUser)
+            body: JSON.stringify(newUserBody)
           });
           if (createRes.ok) {
             const createJson = await createRes.json();
             userObj = createJson?.data;
+          } else {
+            const errTxt = await createRes.text();
+            console.warn('Directus create user error:', errTxt);
           }
         } catch (createErr) {
           console.warn('Error creating user via phone OTP:', createErr);
         }
-      }
 
-      // If still no userObj, construct fallback user object
-      if (!userObj) {
-        userObj = {
-          id: `u-${mobile}`,
-          email: `${mobile}@cardinow.local`,
-          first_name: 'صاحب کارت',
-          last_name: mobile.slice(-4),
-          role: 'customer'
-        };
+        // Fallback user object if directus API restricted creation
+        if (!userObj) {
+          userObj = {
+            id: `u-${mobile}`,
+            email: newEmail,
+            first_name: first_name?.trim() || 'کاربر',
+            last_name: last_name?.trim() || '',
+            role: 'customer'
+          };
+        }
       }
 
       // Determine role
-      const rawRole = userObj.role || '';
       const isEmailAdmin = userObj.email?.toLowerCase() === 'admin@brandyar.com' || userObj.email?.toLowerCase() === 'admin@cardinow.ir';
       const role = isEmailAdmin ? 'admin' : (userObj.email?.toLowerCase() === 'tenant@brandyar.com' ? 'tenant' : 'customer');
 
       return NextResponse.json({
         success: true,
+        userExists: true,
         message: 'ورود با موفقیت انجام شد.',
         userSession: {
           id: userObj.id,
