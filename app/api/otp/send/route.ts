@@ -98,13 +98,16 @@ export async function POST(req: NextRequest) {
     if (ippanelApi && ippanelPattern) {
       const trimmedApi = ippanelApi.trim();
       const trimmedPattern = ippanelPattern.trim();
-      const authHeader = trimmedApi.startsWith('ApiKey ') ? trimmedApi : `ApiKey ${trimmedApi}`;
+      
+      const keyOnly = trimmedApi.replace(/^ApiKey\s+/i, '');
+      const apiKeyHeader = `ApiKey ${keyOnly}`;
 
-      // Try multiple IPPanel endpoints in sequence
+      // Try multiple IPPanel endpoints and Authorization header variants
       const endpoints = [
         {
+          name: 'IPPanel v1 (api2 with ApiKey header)',
           url: 'https://api2.ippanel.com/api/v1/sms/pattern/normal/send',
-          headers: { 'Content-Type': 'application/json', 'Authorization': trimmedApi },
+          headers: { 'Content-Type': 'application/json', 'Authorization': apiKeyHeader },
           body: JSON.stringify({
             code: trimmedPattern,
             sender: '+983000505',
@@ -113,8 +116,31 @@ export async function POST(req: NextRequest) {
           })
         },
         {
+          name: 'IPPanel v1 (api2 with direct token)',
+          url: 'https://api2.ippanel.com/api/v1/sms/pattern/normal/send',
+          headers: { 'Content-Type': 'application/json', 'Authorization': keyOnly },
+          body: JSON.stringify({
+            code: trimmedPattern,
+            sender: '+983000505',
+            recipient: mobile,
+            variable: { code: code, verification_code: code, otp: code }
+          })
+        },
+        {
+          name: 'IPPanel v1 (api2 with apikey header)',
+          url: 'https://api2.ippanel.com/api/v1/sms/pattern/normal/send',
+          headers: { 'Content-Type': 'application/json', 'apikey': keyOnly },
+          body: JSON.stringify({
+            code: trimmedPattern,
+            sender: '+983000505',
+            recipient: mobile,
+            variable: { code: code, verification_code: code, otp: code }
+          })
+        },
+        {
+          name: 'IPPanel Edge (with ApiKey header)',
           url: 'https://edge.ippanel.com/api/v1/sms/pattern/normal/send',
-          headers: { 'Content-Type': 'application/json', 'Authorization': trimmedApi },
+          headers: { 'Content-Type': 'application/json', 'Authorization': apiKeyHeader },
           body: JSON.stringify({
             code: trimmedPattern,
             sender: '+983000505',
@@ -123,8 +149,9 @@ export async function POST(req: NextRequest) {
           })
         },
         {
+          name: 'IPPanel Rest (v1 messages patterns)',
           url: 'https://rest.ippanel.com/v1/messages/patterns/send',
-          headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+          headers: { 'Content-Type': 'application/json', 'Authorization': apiKeyHeader },
           body: JSON.stringify({
             pattern_code: trimmedPattern,
             originator: '+983000505',
@@ -140,7 +167,7 @@ export async function POST(req: NextRequest) {
         try {
           const res = await fetch(ep.url, {
             method: 'POST',
-            headers: ep.headers,
+            headers: ep.headers as unknown as Record<string, string>,
             body: ep.body
           });
 
@@ -150,11 +177,11 @@ export async function POST(req: NextRequest) {
             break;
           } else {
             const rawText = await res.text();
-            console.warn(`IPPanel endpoint (${ep.url}) failed status ${res.status}:`, rawText);
+            console.warn(`[IPPanel ${ep.name}] status ${res.status}:`, rawText);
             lastErrText = cleanErrorDetail(rawText);
           }
         } catch (fetchErr: any) {
-          console.warn(`IPPanel endpoint (${ep.url}) fetch exception:`, fetchErr.message);
+          console.warn(`[IPPanel ${ep.name}] fetch exception:`, fetchErr.message);
           lastErrText = `خطای شبکه: ${fetchErr.message}`;
         }
       }

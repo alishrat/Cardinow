@@ -86,20 +86,28 @@ export async function POST(req: NextRequest) {
     const trimmedApi = ippanelApi.trim();
     const authHeader = trimmedApi.startsWith('ApiKey ') ? trimmedApi : `ApiKey ${trimmedApi}`;
 
+    const keyOnly = trimmedApi.replace(/^ApiKey\s+/i, '');
+    const apiKeyHeader = `ApiKey ${keyOnly}`;
+
     const endpoints = [
       {
         url: 'https://api2.ippanel.com/api/v1/sms/send/panel/single',
-        headers: { 'Content-Type': 'application/json', 'Authorization': trimmedApi },
+        headers: { 'Content-Type': 'application/json', 'Authorization': apiKeyHeader },
+        body: JSON.stringify({ sender: '+983000505', recipient: mobiles, message: message })
+      },
+      {
+        url: 'https://api2.ippanel.com/api/v1/sms/send/panel/single',
+        headers: { 'Content-Type': 'application/json', 'Authorization': keyOnly },
         body: JSON.stringify({ sender: '+983000505', recipient: mobiles, message: message })
       },
       {
         url: 'https://edge.ippanel.com/api/v1/sms/send/panel/single',
-        headers: { 'Content-Type': 'application/json', 'Authorization': trimmedApi },
+        headers: { 'Content-Type': 'application/json', 'Authorization': apiKeyHeader },
         body: JSON.stringify({ sender: '+983000505', recipient: mobiles, message: message })
       },
       {
         url: 'https://rest.ippanel.com/v1/messages',
-        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+        headers: { 'Content-Type': 'application/json', 'Authorization': apiKeyHeader },
         body: JSON.stringify({ originator: '+983000505', recipients: mobiles, message: message })
       }
     ];
@@ -109,7 +117,7 @@ export async function POST(req: NextRequest) {
       try {
         const ippanelRes = await fetch(ep.url, {
           method: 'POST',
-          headers: ep.headers,
+          headers: ep.headers as unknown as Record<string, string>,
           body: ep.body
         });
 
