@@ -10,7 +10,7 @@ import {
   Settings, User, LogOut, LayoutGrid, CreditCard, BarChart2, ShieldCheck, 
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
-  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram
+  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, UserCheck
 } from 'lucide-react';
 
 // Modular Subcomponents Imports
@@ -64,8 +64,69 @@ function DashboardContent() {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerMobile, setRegisterMobile] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'otp'>('login');
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // OTP Mobile Auth State
+  const [otpMobile, setOtpMobile] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpStep, setOtpStep] = useState<'mobile' | 'code'>('mobile');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpMessage, setOtpMessage] = useState<string | null>(null);
+
+  const handleOtpSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setOtpMessage(null);
+    setOtpLoading(true);
+    try {
+      const res = await fetch('/api/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile: otpMobile, purpose: 'login' })
+      });
+      const json = await res.json();
+      if (!json.success) {
+        throw new Error(json.error || 'خطا در ارسال کد تایید');
+      }
+      setOtpMessage(json.message || 'کد تایید پیامکی ارسال شد.');
+      if (json.dev_code) {
+        setOtpCode(json.dev_code);
+      }
+      setOtpStep('code');
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleOtpVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setOtpLoading(true);
+    try {
+      const res = await fetch('/api/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile: otpMobile, code: otpCode, purpose: 'login' })
+      });
+      const json = await res.json();
+      if (!json.success) {
+        throw new Error(json.error || 'کد تایید معتبر نیست.');
+      }
+      if (json.userSession) {
+        setUser(json.userSession);
+        localStorage.setItem('digital_card_session', JSON.stringify(json.userSession));
+        showToast('ورود با موفقیت انجام شد.', 'success');
+        await refreshData();
+      }
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
 
   // Customer Panel States
   const [editingCard, setEditingCard] = useState<Card | null>(null);
@@ -80,6 +141,84 @@ function DashboardContent() {
   
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+
+  // Subscribers & Bulk SMS States
+  const [subscribersCardId, setSubscribersCardId] = useState<string | null>(null);
+  const [subscribersList, setSubscribersList] = useState<any[]>([]);
+  const [loadingSubscribers, setLoadingSubscribers] = useState(false);
+  const [bulkSmsMessage, setBulkSmsMessage] = useState('');
+  const [sendingBulkSms, setSendingBulkSms] = useState(false);
+  const [bulkSmsResult, setBulkSmsResult] = useState<string | null>(null);
+
+  const fetchCardSubscribers = async (cardId: string) => {
+    setLoadingSubscribers(true);
+    try {
+      const res = await fetch(`/api/subscribers?card_id=${cardId}`);
+      const json = await res.json();
+      if (json.success) {
+        setSubscribersList(json.subscribers || []);
+      } else {
+        setSubscribersList([]);
+      }
+    } catch (err) {
+      console.error('Error fetching subscribers:', err);
+      setSubscribersList([]);
+    } finally {
+      setLoadingSubscribers(false);
+    }
+  };
+
+  const handleSendBulkSms = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subscribersCardId) {
+      showToast('لطفاً ابتدا کارت مورد نظر را انتخاب کنید.', 'error');
+      return;
+    }
+    if (!bulkSmsMessage.trim()) {
+      showToast('لطفاً متن پیامک را وارد نمایید.', 'error');
+      return;
+    }
+    const activeMobiles = subscribersList.map(s => s.user_mobile).filter(Boolean);
+    if (activeMobiles.length === 0) {
+      showToast('هیچ مشترک فعالی برای ارسال پیامک یافت نشد.', 'error');
+      return;
+    }
+
+    setSendingBulkSms(true);
+    setBulkSmsResult(null);
+    try {
+      const res = await fetch('/api/sms/send-bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          card_id: subscribersCardId,
+          message: bulkSmsMessage,
+          recipients: activeMobiles
+        })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setBulkSmsResult(`پیامک گروهی با موفقیت به ${json.sent_count || activeMobiles.length} دنبال‌کننده ارسال شد.`);
+        showToast('پیامک گروهی با موفقیت ارسال شد.', 'success');
+        setBulkSmsMessage('');
+      } else {
+        throw new Error(json.error || 'خطا در ارسال پیامک گروهی');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'خطا در ارسال پیامک', 'error');
+      setBulkSmsResult(`خطا: ${err.message}`);
+    } finally {
+      setSendingBulkSms(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'subscribers' && cards.length > 0) {
+      const defaultCardId = subscribersCardId || cards[0].id;
+      if (!subscribersCardId) setSubscribersCardId(defaultCardId);
+      fetchCardSubscribers(defaultCardId);
+    }
+  }, [activeTab, cards]);
 
   const handleFileUpload = async (file: File, type: 'profile' | 'cover') => {
     if (!editingCard) return;
@@ -768,36 +907,49 @@ function DashboardContent() {
           <div className="lg:col-span-7 bg-slate-950 p-6 rounded-2xl border border-slate-800/80 flex flex-col justify-center space-y-6">
             
             {/* Tab Selection */}
-            <div className="flex border-b border-slate-800">
+            <div className="flex border-b border-slate-800 text-xs sm:text-sm font-bold">
               <button
                 onClick={() => { setAuthMode('login'); setAuthError(null); }}
-                className={`flex-1 pb-3 text-sm font-bold transition-all ${
+                className={`flex-1 pb-3 transition-all ${
                   authMode === 'login' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
                   : 'text-slate-400 hover:text-white'
                 }`}
               >
-                ورود به حساب کاربری
+                ورود با رمز عبور
+              </button>
+              <button
+                onClick={() => { setAuthMode('otp'); setAuthError(null); setOtpStep('mobile'); setOtpMessage(null); }}
+                className={`flex-1 pb-3 transition-all flex items-center justify-center gap-1.5 ${
+                  authMode === 'otp' 
+                  ? 'text-emerald-400 border-b-2 border-emerald-400' 
+                  : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Smartphone className="h-4 w-4" />
+                <span>ورود با کد پیامکی (OTP)</span>
               </button>
               <button
                 onClick={() => { setAuthMode('register'); setAuthError(null); }}
-                className={`flex-1 pb-3 text-sm font-bold transition-all ${
+                className={`flex-1 pb-3 transition-all ${
                   authMode === 'register' 
                   ? 'text-blue-500 border-b-2 border-blue-500' 
                   : 'text-slate-400 hover:text-white'
                 }`}
               >
-                ایجاد حساب جدید (ثبت نام)
+                ثبت نام
               </button>
             </div>
 
             <div>
               <h3 className="text-lg font-bold text-white">
-                {authMode === 'login' ? 'خوش آمدید' : 'ثبت نام در کاردینو'}
+                {authMode === 'login' ? 'ورود صاحبان کارت' : authMode === 'otp' ? 'ورود سریع با شماره موبایل و کد پیامکی' : 'ثبت نام در کاردینو'}
               </h3>
               <p className="text-slate-500 text-xs mt-1">
                 {authMode === 'login' 
-                  ? 'با وارد کردن ایمیل خود، دسترسی آنی به پنل مدیریت پیدا کنید.' 
+                  ? 'با وارد کردن ایمیل یا شماره موبایل و رمز عبور وارد شوید.' 
+                  : authMode === 'otp'
+                  ? 'شماره موبایل خود را وارد کرده تا کد پیامکی یکبارمصرف ارسال گردد.'
                   : 'با ایجاد حساب کاربری رایگان، کارت ویزیت دیجیتال هوشمند خود را بسازید.'}
               </p>
             </div>
@@ -805,6 +957,12 @@ function DashboardContent() {
             {authError && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl">
                 {authError}
+              </div>
+            )}
+
+            {otpMessage && authMode === 'otp' && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs p-3 rounded-xl">
+                {otpMessage}
               </div>
             )}
 
@@ -841,6 +999,65 @@ function DashboardContent() {
                   ورود به حساب
                 </button>
               </form>
+            ) : authMode === 'otp' ? (
+              otpStep === 'mobile' ? (
+                <form onSubmit={handleOtpSend} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400">شماره موبایل صاحب کارت:</label>
+                    <input 
+                      type="tel" 
+                      required
+                      placeholder="09123456789"
+                      value={otpMobile}
+                      onChange={(e) => setOtpMobile(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono text-center tracking-widest text-lg"
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    disabled={otpLoading}
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/10 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {otpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    <span>ارسال کد پیامکی ورود</span>
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleOtpVerify} className="space-y-4">
+                  <div className="text-xs text-slate-400 mb-2">
+                    کد ۵ رقمی ارسال شده به شماره <span className="font-mono text-emerald-400 font-bold">{otpMobile}</span> را وارد کنید:
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400">کد تایید ۵ رقمی:</label>
+                    <input 
+                      type="text" 
+                      required
+                      maxLength={5}
+                      placeholder="12345"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-lg focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono text-center tracking-widest font-bold"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setOtpStep('mobile')}
+                      className="w-1/3 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
+                    >
+                      ویرایش شماره
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={otpLoading}
+                      className="w-2/3 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/10 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {otpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      <span>تایید و ورود به پنل</span>
+                    </button>
+                  </div>
+                </form>
+              )
             ) : (
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -995,6 +1212,18 @@ function DashboardContent() {
                   >
                     <LayoutGrid className="h-4 w-4" />
                     کارت‌های ویزیت من
+                  </button>
+
+                  <button
+                    onClick={() => { setEditingCard(null); setActiveTab('subscribers'); }}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-2.5 ${
+                      activeTab === 'subscribers' 
+                      ? 'bg-emerald-600 text-white' 
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Users className="h-4 w-4 text-emerald-400" />
+                    اعضای خبرنامه و پیامک گروهی
                   </button>
 
                   <button
@@ -1456,6 +1685,154 @@ function DashboardContent() {
               cards={cards}
               analytics={analytics}
             />
+          )}
+          {/* ==============================================
+              CUSTOMER MODE: SUBSCRIBERS & BULK SMS TAB
+             ============================================== */}
+          {user.role === 'customer' && activeTab === 'subscribers' && (
+            <div className="space-y-6">
+              <div className="border-b border-slate-800 pb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Users className="h-6 w-6 text-emerald-400" />
+                    <span>دنبال‌کنندگان کارت و پیامک گروهی</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    لیست افرادی که با شماره موبایل در خبرنامه کارت ویزیت شما عضو شده‌اند را مشاهده و برای آن‌ها پیامک ارسال کنید.
+                  </p>
+                </div>
+
+                {/* Select Card Dropdown */}
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-slate-400 font-bold whitespace-nowrap">انتخاب کارت:</label>
+                  <select
+                    value={subscribersCardId || ''}
+                    onChange={(e) => {
+                      const cid = e.target.value;
+                      setSubscribersCardId(cid);
+                      if (cid) fetchCardSubscribers(cid);
+                    }}
+                    className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white focus:border-emerald-500 focus:outline-none"
+                  >
+                    {cards.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.first_name} {c.last_name} ({c.slug})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left Column: Bulk SMS Form */}
+                <div className="lg:col-span-7 bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                  <div className="flex items-center gap-2 text-emerald-400 border-b border-slate-800 pb-3">
+                    <Send className="h-5 w-5" />
+                    <h3 className="text-sm font-bold text-white">ارسال پیامک اطلاع‌رسانی گروهی</h3>
+                  </div>
+
+                  {bulkSmsResult && (
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-medium">
+                      {bulkSmsResult}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSendBulkSms} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-400 block">
+                        متن پیامک اطلاع‌رسانی / تخفیف / خبرنامه:
+                      </label>
+                      <textarea
+                        rows={5}
+                        required
+                        placeholder="متن پیامک خود را بنویسید (مثال: سلام، با تشکر از دنبال کردن کارت ویزیت ما. تخفیف ۱۰ درصدی ویژه اعضا...)"
+                        value={bulkSmsMessage}
+                        onChange={(e) => setBulkSmsMessage(e.target.value)}
+                        className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none transition leading-relaxed"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-500 px-1">
+                        <span>تعداد کاراکتر: {bulkSmsMessage.length}</span>
+                        <span>ارسال مستقیم با پترن پیامکی ippanel</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-slate-900/50 rounded-xl border border-slate-800/80 text-xs text-slate-400 space-y-1">
+                      <div className="flex justify-between font-bold text-slate-300">
+                        <span>تعداد گیرندگان پیامک:</span>
+                        <span className="font-mono text-emerald-400">{subscribersList.length} نفر</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={sendingBulkSms || subscribersList.length === 0}
+                      className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2"
+                    >
+                      {sendingBulkSms ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      <span>ارسال پیامک به تمام {subscribersList.length} دنبال‌کننده</span>
+                    </button>
+                  </form>
+                </div>
+
+                {/* Right Column: Subscribers List */}
+                <div className="lg:col-span-5 bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-emerald-400" />
+                      <span>فهرست دنبال‌کنندگان ({subscribersList.length})</span>
+                    </h3>
+                    <button
+                      onClick={() => subscribersCardId && fetchCardSubscribers(subscribersCardId)}
+                      className="p-1.5 hover:bg-slate-900 rounded-lg text-slate-400 hover:text-white transition"
+                      title="بروزرسانی لیست"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${loadingSubscribers ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+
+                  {loadingSubscribers ? (
+                    <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center gap-2">
+                      <RefreshCw className="h-6 w-6 animate-spin text-emerald-500" />
+                      <span>در حال دریافت لیست دنبال‌کنندگان...</span>
+                    </div>
+                  ) : subscribersList.length === 0 ? (
+                    <div className="py-12 text-center text-slate-500 text-xs space-y-2">
+                      <Users className="h-8 w-8 text-slate-700 mx-auto" />
+                      <p className="font-bold text-slate-400">هنوز دنبال‌کننده‌ای ثبت نشده است</p>
+                      <p className="text-[11px] text-slate-600 max-w-xs mx-auto">
+                        بازدیدکنندگان کارت شما می‌توانند با کلیک روی دکمه «دنبال کردن»، شماره موبایل خود را تایید کرده و عضو شوند.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                      {subscribersList.map((sub: any, idx: number) => (
+                        <div
+                          key={sub.id || idx}
+                          className="p-3 bg-slate-900 border border-slate-800/80 rounded-xl flex items-center justify-between text-xs"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                              {idx + 1}
+                            </div>
+                            <div>
+                              <span className="font-mono font-bold text-slate-200 block" dir="ltr">
+                                {sub.user_mobile}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                تاریخ عضویت: {sub.subscribed_at ? new Date(sub.subscribed_at).toLocaleDateString('fa-IR') : 'نامشخص'}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-full">
+                            فعال
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
           {/* ==============================================
               TENANT MODE: SETTINGS TAB

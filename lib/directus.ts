@@ -179,6 +179,14 @@ export function getImageUrl(idOrUrl: string | null | undefined): string {
   return idOrUrl;
 }
 
+// Helper to convert English digits (0-9) to Persian digits (۰-۹)
+export function toPersianDigits(n: string | number | null | undefined): string {
+  if (n === null || n === undefined) return '';
+  const str = String(n);
+  const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return str.replace(/[0-9]/g, (w) => farsiDigits[parseInt(w, 10)]);
+}
+
 // Helper to sanitize any database error messages, removing Directus technical branding
 export function sanitizeDbError(errMsg: string): string {
   if (!errMsg) return 'خطای نامشخص در پایگاه داده';

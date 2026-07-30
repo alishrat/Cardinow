@@ -1614,7 +1614,7 @@ export function CustomerCardsView({
                 const activeTemplate = templates.find(t => toUUID(t.id) === toUUID(templateId));
 
                 return (
-                  <div className="flex-grow overflow-y-auto flex flex-col font-sans select-none transition-colors duration-200" dir="rtl" style={{ backgroundColor: bgColor, color: textColor }}>
+                  <div className="flex-grow overflow-y-auto flex flex-col font-sans select-none transition-colors duration-200" dir="rtl" style={{ backgroundColor: bgColor, color: textColor, fontFamily: 'var(--font-vazirmatn), sans-serif', fontFeatureSettings: "'ss01'" }}>
                     {/* Inject user's custom CSS live inside preview */}
                     {editingCard.custom_css && (
                       <style dangerouslySetInnerHTML={{ __html: editingCard.custom_css }} />

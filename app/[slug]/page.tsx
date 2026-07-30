@@ -8,7 +8,8 @@ import BrandLogo from '../../components/BrandLogo';
 import { 
   Phone, Mail, Globe, MapPin, Share2, Download, 
   Linkedin, Instagram, Send, MessageCircle, Link as LinkIcon, 
-  Eye, Calendar, Check, AlertTriangle, ChevronLeft, CreditCard, Copy 
+  Eye, Calendar, Check, AlertTriangle, ChevronLeft, CreditCard, Copy,
+  Bell, UserPlus, RefreshCw, X
 } from 'lucide-react';
 
 const getDirectusBaseUrl = () => {
@@ -35,6 +36,71 @@ export default function PublicCardPage() {
   const [connectionError, setConnectionError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeShareId, setActiveShareId] = useState<string | null>(null);
+
+  // Subscribe / Newsletter States
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [subscribeMobile, setSubscribeMobile] = useState('');
+  const [subscribeCode, setSubscribeCode] = useState('');
+  const [subscribeStep, setSubscribeStep] = useState<'mobile' | 'code' | 'success'>('mobile');
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
+  const [subscribeMessage, setSubscribeMessage] = useState<string | null>(null);
+
+  const handleSubscribeSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!card) return;
+    setSubscribeError(null);
+    setSubscribeLoading(true);
+    try {
+      const res = await fetch('/api/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile: subscribeMobile, purpose: 'subscribe' })
+      });
+      const json = await res.json();
+      if (!json.success) {
+        throw new Error(json.error || 'خطا در ارسال کد تایید');
+      }
+      setSubscribeMessage(json.message || 'کد تایید پیامکی ارسال شد.');
+      if (json.dev_code) {
+        setSubscribeCode(json.dev_code);
+      }
+      setSubscribeStep('code');
+    } catch (err: any) {
+      setSubscribeError(err.message);
+    } finally {
+      setSubscribeLoading(false);
+    }
+  };
+
+  const handleSubscribeVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!card) return;
+    setSubscribeError(null);
+    setSubscribeLoading(true);
+    try {
+      const res = await fetch('/api/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile: subscribeMobile,
+          code: subscribeCode,
+          purpose: 'subscribe',
+          card_id: card.id
+        })
+      });
+      const json = await res.json();
+      if (!json.success) {
+        throw new Error(json.error || 'کد تایید معتبر نیست.');
+      }
+      setSubscribeStep('success');
+      setSubscribeMessage(json.message || 'عضویت شما با موفقیت ثبت شد!');
+    } catch (err: any) {
+      setSubscribeError(err.message);
+    } finally {
+      setSubscribeLoading(false);
+    }
+  };
 
   const handleCopyText = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -335,7 +401,7 @@ export default function PublicCardPage() {
   const cardBgColor = card.custom_colors?.card_bg?.trim() ? card.custom_colors.card_bg : tmplDefaults.card_bg;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
+    <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif', fontFeatureSettings: "'ss01'" }}>
       {activeShareId && (
         <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[1px]" onClick={() => setActiveShareId(null)} />
       )}
@@ -413,14 +479,21 @@ export default function PublicCardPage() {
                 switch (secKey) {
                   case 'save_contact':
                     return (
-                      <div key="sec_save_contact" className="grid grid-cols-1 gap-3">
+                      <div key="sec_save_contact" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button 
                           onClick={handleDownloadVCard}
                           className="w-full py-3 px-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 shadow-md transition-all text-sm"
                           style={{ backgroundColor: primaryColor }}
                         >
                           {isVCardGenerated ? <Check className="h-5 w-5 text-white" /> : <Download className="h-5 w-5" />}
-                          <span>{isVCardGenerated ? 'ذخیره شد' : 'ذخیره در مخاطبین گوشی'}</span>
+                          <span>{isVCardGenerated ? 'ذخیره شد' : 'ذخیره در مخاطبین'}</span>
+                        </button>
+                        <button 
+                          onClick={() => { setShowSubscribeModal(true); setSubscribeStep('mobile'); setSubscribeError(null); setSubscribeMessage(null); }}
+                          className="w-full py-3 px-4 rounded-xl font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 flex items-center justify-center gap-2 transition-all text-sm shadow-sm"
+                        >
+                          <Bell className="h-5 w-5 text-emerald-700" />
+                          <span>دنبال کردن (عضویت)</span>
                         </button>
                       </div>
                     );
@@ -711,15 +784,23 @@ export default function PublicCardPage() {
               switch (secKey) {
                 case 'save_contact':
                   return (
-                    <button 
-                      key="sec_temp2_save"
-                      onClick={handleDownloadVCard}
-                      className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 shadow-lg shadow-cyan-500/20 transition-all text-sm text-slate-950"
-                      style={{ backgroundImage: `linear-gradient(to left, ${primaryColor}, ${secondaryColor})` }}
-                    >
-                      {isVCardGenerated ? <Check className="h-5 w-5 text-slate-950" /> : <Download className="h-5 w-5" />}
-                      <span className="font-extrabold">{isVCardGenerated ? 'ذخیره شد' : 'ذخیره مستقیم شماره تلفن'}</span>
-                    </button>
+                    <div key="sec_temp2_save" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button 
+                        onClick={handleDownloadVCard}
+                        className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 shadow-lg shadow-cyan-500/20 transition-all text-sm text-slate-950"
+                        style={{ backgroundImage: `linear-gradient(to left, ${primaryColor}, ${secondaryColor})` }}
+                      >
+                        {isVCardGenerated ? <Check className="h-5 w-5 text-slate-950" /> : <Download className="h-5 w-5" />}
+                        <span className="font-extrabold">{isVCardGenerated ? 'ذخیره شد' : 'ذخیره مخاطب'}</span>
+                      </button>
+                      <button 
+                        onClick={() => { setShowSubscribeModal(true); setSubscribeStep('mobile'); setSubscribeError(null); setSubscribeMessage(null); }}
+                        className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40 transition-all text-sm"
+                      >
+                        <Bell className="h-5 w-5 text-emerald-400" />
+                        <span>عضویت در خبرنامه</span>
+                      </button>
+                    </div>
                   );
                 case 'bio':
                   return card.bio ? (
@@ -988,14 +1069,22 @@ export default function PublicCardPage() {
               switch (secKey) {
                 case 'save_contact':
                   return (
-                    <button 
-                      key="sec_temp3_save"
-                      onClick={handleDownloadVCard}
-                      className="w-full py-3 rounded-xl border border-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all text-xs"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span>{isVCardGenerated ? 'ذخیره شد' : 'ذخیره شماره در لیست مخاطبین'}</span>
-                    </button>
+                    <div key="sec_temp3_save" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button 
+                        onClick={handleDownloadVCard}
+                        className="w-full py-3 rounded-xl border border-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all text-xs"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span>{isVCardGenerated ? 'ذخیره شد' : 'ذخیره مخاطب'}</span>
+                      </button>
+                      <button 
+                        onClick={() => { setShowSubscribeModal(true); setSubscribeStep('mobile'); setSubscribeError(null); setSubscribeMessage(null); }}
+                        className="w-full py-3 rounded-xl border border-emerald-600 font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center gap-2 transition-all text-xs"
+                      >
+                        <Bell className="h-4 w-4 text-emerald-700" />
+                        <span>عضویت در خبرنامه</span>
+                      </button>
+                    </div>
                   );
                 case 'bio':
                   return card.bio ? (
@@ -1818,6 +1907,112 @@ export default function PublicCardPage() {
             </div>
           );
         })()}
+
+      {/* NEWSLETTER SUBSCRIBE MODAL */}
+      {showSubscribeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative space-y-5">
+            <button 
+              onClick={() => setShowSubscribeModal(false)}
+              className="absolute left-4 top-4 p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="text-center space-y-2 pt-2">
+              <div className="mx-auto w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400">
+                <Bell className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold">عضویت در خبرنامه پیامکی</h3>
+              <p className="text-xs text-slate-400">
+                با عضویت در خبرنامه <span className="font-bold text-white">{card?.first_name} {card?.last_name}</span>، پیامک‌های اطلاع‌رسانی، تخفیف‌ها و اخبار جدید را دریافت کنید.
+              </p>
+            </div>
+
+            {subscribeError && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl text-center font-medium">
+                {subscribeError}
+              </div>
+            )}
+
+            {subscribeStep === 'mobile' && (
+              <form onSubmit={handleSubscribeSendOtp} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-400 block">شماره تلفن همراه شما:</label>
+                  <input 
+                    type="tel" 
+                    required
+                    placeholder="09123456789"
+                    value={subscribeMobile}
+                    onChange={(e) => setSubscribeMobile(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-lg font-mono tracking-widest focus:border-emerald-500 focus:outline-none transition-all"
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  disabled={subscribeLoading}
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {subscribeLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  <span>ارسال کد تایید پیامکی</span>
+                </button>
+              </form>
+            )}
+
+            {subscribeStep === 'code' && (
+              <form onSubmit={handleSubscribeVerifyOtp} className="space-y-4">
+                <div className="text-xs text-slate-400 text-center">
+                  کد تایید ۵ رقمی به شماره <span className="font-mono text-emerald-400 font-bold">{subscribeMobile}</span> پیامک شد:
+                </div>
+                <div className="space-y-1.5">
+                  <input 
+                    type="text" 
+                    required
+                    maxLength={5}
+                    placeholder="12345"
+                    value={subscribeCode}
+                    onChange={(e) => setSubscribeCode(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-2xl font-mono tracking-widest font-bold focus:border-emerald-500 focus:outline-none transition-all"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    type="button"
+                    onClick={() => setSubscribeStep('mobile')}
+                    className="w-1/3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
+                  >
+                    اصلاح شماره
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={subscribeLoading}
+                    className="w-2/3 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {subscribeLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    <span>تایید و عضویت</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {subscribeStep === 'success' && (
+              <div className="text-center space-y-4 py-3">
+                <div className="mx-auto w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center">
+                  <Check className="h-6 w-6" />
+                </div>
+                <p className="text-sm font-bold text-emerald-400">{subscribeMessage}</p>
+                <button 
+                  onClick={() => setShowSubscribeModal(false)}
+                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition"
+                >
+                  بستن پنجره
+                </button>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
       </div>
     </div>

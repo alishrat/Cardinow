@@ -4,6 +4,15 @@
   --font-sans: var(--font-vazirmatn), sans-serif;
 }
 
+:root {
+  font-feature-settings: "ss01" 1, "cv01" 1;
+}
+
+body, [dir="rtl"], .rtl, input, textarea, button, select, div, p, span {
+  font-family: var(--font-vazirmatn), sans-serif;
+  font-feature-settings: "ss01" 1, "cv01" 1;
+}
+
 /* Force pointer cursor on all interactive elements */
 a,
 button,
