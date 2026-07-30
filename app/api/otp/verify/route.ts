@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
     let otpRecordId: number | null = null;
 
     try {
-      const queryUrl = `${DIRECTUS_URL}/items/mobile_otps?filter[mobile][_eq]=${encodeURIComponent(mobile)}&filter[code][_eq]=${encodeURIComponent(code)}&filter[used][_eq]=false&sort=-id&limit=1`;
+      // Query recent OTPs without strictly requiring used=false if details step is submitting
+      const queryUrl = `${DIRECTUS_URL}/items/mobile_otps?filter[mobile][_eq]=${encodeURIComponent(mobile)}&filter[code][_eq]=${encodeURIComponent(code)}&sort=-id&limit=1`;
       const otpRes = await fetch(queryUrl);
       if (otpRes.ok) {
         const otpJson = await otpRes.json();
@@ -52,7 +53,13 @@ export async function POST(req: NextRequest) {
         if (Array.isArray(otps) && otps.length > 0) {
           const otpItem = otps[0];
           const expiresAt = otpItem.expires_at ? new Date(otpItem.expires_at).getTime() : Date.now() + 100000;
-          if (expiresAt >= Date.now() - 30000) { // allow 30s grace period
+          const isRecent = expiresAt >= Date.now() - 60000;
+          
+          if (!otpItem.used && isRecent) {
+            isValidCode = true;
+            otpRecordId = otpItem.id;
+          } else if (otpItem.used && (first_name || registerComplete) && isRecent) {
+            // Allow recent used code during registration details submission step
             isValidCode = true;
             otpRecordId = otpItem.id;
           }
@@ -62,7 +69,7 @@ export async function POST(req: NextRequest) {
       console.warn('Error querying mobile_otps:', dbErr);
     }
 
-    // Fallback if DB check had an issue or for development demo numbers
+    // Fallback for development demo numbers
     if (!isValidCode && (code === '12345' || code === '11111')) {
       isValidCode = true;
     }
@@ -74,8 +81,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Mark OTP as used
-    if (otpRecordId) {
+    // Helper to mark OTP as used
+    const markOtpUsed = async () => {
+      if (!otpRecordId) return;
       try {
         await fetch(`${DIRECTUS_URL}/items/mobile_otps/${otpRecordId}`, {
           method: 'PATCH',
@@ -85,7 +93,7 @@ export async function POST(req: NextRequest) {
       } catch (markErr) {
         console.warn('Could not mark OTP as used:', markErr);
       }
-    }
+    };
 
     // Purpose 1: Subscribe to card newsletter
     if (purpose === 'subscribe') {
@@ -95,6 +103,8 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+
+      await markOtpUsed();
 
       // Check if subscriber already exists
       let existingId: number | null = null;
@@ -143,7 +153,7 @@ export async function POST(req: NextRequest) {
       let userObj: any = null;
 
       try {
-        // Filter by user_phone or location or email
+        // Filter by user_phone or location
         const userRes = await fetch(`${DIRECTUS_URL}/users?filter[_or][0][user_phone][_eq]=${encodeURIComponent(mobile)}&filter[_or][1][location][_eq]=${encodeURIComponent(mobile)}`);
         if (userRes.ok) {
           const userJson = await userRes.json();
@@ -159,6 +169,7 @@ export async function POST(req: NextRequest) {
       if (!userObj) {
         // If registration info (first_name or registerComplete) is NOT provided, notify frontend to show Registration Form
         if (!first_name && !registerComplete) {
+          // Do NOT mark OTP as used yet so that step 2 details submit can proceed
           return NextResponse.json({
             success: true,
             userExists: false,
@@ -167,19 +178,37 @@ export async function POST(req: NextRequest) {
           });
         }
 
+        // Check if email already exists in Directus
+        const targetEmail = userEmail?.trim() || `${mobile}@cardinow.local`;
+        if (userEmail && userEmail.trim()) {
+          try {
+            const checkEmailRes = await fetch(`${DIRECTUS_URL}/users?filter[email][_eq]=${encodeURIComponent(targetEmail)}`);
+            if (checkEmailRes.ok) {
+              const checkEmailJson = await checkEmailRes.json();
+              if (Array.isArray(checkEmailJson?.data) && checkEmailJson.data.length > 0) {
+                return NextResponse.json(
+                  { success: false, error: 'حساب کاربری با این آدرس ایمیل قبلاً ثبت شده است.' },
+                  { status: 400 }
+                );
+              }
+            }
+          } catch (eErr) {
+            console.warn('Error checking existing email:', eErr);
+          }
+        }
+
         // Create new user with provided details
-        const newEmail = userEmail?.trim() || `${mobile}@cardinow.local`;
         const newUserBody: any = {
           first_name: first_name?.trim() || 'کاربر',
           last_name: last_name?.trim() || '',
-          email: newEmail,
+          email: targetEmail,
           user_phone: mobile,
           location: mobile,
           role: '05826f60-e759-4348-b4c2-6f085cd5e425', // customer role
           status: 'active'
         };
-        if (password) {
-          newUserBody.password = password;
+        if (password && password.trim()) {
+          newUserBody.password = password.trim();
         }
 
         try {
@@ -188,28 +217,30 @@ export async function POST(req: NextRequest) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newUserBody)
           });
+
           if (createRes.ok) {
             const createJson = await createRes.json();
             userObj = createJson?.data;
           } else {
-            const errTxt = await createRes.text();
-            console.warn('Directus create user error:', errTxt);
+            const errData = await createRes.json().catch(() => null);
+            const errMsg = errData?.errors?.[0]?.message || 'خطا در ثبت مشخصات در دایرکتوس.';
+            console.warn('Directus create user error:', errMsg);
+            return NextResponse.json(
+              { success: false, error: `خطا در ایجاد حساب کاربری: ${errMsg}` },
+              { status: 400 }
+            );
           }
-        } catch (createErr) {
+        } catch (createErr: any) {
           console.warn('Error creating user via phone OTP:', createErr);
-        }
-
-        // Fallback user object if directus API restricted creation
-        if (!userObj) {
-          userObj = {
-            id: `u-${mobile}`,
-            email: newEmail,
-            first_name: first_name?.trim() || 'کاربر',
-            last_name: last_name?.trim() || '',
-            role: 'customer'
-          };
+          return NextResponse.json(
+            { success: false, error: 'خطا در ارتباط با سرور برای ثبت نام: ' + createErr.message },
+            { status: 500 }
+          );
         }
       }
+
+      // Mark OTP as used now that user exists or was created
+      await markOtpUsed();
 
       // Determine role
       const isEmailAdmin = userObj.email?.toLowerCase() === 'admin@brandyar.com' || userObj.email?.toLowerCase() === 'admin@cardinow.ir';
