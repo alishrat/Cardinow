@@ -616,13 +616,14 @@ function DashboardContent() {
     if (confirm('آیا از حذف این کارت ویزیت اطمینان کامل دارید؟ این عمل غیرقابل بازگشت است.')) {
       try {
         await dbService.deleteCard(cardId);
-        if (editingCard?.id === cardId) setEditingCard(null);
-        await refreshData();
-        if (user?.role === 'admin') {
-          setActiveTab('admin-cards');
+        setCards(prev => prev.filter(c => c.id !== cardId && toUUID(c.id) !== toUUID(cardId)));
+        if (editingCard?.id === cardId || toUUID(editingCard?.id) === toUUID(cardId)) {
+          setEditingCard(null);
         }
+        showToast('کارت ویزیت با موفقیت حذف شد.', 'success');
+        await refreshData();
       } catch (err: any) {
-        alert(sanitizeDbError(err.message));
+        showToast(sanitizeDbError(err?.message || 'خطا در حذف کارت ویزیت'), 'error');
       }
     }
   };

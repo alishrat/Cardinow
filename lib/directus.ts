@@ -1176,18 +1176,21 @@ export const dbService = {
 
     // 1. Fetch and delete any associated card_analytics to prevent foreign key constraint violations
     try {
-      const analyticsRes = await fetch(`${DIRECTUS_BASE_URL}/items/card_analytics?filter[card_id][_eq]=${cardId}`, {
-        headers: { ...authHeaders }
-      });
-      if (analyticsRes.ok) {
-        const analyticsJson = await analyticsRes.json();
-        const analyticsList = analyticsJson?.data || [];
-        for (const record of analyticsList) {
-          if (record.id) {
-            await fetch(`${DIRECTUS_BASE_URL}/items/card_analytics/${record.id}`, {
-              method: 'DELETE',
-              headers: { ...authHeaders }
-            });
+      const idsToCheck = Array.from(new Set([cardId, id].filter(Boolean)));
+      for (const targetId of idsToCheck) {
+        const analyticsRes = await fetch(`${DIRECTUS_BASE_URL}/items/card_analytics?filter[card_id][_eq]=${encodeURIComponent(targetId)}`, {
+          headers: { ...authHeaders }
+        });
+        if (analyticsRes.ok) {
+          const analyticsJson = await analyticsRes.json();
+          const analyticsList = analyticsJson?.data || [];
+          for (const record of analyticsList) {
+            if (record.id) {
+              await fetch(`${DIRECTUS_BASE_URL}/items/card_analytics/${record.id}`, {
+                method: 'DELETE',
+                headers: { ...authHeaders }
+              });
+            }
           }
         }
       }
@@ -1195,12 +1198,63 @@ export const dbService = {
       console.warn("Failed to delete associated card_analytics:", e);
     }
 
-    // 2. Delete the card itself
-    const res = await fetch(`${DIRECTUS_BASE_URL}/items/cards/${cardId}`, {
+    // 2. Fetch and delete any associated card_subscribers to prevent foreign key constraint violations
+    try {
+      const idsToCheck = Array.from(new Set([cardId, id].filter(Boolean)));
+      for (const targetId of idsToCheck) {
+        const subRes = await fetch(`${DIRECTUS_BASE_URL}/items/card_subscribers?filter[card_id][_eq]=${encodeURIComponent(targetId)}`, {
+          headers: { ...authHeaders }
+        });
+        if (subRes.ok) {
+          const subJson = await subRes.json();
+          const subList = subJson?.data || [];
+          for (const record of subList) {
+            if (record.id) {
+              await fetch(`${DIRECTUS_BASE_URL}/items/card_subscribers/${record.id}`, {
+                method: 'DELETE',
+                headers: { ...authHeaders }
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to delete associated card_subscribers:", e);
+    }
+
+    // 3. Delete the card itself
+    let res = await fetch(`${DIRECTUS_BASE_URL}/items/cards/${cardId}`, {
       method: 'DELETE',
       headers: { ...authHeaders }
     });
-    if (!res.ok) throw new Error('خطا در حذف کارت از پایگاه داده');
+
+    if (!res.ok && id && id !== cardId) {
+      res = await fetch(`${DIRECTUS_BASE_URL}/items/cards/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { ...authHeaders }
+      });
+    }
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        // If the record is already gone or 404, treat as successfully removed
+        return;
+      }
+      let errorDetail = '';
+      try {
+        const errJson = await res.json();
+        if (errJson?.errors?.[0]?.message) {
+          errorDetail = errJson.errors[0].message;
+        } else {
+          errorDetail = JSON.stringify(errJson);
+        }
+      } catch {
+        try {
+          errorDetail = await res.text();
+        } catch {}
+      }
+      throw new Error(`خطا در حذف کارت از پایگاه داده: ${errorDetail || res.statusText}`);
+    }
   },
 
   // ---- SUBSCRIPTIONS ----
