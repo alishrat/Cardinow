@@ -264,7 +264,7 @@ export default function PublicCardPage() {
             <div className="h-14 w-14 rounded-full border-4 border-slate-800 border-t-amber-500 animate-spin"></div>
             <div className="absolute h-8 w-8 bg-amber-500/10 rounded-full animate-ping"></div>
           </div>
-          <p className="text-xs font-semibold text-slate-400">در حال بارگذاری کارت ویزیت کاردینو...</p>
+          <p className="text-xs font-semibold text-slate-400">در حال بارگذاری کارت ویزیت مگاکارت...</p>
         </div>
       </div>
     );
@@ -709,7 +709,7 @@ export default function PublicCardPage() {
               {/* Footer Powered By */}
               <div className="flex items-center justify-center gap-2 pt-8 opacity-60 text-[11px] font-medium text-slate-400">
                 <BrandLogo size="sm" className="h-5 w-5" />
-                <span>قدرت گرفته از سامانه کارت ویزیت دیجیتال کاردینو</span>
+                <span>قدرت گرفته از سامانه کارت ویزیت دیجیتال مگاکارت</span>
               </div>
 
             </div>
@@ -1917,7 +1917,7 @@ export default function PublicCardPage() {
 
               {/* Footer */}
               <div className="text-center pt-4 opacity-35 text-[8px] uppercase tracking-wider font-mono" style={{ color: txtSecColor }}>
-                <span>{matchedTemp?.name || 'CUSTOM CARD'} {"// POWERED BY CARDINOW"}</span>
+                <span>{matchedTemp?.name || 'CUSTOM CARD'} {"// POWERED BY MEGACARD"}</span>
               </div>
             </div>
           );

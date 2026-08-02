@@ -10,13 +10,13 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: 'کاردینو (Cardinow) | کارت ویزیت دیجیتال هوشمند',
+  title: 'مگاکارت (MegaCard) | کارت ویزیت دیجیتال هوشمند',
   description: 'سامانه هوشمند طراحی، مدیریت و اشتراک‌گذاری کارت ویزیت دیجیتال',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'کاردینو',
+    title: 'مگاکارت',
   },
   icons: {
     icon: [

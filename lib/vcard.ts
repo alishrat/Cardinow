@@ -121,12 +121,12 @@ export function createVCardString(card: Card): string {
 
   const firstName = card.first_name || '';
   const lastName = card.last_name || '';
-  const fullName = `${firstName} ${lastName}`.trim() || 'مخاطب کاردینو';
+  const fullName = `${firstName} ${lastName}`.trim() || 'مخاطب مگاکارت';
 
   const telLines = phoneNumbers.map(p => `TEL;TYPE=${p.type}:${p.number}`);
 
   // Base URL for digital card link
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://cardinow.ir';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://megacard.ir';
   const cardDigitalUrl = card.slug ? `${baseUrl}/${card.slug}` : '';
 
   // Process social links
@@ -148,9 +148,9 @@ export function createVCardString(card: Card): string {
   const socialLines: string[] = [];
   const linkSummaryLines: string[] = [];
 
-  // Cardinow Digital Card Link
+  // MegaCard Digital Card Link
   if (cardDigitalUrl) {
-    urlLines.push(`URL;CHARSET=UTF-8;TYPE=کارت دیجیتال (Cardinow):${cardDigitalUrl}`);
+    urlLines.push(`URL;CHARSET=UTF-8;TYPE=کارت دیجیتال (MegaCard):${cardDigitalUrl}`);
     linkSummaryLines.push(`• کارت دیجیتال: ${cardDigitalUrl}`);
   }
 

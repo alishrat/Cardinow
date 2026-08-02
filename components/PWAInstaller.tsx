@@ -42,7 +42,7 @@ export default function PWAInstaller() {
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
       // Check if user dismissed recently
-      const dismissed = localStorage.getItem('cardinow_pwa_dismissed');
+      const dismissed = localStorage.getItem('megacard_pwa_dismissed');
       if (!dismissed && !isStandaloneMode) {
         if (isIosDevice) {
           setShowBanner(true);
@@ -73,7 +73,7 @@ export default function PWAInstaller() {
 
   const handleDismiss = () => {
     setShowBanner(false);
-    localStorage.setItem('cardinow_pwa_dismissed', 'true');
+    localStorage.setItem('megacard_pwa_dismissed', 'true');
   };
 
   if (isStandalone) return null;
@@ -86,11 +86,11 @@ export default function PWAInstaller() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="h-11 w-11 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 p-0.5 shrink-0 shadow-lg shadow-amber-500/20">
-                <img src="/logo.png" alt="Cardinow" className="w-full h-full object-cover rounded-[10px]" />
+                <img src="/logo.png" alt="MegaCard" className="w-full h-full object-cover rounded-[10px]" />
               </div>
               <div>
                 <h5 className="font-bold text-xs text-amber-200 flex items-center gap-1">
-                  <span>نصب اپلیکیشن کاردینو</span>
+                  <span>نصب اپلیکیشن مگاکارت</span>
                   <Sparkles className="h-3 w-3 text-amber-400" />
                 </h5>
                 <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
@@ -135,7 +135,7 @@ export default function PWAInstaller() {
               </div>
               <h4 className="font-extrabold text-sm text-white">راهنمای نصب روی آیفون و آیپد (iOS)</h4>
               <p className="text-xs text-slate-400 leading-relaxed">
-                برای تجربه تمام‌صفحه و سریع کاردینو، مراحل زیر را طی کنید:
+                برای تجربه تمام‌صفحه و سریع مگاکارت، مراحل زیر را طی کنید:
               </p>
             </div>
 

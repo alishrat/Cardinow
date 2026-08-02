@@ -25,7 +25,7 @@ export function AdminTemplatesView({
     <div className="space-y-6">
       <div className="border-b border-slate-800 pb-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white">مدیریت قالب‌های اختصاصی کاردینو</h2>
+          <h2 className="text-xl font-bold text-white">مدیریت قالب‌های اختصاصی مگاکارت</h2>
           <p className="text-xs text-slate-400 mt-1">ایجاد و تنظیم قالب‌های کاملاً داینامیک بر اساس ساختار JSON Schema.</p>
         </div>
         {!editingTemplate && (

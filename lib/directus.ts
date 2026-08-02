@@ -42,7 +42,7 @@ export interface Plan {
 export interface Subscription {
   id: string;
   user_id: string;
-  plan_id: string;
+  plan_id?: string;
   status: 'active' | 'expired' | 'pending';
   start_date: string;
   end_date: string;
@@ -1052,6 +1052,14 @@ export const dbService = {
     });
     if (!res.ok) throw new Error('خطا در ذخیره‌سازی پلن در پایگاه داده');
   },
+  deletePlan: async (planId: string): Promise<void> => {
+    const cleanId = toUUID(planId);
+    const res = await fetch(`${DIRECTUS_BASE_URL}/items/plans/${cleanId}`, {
+      method: 'DELETE',
+      headers: { ...getAuthHeaders() }
+    });
+    if (!res.ok) throw new Error('خطا در حذف پلن از پایگاه داده');
+  },
 
   // ---- CARDS ----
   getCards: async (userId?: string): Promise<Card[]> => {
@@ -1354,13 +1362,13 @@ export const dbService = {
       if (record) {
         return {
           bank_card: record.bank_card || record.card_number || '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸',
-          bank_name: record.bank_name || record.account_name || 'کاردینو دیجیتال سیستم'
+          bank_name: record.bank_name || record.account_name || 'مگاکارت دیجیتال سیستم'
         };
       }
-      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'کاردینو دیجیتال سیستم' };
+      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم' };
     } catch {
       console.warn('Directus site settings fetch failed, using defaults');
-      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'کاردینو دیجیتال سیستم' };
+      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم' };
     }
   },
   saveSiteSettings: async (settings: { bank_card?: string; bank_name?: string }): Promise<void> => {
@@ -1438,6 +1446,23 @@ export const dbService = {
       return SEED_USERS;
     }
   },
+  updateUser: async (userId: string, data: Partial<any>): Promise<void> => {
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) {
+        console.warn('Failed to update user in Directus directly');
+      }
+    } catch (err) {
+      console.warn('Error updating user:', err);
+    }
+  },
   logVisit: async (cardId: string, device: string, referrer: string, country: string): Promise<void> => {
     const cleanCardId = toUUID(cardId);
     const newRecord = {
@@ -1491,14 +1516,14 @@ export const authService = {
     const isEmail = loginId.includes('@');
     
     // Quick login / demo accounts bypass for visual evaluation flow
-    const isDemo = ['demo@brandyar.com', 'tenant@brandyar.com', 'admin@brandyar.com', 'admin@cardinow.ir'].includes(loginId.toLowerCase());
+    const isDemo = ['demo@brandyar.com', 'tenant@brandyar.com', 'admin@brandyar.com', 'admin@megacard.ir'].includes(loginId.toLowerCase());
     if (isDemo && !password) {
       let role: 'customer' | 'tenant' | 'admin' = 'customer';
       let name = 'کاربر دمو';
       if (loginId.toLowerCase() === 'tenant@brandyar.com') {
         role = 'tenant';
         name = 'نماینده سیستم (تک‌کارت)';
-      } else if (loginId.toLowerCase() === 'admin@brandyar.com' || loginId.toLowerCase() === 'admin@cardinow.ir') {
+      } else if (loginId.toLowerCase() === 'admin@brandyar.com' || loginId.toLowerCase() === 'admin@megacard.ir') {
         role = 'admin';
         name = 'مدیر ارشد سیستم';
       }
@@ -1510,7 +1535,7 @@ export const authService = {
         targetId = toUUID('u-tenant');
       } else if (lowerLogin === 'admin@brandyar.com') {
         targetId = toUUID('u-admin');
-      } else if (lowerLogin === 'admin@cardinow.ir') {
+      } else if (lowerLogin === 'admin@megacard.ir') {
         targetId = '8c2678b2-fab5-4c94-b6d6-89c3ca209431';
       } else {
         targetId = toUUID('u-' + loginId.split('@')[0]);
@@ -1585,7 +1610,7 @@ export const authService = {
     // Resolve Role
     const rawRole = profile.role || '';
     const resolvedRole: 'customer' | 'tenant' | 'admin' = 
-      (profile.email?.toLowerCase() === 'admin@cardinow.ir' || 
+      (profile.email?.toLowerCase() === 'admin@megacard.ir' || 
        profile.email?.toLowerCase() === 'admin@brandyar.com' || 
        rawRole === '327ff892-52b4-47fb-939d-8c15473f0f27' || 
        rawRole === '745c670e-f21a-43de-8a14-0dccf10cb900' || 
@@ -1595,7 +1620,7 @@ export const authService = {
     const session: UserSession = {
       id: profile.id,
       email: profile.email,
-      name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'کاربر کاردینو',
+      name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'کاربر مگاکارت',
       role: resolvedRole,
       tenant_id: profile.tenant_id ? toUUID(profile.tenant_id) : null,
       access_token: accessToken

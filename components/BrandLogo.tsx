@@ -18,7 +18,7 @@ export default function BrandLogo({
   onClick,
   showText = false,
   subText,
-  titleText = 'سامانه کاردینو',
+  titleText = 'سامانه مگاکارت',
   textClassName = '',
 }: BrandLogoProps) {
   const [imgError, setImgError] = useState(false);
@@ -37,7 +37,7 @@ export default function BrandLogo({
       {!imgError ? (
         <img
           src="/logo.png"
-          alt="لوگوی کاردینو"
+          alt="لوگوی مگاکارت"
           onError={() => setImgError(true)}
           className={`${dim} object-contain p-0.5 rounded-xl border border-slate-800/60 bg-slate-900/60 shadow-md ${className}`}
         />
@@ -45,7 +45,7 @@ export default function BrandLogo({
         <div
           className={`${dim} bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/20 shrink-0 ${className}`}
         >
-          ک
+          م
         </div>
       )}
 

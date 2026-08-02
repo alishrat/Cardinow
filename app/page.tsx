@@ -252,7 +252,7 @@ export default function LandingPage() {
                       <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500/10 shrink-0" />
                     </h3>
                     <p className="text-xs text-blue-400 font-bold mt-0.5">توسعه‌دهنده فول‌استک و مشاور برندینگ</p>
-                    <p className="text-[10px] text-slate-400">شرکت دانش بنیان کاردینو</p>
+                    <p className="text-[10px] text-slate-400">شرکت دانش بنیان مگاکارت</p>
                   </div>
 
                   {/* Short Bio */}
@@ -970,7 +970,7 @@ export default function LandingPage() {
               <div className="bg-slate-950 border border-slate-800 p-6 rounded-2xl text-center space-y-5 w-full max-w-xs shadow-xl">
                 <Building2 className="h-10 w-10 text-indigo-400 mx-auto" />
                 <div>
-                  <h4 className="font-bold text-sm text-white">پک نمایندگی کاردینو</h4>
+                  <h4 className="font-bold text-sm text-white">پک نمایندگی مگاکارت</h4>
                   <p className="text-[10px] text-slate-500 mt-1">شروع کسب درآمد به عنوان نماینده مستقل</p>
                 </div>
                 <div className="bg-slate-900 py-3.5 rounded-xl border border-slate-800/80">
@@ -1118,7 +1118,7 @@ export default function LandingPage() {
           <BrandLogo 
             size="sm"
             showText 
-            titleText="سامانه کارت ویزیت دیجیتال کاردینو"
+            titleText="سامانه کارت ویزیت دیجیتال مگاکارت"
             subText="میزبانی امن داده‌ها با پایداری ۹۹.۹٪"
           />
 

@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Check if email already exists in Directus
-        const targetEmail = userEmail?.trim() || `${mobile}@cardinow.local`;
+        const targetEmail = userEmail?.trim() || `${mobile}@megacard.local`;
         if (userEmail && userEmail.trim()) {
           try {
             const checkEmailRes = await fetch(`${DIRECTUS_URL}/users?filter[email][_eq]=${encodeURIComponent(targetEmail)}`);
@@ -243,7 +243,7 @@ export async function POST(req: NextRequest) {
       await markOtpUsed();
 
       // Determine role
-      const isEmailAdmin = userObj.email?.toLowerCase() === 'admin@brandyar.com' || userObj.email?.toLowerCase() === 'admin@cardinow.ir';
+      const isEmailAdmin = userObj.email?.toLowerCase() === 'admin@brandyar.com' || userObj.email?.toLowerCase() === 'admin@megacard.ir';
       const role = isEmailAdmin ? 'admin' : (userObj.email?.toLowerCase() === 'tenant@brandyar.com' ? 'tenant' : 'customer');
 
       return NextResponse.json({

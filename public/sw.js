@@ -1,5 +1,5 @@
-// Cardinow Service Worker for PWA
-const CACHE_NAME = 'cardinow-v1';
+// MegaCard Service Worker for PWA
+const CACHE_NAME = 'megacard-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',

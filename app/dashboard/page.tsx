@@ -10,12 +10,13 @@ import {
   Settings, User, LogOut, LayoutGrid, CreditCard, BarChart2, ShieldCheck, 
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
-  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, UserCheck
+  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, UserCheck, List, X
 } from 'lucide-react';
 
 // Modular Subcomponents Imports
 import { CustomerCardsView } from '../../components/dashboard/CustomerCardsView';
 import { AdminTemplatesView } from '../../components/dashboard/AdminTemplatesView';
+import { AdminPlansView } from '../../components/dashboard/AdminPlansView';
 import { CustomerBillingView } from '../../components/dashboard/CustomerBillingView';
 import { CustomerAnalyticsView } from '../../components/dashboard/CustomerAnalyticsView';
 import BrandLogo from '../../components/BrandLogo';
@@ -329,6 +330,12 @@ function DashboardContent() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
   const [adminCardsSearch, setAdminCardsSearch] = useState<string>('');
+  const [adminCardsViewMode, setAdminCardsViewMode] = useState<'grid' | 'table'>('grid');
+
+  // User Management States
+  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [isSavingUser, setIsSavingUser] = useState(false);
+  const [adminUserSearch, setAdminUserSearch] = useState<string>('');
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -846,6 +853,45 @@ function DashboardContent() {
     }
   };
 
+  const handleSaveEditedUser = async () => {
+    if (!editingUser) return;
+    setIsSavingUser(true);
+    try {
+      await dbService.updateUser(editingUser.id, {
+        first_name: editingUser.first_name || '',
+        last_name: editingUser.last_name || '',
+        email: editingUser.email || '',
+        mobile: editingUser.mobile || '',
+        role: editingUser.role || 'customer',
+        tenant_id: editingUser.tenant_id || null,
+        subscription_end_date: editingUser.subscription_end_date || null
+      });
+
+      // Also create or update subscription if end date provided
+      if (editingUser.subscription_end_date) {
+        const existingSub = subscriptions.find(s => toUUID(s.user_id) === toUUID(editingUser.id));
+        const subPayload: Subscription = {
+          id: existingSub ? existingSub.id : generateRandomUUID(),
+          user_id: editingUser.id,
+          plan_id: existingSub?.plan_id || (plans[0]?.id ? String(plans[0].id) : undefined),
+          status: new Date(editingUser.subscription_end_date) > new Date() ? 'active' : 'expired',
+          start_date: existingSub?.start_date || new Date().toISOString().split('T')[0],
+          end_date: editingUser.subscription_end_date
+        };
+        await dbService.saveSubscription(subPayload);
+      }
+
+      setAllUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...editingUser } : u));
+      showToast('اطلاعات کاربر با موفقیت ویرایش شد.', 'success');
+      setEditingUser(null);
+      await refreshData();
+    } catch (err: any) {
+      showToast('خطا در ثبت تغییرات کاربر: ' + (err?.message || ''), 'error');
+    } finally {
+      setIsSavingUser(false);
+    }
+  };
+
   const handleAdminVerifyOfflinePayment = async (tx: Transaction, approved: boolean) => {
     try {
       if (approved) {
@@ -915,7 +961,7 @@ function DashboardContent() {
               <div className="flex items-center gap-3">
                 <BrandLogo size="lg" />
                 <div>
-                  <h2 className="text-3xl font-black text-white">کاردینو (Cardinow)</h2>
+                  <h2 className="text-3xl font-black text-white">مگاکارت (MegaCard)</h2>
                   <p className="text-blue-400 text-xs font-bold mt-0.5">پلتفرم مدیریت کارت ویزیت دیجیتال</p>
                 </div>
               </div>
@@ -946,7 +992,7 @@ function DashboardContent() {
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Smartphone className="h-5 w-5 text-emerald-400" />
-                <span>{useEmailLogin ? 'ورود با ایمیل و رمز عبور' : 'ورود و ثبت نام سریع در کاردینو'}</span>
+                <span>{useEmailLogin ? 'ورود با ایمیل و رمز عبور' : 'ورود و ثبت نام سریع در مگاکارت'}</span>
               </h3>
               <p className="text-slate-400 text-xs mt-1">
                 {useEmailLogin 
@@ -1180,7 +1226,7 @@ function DashboardContent() {
           
           <BrandLogo 
             showText 
-            titleText="پنل هوشمند مدیریت کاردینو"
+            titleText="پنل هوشمند مدیریت مگاکارت"
             subText="پایگاه داده آنلاین امن و پویا"
             onClick={() => router.push('/')}
           />
@@ -1375,6 +1421,18 @@ function DashboardContent() {
                     <Palette className="h-4 w-4" />
                     مدیریت قالب‌های ظاهری
                   </button>
+
+                  <button
+                    onClick={() => setActiveTab('admin-plans')}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-2.5 ${
+                      activeTab === 'admin-plans' 
+                      ? 'bg-amber-600 text-white' 
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Sliders className="h-4 w-4" />
+                    مدیریت پلن‌های تعرفه‌ای
+                  </button>
                 </>
               )}
 
@@ -1462,7 +1520,7 @@ function DashboardContent() {
                 {/* Bank Card Info Section */}
                 <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl space-y-3 text-xs text-slate-300">
                   <p className="font-bold text-blue-400 flex items-center gap-1">
-                    📌 اطلاعات حساب بانکی کاردینو جهت واریز کارت به کارت:
+                    📌 اطلاعات حساب بانکی مگاکارت جهت واریز کارت به کارت:
                   </p>
                   
                   <div className="space-y-2">
@@ -1489,7 +1547,7 @@ function DashboardContent() {
                     <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-850/60">
                       <span className="text-slate-400">به نام:</span>
                       <span className="text-white font-extrabold text-xs">
-                        {siteSettings?.bank_name || 'کاردینو دیجیتال سیستم'}
+                        {siteSettings?.bank_name || 'مگاکارت دیجیتال سیستم'}
                       </span>
                     </div>
                   </div>
@@ -2117,7 +2175,7 @@ function DashboardContent() {
           {user.role === 'admin' && activeTab === 'admin-transactions' && (
             <div className="space-y-6">
               <div className="border-b border-slate-800 pb-5">
-                <h2 className="text-xl font-bold text-white">گزارش امور مالی و درآمد کل سامانه کاردینو</h2>
+                <h2 className="text-xl font-bold text-white">گزارش امور مالی و درآمد کل سامانه مگاکارت</h2>
                 <p className="text-xs text-slate-400 mt-1">مشاهده تمامی پرداخت‌های ثبت‌شده مشتریان درگاه‌های کل کشور به تفکیک پرتال همراه با تایید پرداخت‌های آفلاین.</p>
               </div>
 
@@ -2149,7 +2207,7 @@ function DashboardContent() {
                       type="text"
                       value={bankNameInput}
                       onChange={(e) => setBankNameInput(e.target.value)}
-                      placeholder="مثال: کاردینو دیجیتال سیستم (بانک پاسارگاد)"
+                      placeholder="مثال: مگاکارت دیجیتال سیستم (بانک پاسارگاد)"
                       className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-blue-500"
                     />
                   </div>
@@ -2187,7 +2245,7 @@ function DashboardContent() {
                       return (
                         <tr key={tx.id} className="hover:bg-slate-900/40 align-middle">
                           <td className="p-3 font-bold text-white">{tx.amount.toLocaleString('fa-IR')} تومان</td>
-                          <td className="p-3">{associatedTenant?.name || 'سایت اصلی کاردینو'}</td>
+                          <td className="p-3">{associatedTenant?.name || 'سایت اصلی مگاکارت'}</td>
                           <td className="p-3">
                             <span className="px-2 py-1 rounded bg-slate-900 text-slate-300 font-medium">
                               {tx.gateway}
@@ -2216,9 +2274,9 @@ function DashboardContent() {
                             {isOffline ? (
                               <div className="space-y-2 py-1">
                                 <div className="p-2 bg-slate-900 rounded-lg text-[10px] text-slate-400 space-y-1">
-                                  <p>🕰️ ساعت واریز: <span className="text-slate-200 font-bold">{tx.payload?.deposit_time || 'نامشخص'}</span></p>
-                                  {tx.payload?.note && <p>✍️ یادداشت: <span className="text-slate-200">{tx.payload?.note}</span></p>}
-                                  {tx.payload?.plan_title && <p>📦 پلن درخواستی: <span className="text-blue-400 font-bold">{tx.payload?.plan_title}</span></p>}
+                                  <p>ساعت واریز: <span className="text-slate-200 font-bold">{tx.payload?.deposit_time || 'نامشخص'}</span></p>
+                                  {tx.payload?.note && <p>یادداشت: <span className="text-slate-200">{tx.payload?.note}</span></p>}
+                                  {tx.payload?.plan_title && <p>پلن درخواستی: <span className="text-blue-400 font-bold">{tx.payload?.plan_title}</span></p>}
                                   {tx.receipt_Image && (
                                     <div className="pt-2 border-t border-slate-800/40">
                                       <button
@@ -2273,6 +2331,19 @@ function DashboardContent() {
               refreshData={refreshData}
             />
           )}
+
+          {/* ==============================================
+              ADMIN MODE: PLANS MANAGEMENT TAB
+             ============================================== */}
+          {user.role === 'admin' && activeTab === 'admin-plans' && (
+            <AdminPlansView
+              user={user}
+              plans={plans}
+              templates={templates}
+              refreshData={refreshData}
+              showToast={showToast}
+            />
+          )}
           {/* ==============================================
               ADMIN MODE: ALL CARDS MONITORING TAB
              ============================================== */}
@@ -2294,10 +2365,37 @@ function DashboardContent() {
                 <div className="border-b border-slate-800 pb-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <h2 className="text-xl font-bold text-white">نظارت و مدیریت کارت‌های ویزیت دیجیتال کاربران</h2>
-                    <p className="text-xs text-slate-400 mt-1">مشاهده، فیلتر و حذف تمامی کارت‌های ساخته‌شده در کل سامانه کاردینو.</p>
+                    <p className="text-xs text-slate-400 mt-1">مشاهده، فیلتر و حذف تمامی کارت‌های ساخته‌شده در کل سامانه مگاکارت.</p>
                   </div>
-                  <div className="text-xs bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 font-bold text-slate-300">
-                    تعداد کل کارت‌ها: <span className="text-blue-400">{cards.length}</span>
+                  
+                  <div className="flex items-center gap-3">
+                    {/* View Mode Switcher */}
+                    <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 gap-1">
+                      <button
+                        onClick={() => setAdminCardsViewMode('grid')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                          adminCardsViewMode === 'grid' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="نمایش کارتی"
+                      >
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                        <span>شبکه‌ای</span>
+                      </button>
+                      <button
+                        onClick={() => setAdminCardsViewMode('table')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                          adminCardsViewMode === 'table' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="نمایش لیستی"
+                      >
+                        <List className="h-3.5 w-3.5" />
+                        <span>جدولی (لیست)</span>
+                      </button>
+                    </div>
+
+                    <div className="text-xs bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 font-bold text-slate-300">
+                      تعداد کل کارت‌ها: <span className="text-amber-400">{cards.length}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -2311,7 +2409,7 @@ function DashboardContent() {
                     value={adminCardsSearch}
                     onChange={(e) => setAdminCardsSearch(e.target.value)}
                     placeholder="جستجو در نام، نام خانوادگی، شغل، شرکت یا آدرس Slug کارت..."
-                    className="w-full pr-10 pl-4 py-3 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
+                    className="w-full pr-10 pl-4 py-3 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
                   />
                 </div>
 
@@ -2319,6 +2417,103 @@ function DashboardContent() {
                   <div className="text-center py-12 border border-dashed border-slate-800 rounded-3xl space-y-3">
                     <LayoutGrid className="h-10 w-10 text-slate-600 mx-auto" />
                     <p className="text-slate-500 text-xs font-bold">هیچ کارت ویزیتی با این مشخصات یافت نشد!</p>
+                  </div>
+                ) : adminCardsViewMode === 'table' ? (
+                  /* LIST / TABLE VIEW */
+                  <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden text-xs font-medium">
+                    <table className="w-full text-right">
+                      <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 text-[10px] font-bold">
+                        <tr>
+                          <th className="p-3">صاحب کارت</th>
+                          <th className="p-3">عنوان شغلی و شرکت</th>
+                          <th className="p-3">آدرس اختصاصی (Slug)</th>
+                          <th className="p-3">قالب</th>
+                          <th className="p-3">پرتال / نماینده</th>
+                          <th className="p-3">بازدید</th>
+                          <th className="p-3">وضعیت</th>
+                          <th className="p-3">عملیات</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-850/40 text-slate-300">
+                        {filteredAdminCards.map((card) => {
+                          const template = templates.find(t => toUUID(t.id) === toUUID(card.template_id));
+                          const cardTenant = tenants.find(t => toUUID(t.id) === toUUID(card.tenant_id));
+                          return (
+                            <tr key={card.id} className="hover:bg-slate-900/40 align-middle">
+                              <td className="p-3">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800 overflow-hidden shrink-0">
+                                    <img 
+                                      src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
+                                      alt="avatar" 
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+                                  <span className="font-bold text-white text-xs">{card.first_name} {card.last_name}</span>
+                                </div>
+                              </td>
+                              <td className="p-3">
+                                <div className="space-y-0.5">
+                                  <p className="text-blue-400 font-semibold text-[11px]">{card.job_title || 'بدون عنوان شغلی'}</p>
+                                  <p className="text-[10px] text-slate-500">{card.company || 'ثبت نشده'}</p>
+                                </div>
+                              </td>
+                              <td className="p-3 font-mono text-blue-400 font-bold">{card.slug}/</td>
+                              <td className="p-3 text-slate-200">{template?.name || 'کلاسیک'}</td>
+                              <td className="p-3 text-amber-500 font-bold">{cardTenant?.name || 'سایت اصلی مگاکارت'}</td>
+                              <td className="p-3 text-emerald-400 font-bold">{card.views_count?.toLocaleString('fa-IR') || 0}</td>
+                              <td className="p-3">
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                                  card.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                                }`}>
+                                  {card.status === 'published' ? 'انتشار' : 'پیش‌نویس'}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      setEditingCard(card);
+                                      setActiveTab('cards');
+                                    }}
+                                    className="p-1.5 bg-slate-900 hover:bg-slate-850 rounded-lg text-blue-400 border border-slate-800 transition"
+                                    title="ویرایش"
+                                  >
+                                    <Edit2 className="h-3.5 w-3.5" />
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleCopyCardLink(card.slug)}
+                                    className="p-1.5 bg-slate-900 hover:bg-slate-850 rounded-lg border border-slate-800 transition text-slate-300"
+                                    title="کپی لینک"
+                                  >
+                                    {isCopiedSlug === card.slug ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                                  </button>
+
+                                  <a
+                                    href={`/${card.slug}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-1.5 bg-slate-900 hover:bg-slate-850 rounded-lg border border-slate-800 transition text-blue-400"
+                                    title="مشاهده آنلاین"
+                                  >
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                  </a>
+
+                                  <button
+                                    onClick={() => handleDeleteCard(card.id)}
+                                    className="p-1.5 bg-slate-900 hover:bg-red-950/20 rounded-lg border border-slate-800 transition text-red-400"
+                                    title="حذف دائمی"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -2364,7 +2559,7 @@ function DashboardContent() {
                             </div>
                             <div className="flex justify-between">
                               <span>نماینده / پرتال:</span>
-                              <span className="text-amber-500 font-bold">{cardTenant?.name || 'سایت اصلی کاردینو'}</span>
+                              <span className="text-amber-500 font-bold">{cardTenant?.name || 'سایت اصلی مگاکارت'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>آمار بازدید:</span>
@@ -2422,66 +2617,348 @@ function DashboardContent() {
           {/* ==============================================
               ADMIN MODE: ALL USERS LIST TAB
              ============================================== */}
-          {user.role === 'admin' && activeTab === 'admin-users' && (
-            <div className="space-y-6">
-              <div className="border-b border-slate-800 pb-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <h2 className="text-xl font-bold text-white">مدیریت کاربران سامانه</h2>
-                  <p className="text-xs text-slate-400 mt-1">مشاهده، نظارت و مدیریت تمامی کاربران عضو شده در سامانه.</p>
-                </div>
-                <div className="text-xs bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 font-bold text-slate-300">
-                  تعداد کل کاربران: <span className="text-blue-400">{allUsers.length}</span>
-                </div>
-              </div>
+          {user.role === 'admin' && activeTab === 'admin-users' && (() => {
+            const filteredUsers = allUsers.filter(u => {
+              const query = adminUserSearch.toLowerCase().trim();
+              if (!query) return true;
+              const fullName = `${u.first_name || ''} ${u.last_name || ''} ${u.name || ''}`.toLowerCase();
+              const email = (u.email || '').toLowerCase();
+              const mobile = (u.mobile || '').toLowerCase();
+              const id = (u.id || '').toLowerCase();
+              return fullName.includes(query) || email.includes(query) || mobile.includes(query) || id.includes(query);
+            });
 
-              {/* Users table */}
-              <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-right text-xs">
-                    <thead className="bg-slate-900 text-slate-400 font-bold border-b border-slate-850">
-                      <tr>
-                        <th className="py-3 px-4">شناسه کاربر</th>
-                        <th className="py-3 px-4">نام و نام خانوادگی</th>
-                        <th className="py-3 px-4">پست الکترونیک (ایمیل)</th>
-                        <th className="py-3 px-4">نقش دسترسی</th>
-                        <th className="py-3 px-4">شناسه نماینده (Tenant ID)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-900 text-slate-300">
-                      {allUsers.map((u) => {
-                        const associatedTenant = tenants.find(t => toUUID(t.id) === toUUID(u.tenant_id));
-                        return (
-                          <tr key={u.id} className="hover:bg-slate-900/40 transition">
-                            <td className="py-3 px-4 font-mono text-slate-500 text-[10px]">{u.id}</td>
-                            <td className="py-3 px-4 font-bold text-white">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'کاربر بدون نام'}</td>
-                            <td className="py-3 px-4 font-mono text-blue-400">{u.email}</td>
-                            <td className="py-3 px-4">
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
-                                u.role === 'admin' 
-                                  ? 'bg-red-500/10 text-red-400' 
-                                  : u.role === 'tenant' 
-                                    ? 'bg-amber-500/10 text-amber-400' 
-                                    : 'bg-blue-500/10 text-blue-400'
-                              }`}>
-                                {u.role === 'admin' ? 'مدیر ارشد' : u.role === 'tenant' ? 'نماینده' : 'مشتری'}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              {u.tenant_id ? (
-                                <span className="text-amber-500 font-bold">{associatedTenant?.name || u.tenant_id}</span>
-                              ) : (
-                                <span className="text-slate-500">پرتال اصلی</span>
-                              )}
+            return (
+              <div className="space-y-6">
+                <div className="border-b border-slate-800 pb-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">مدیریت و نظارت کاربران سامانه</h2>
+                    <p className="text-xs text-slate-400 mt-1">مشاهده، جستجو، ویرایش نقش‌ها و مدیریت اعتبار اشتراک کلیه کاربران.</p>
+                  </div>
+                  <div className="text-xs bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 font-bold text-slate-300">
+                    تعداد کل کاربران: <span className="text-amber-400">{allUsers.length}</span>
+                  </div>
+                </div>
+
+                {/* Search input */}
+                <div className="relative">
+                  <Search className="absolute right-3.5 top-3.5 h-4 w-4 text-slate-500" />
+                  <input
+                    type="text"
+                    value={adminUserSearch}
+                    onChange={(e) => setAdminUserSearch(e.target.value)}
+                    placeholder="جستجو بر اساس نام، فامیل، ایمیل، شماره همراه یا شناسه کاربر..."
+                    className="w-full pr-10 pl-4 py-3 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
+                  />
+                </div>
+
+                {/* Users table */}
+                <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-slate-900 text-slate-400 font-bold border-b border-slate-850 text-[11px]">
+                        <tr>
+                          <th className="py-3 px-4">کاربر</th>
+                          <th className="py-3 px-4">شماره همراه / ایمیل</th>
+                          <th className="py-3 px-4">نقش دسترسی</th>
+                          <th className="py-3 px-4">پرتال متصل</th>
+                          <th className="py-3 px-4">تعداد کارت‌ها</th>
+                          <th className="py-3 px-4">وضعیت اشتراک</th>
+                          <th className="py-3 px-4">عملیات</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-850/40 text-slate-300">
+                        {filteredUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="py-8 text-center text-slate-500 font-bold">
+                              هیچ کاربری با این مشخصات یافت نشد!
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        ) : (
+                          filteredUsers.map((u) => {
+                            const associatedTenant = tenants.find(t => toUUID(t.id) === toUUID(u.tenant_id));
+                            const userCardsCount = cards.filter(c => toUUID(c.user_id) === toUUID(u.id)).length;
+                            const userSub = subscriptions.find(s => toUUID(s.user_id) === toUUID(u.id));
+                            const subEndDate = u.subscription_end_date || userSub?.end_date;
+                            const isSubActive = subEndDate ? new Date(subEndDate) > new Date() : false;
+
+                            return (
+                              <tr key={u.id} className="hover:bg-slate-900/40 transition align-middle">
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="h-8 w-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-amber-400 shrink-0 text-xs">
+                                      {(u.first_name?.[0] || u.name?.[0] || 'U').toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <p className="font-bold text-white">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : u.name || 'کاربر بدون نام'}</p>
+                                      <p className="font-mono text-[10px] text-slate-500">{u.id}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="space-y-0.5">
+                                    <p className="font-mono text-blue-400 text-[11px]">{u.email}</p>
+                                    {u.mobile && <p className="font-mono text-slate-400 text-[10px]">{u.mobile}</p>}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <span className={`px-2.5 py-1 rounded-full text-[9px] font-black ${
+                                    u.role === 'admin' 
+                                      ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                                      : u.role === 'tenant' 
+                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                                        : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                  }`}>
+                                    {u.role === 'admin' ? 'مدیر ارشد' : u.role === 'tenant' ? 'نماینده' : 'مشتری'}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4">
+                                  {u.tenant_id ? (
+                                    <span className="text-amber-500 font-bold">{associatedTenant?.name || u.tenant_id}</span>
+                                  ) : (
+                                    <span className="text-slate-500">پرتال اصلی</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-4">
+                                  <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                                    {userCardsCount} کارت
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4">
+                                  {subEndDate ? (
+                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                                      isSubActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                                    }`}>
+                                      {isSubActive ? `فعال تا ${toJalaliDate(subEndDate)}` : `منقضی شده (${toJalaliDate(subEndDate)})`}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-500 text-[10px]">تعیین نشده</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-4">
+                                  <button
+                                    onClick={() => setEditingUser(u)}
+                                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 text-amber-400 border border-slate-800 rounded-xl text-[10px] font-bold transition flex items-center gap-1.5"
+                                  >
+                                    <Edit2 className="h-3.5 w-3.5" />
+                                    <span> ویرایش</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
+
+                {/* Edit Modal Popup */}
+                {editingUser && (
+                  <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 rtl overflow-y-auto" dir="rtl">
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl space-y-6 text-xs text-slate-300 relative shadow-2xl my-8">
+                      {/* Modal Header */}
+                      <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-2xl bg-amber-600/20 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold text-lg">
+                            {(editingUser.first_name?.[0] || editingUser.name?.[0] || 'U').toUpperCase()}
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-white">جزئیات و ویرایش کاربر: {editingUser.first_name || editingUser.name || 'کاربر سیستم'}</h3>
+                            <p className="text-[10px] text-slate-400 font-mono">شناسه کاربری: {editingUser.id}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setEditingUser(null)}
+                          className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition cursor-pointer"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </div>
+
+                      {/* Stats Summary Cards */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-850/60 text-center space-y-1">
+                          <span className="text-[10px] text-slate-400">تعداد کارت‌های ساخته‌شده</span>
+                          <p className="text-base font-black text-amber-400">
+                            {cards.filter(c => toUUID(c.user_id) === toUUID(editingUser.id)).length} کارت
+                          </p>
+                        </div>
+                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-850/60 text-center space-y-1">
+                          <span className="text-[10px] text-slate-400">مجموع بازدید کارت‌ها</span>
+                          <p className="text-base font-black text-emerald-400">
+                            {cards.filter(c => toUUID(c.user_id) === toUUID(editingUser.id)).reduce((acc, c) => acc + (c.views_count || 0), 0).toLocaleString('fa-IR')}
+                          </p>
+                        </div>
+                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-850/60 text-center space-y-1">
+                          <span className="text-[10px] text-slate-400">پرتال متصل</span>
+                          <p className="text-xs font-bold text-blue-400 truncate">
+                            {tenants.find(t => toUUID(t.id) === toUUID(editingUser.tenant_id))?.name || 'سایت اصلی'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Edit Form */}
+                      <div className="space-y-4 border-t border-slate-800/60 pt-4">
+                        <h4 className="font-bold text-white text-xs">ویرایش اطلاعات حساب و سطح دسترسی</h4>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-slate-400 font-bold text-[11px]">نام:</label>
+                            <input 
+                              type="text" 
+                              value={editingUser.first_name || ''} 
+                              onChange={(e) => setEditingUser({ ...editingUser, first_name: e.target.value })}
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:border-amber-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-slate-400 font-bold text-[11px]">نام خانوادگی:</label>
+                            <input 
+                              type="text" 
+                              value={editingUser.last_name || ''} 
+                              onChange={(e) => setEditingUser({ ...editingUser, last_name: e.target.value })}
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:border-amber-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-slate-400 font-bold text-[11px]">پست الکترونیک (ایمیل):</label>
+                            <input 
+                              type="email" 
+                              value={editingUser.email || ''} 
+                              onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xs text-left focus:border-amber-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-slate-400 font-bold text-[11px]">شماره تلفن همراه:</label>
+                            <input 
+                              type="text" 
+                              value={editingUser.mobile || ''} 
+                              onChange={(e) => setEditingUser({ ...editingUser, mobile: e.target.value })}
+                              placeholder="09123456789"
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xs text-left focus:border-amber-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-slate-400 font-bold text-[11px]">نقش دسترسی در سامانه:</label>
+                            <select
+                              value={editingUser.role || 'customer'}
+                              onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none"
+                            >
+                              <option value="customer">مشتری عادی (Customer)</option>
+                              <option value="tenant">نماینده پرتال (Tenant)</option>
+                              <option value="admin">مدیر ارشد سامانه (Admin)</option>
+                            </select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-slate-400 font-bold text-[11px]">پرتال یا نمایندگی مربوطه:</label>
+                            <select
+                              value={editingUser.tenant_id || ''}
+                              onChange={(e) => setEditingUser({ ...editingUser, tenant_id: e.target.value || null })}
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none"
+                            >
+                              <option value="">سایت اصلی مگاکارت (بدون نمایندگی)</option>
+                              {tenants.map((t) => (
+                                <option key={t.id} value={t.id}>{t.name} ({t.custom_domain || 'مستقیم'})</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Subscription Expiry Management */}
+                        <div className="bg-slate-950 p-4 rounded-2xl border border-slate-850/60 space-y-3 mt-2">
+                          <div className="flex justify-between items-center">
+                            <label className="text-slate-300 font-bold text-[11px]">تاریخ پایان اعتبار اشتراک کاربر:</label>
+                            <span className="text-[10px] text-amber-400 font-mono">
+                              {editingUser.subscription_end_date ? toJalaliDate(editingUser.subscription_end_date) : 'بدون انقضا / تعیین نشده'}
+                            </span>
+                          </div>
+
+                          <input 
+                            type="date" 
+                            value={editingUser.subscription_end_date ? editingUser.subscription_end_date.split('T')[0] : ''} 
+                            onChange={(e) => setEditingUser({ ...editingUser, subscription_end_date: e.target.value })}
+                            className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono text-xs"
+                          />
+
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            <span className="text-[10px] text-slate-400 self-center">تمدید سریع:</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const d = new Date();
+                                d.setDate(d.getDate() + 30);
+                                setEditingUser({ ...editingUser, subscription_end_date: d.toISOString().split('T')[0] });
+                              }}
+                              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg text-[10px] text-blue-400 font-bold transition cursor-pointer"
+                            >
+                              +۳۰ روز (یک‌ماهه)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const d = new Date();
+                                d.setDate(d.getDate() + 90);
+                                setEditingUser({ ...editingUser, subscription_end_date: d.toISOString().split('T')[0] });
+                              }}
+                              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg text-[10px] text-blue-400 font-bold transition cursor-pointer"
+                            >
+                              +۹۰ روز (سه‌ماهه)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const d = new Date();
+                                d.setDate(d.getDate() + 365);
+                                setEditingUser({ ...editingUser, subscription_end_date: d.toISOString().split('T')[0] });
+                              }}
+                              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg text-[10px] text-amber-400 font-bold transition cursor-pointer"
+                            >
+                              +۳۶۵ روز (یک‌ساله)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingUser({ ...editingUser, subscription_end_date: '' });
+                              }}
+                              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg text-[10px] text-red-400 font-bold transition cursor-pointer"
+                            >
+                              حذف انقضا
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Modal Actions */}
+                      <div className="flex justify-end gap-3 border-t border-slate-800 pt-4">
+                        <button
+                          onClick={() => setEditingUser(null)}
+                          className="px-5 py-2.5 bg-slate-950 hover:bg-slate-850 border border-slate-800 rounded-xl text-xs font-bold text-slate-300 transition cursor-pointer"
+                        >
+                          انصراف
+                        </button>
+                        <button
+                          onClick={handleSaveEditedUser}
+                          disabled={isSavingUser}
+                          className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer"
+                        >
+                          {isSavingUser ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          ذخیره تغییرات کاربر
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ==============================================
               ADMIN MODE: PLATFORM ANALYTICS TAB
@@ -2638,7 +3115,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 gap-3 rtl" dir="rtl">
         <BrandLogo size="lg" className="animate-pulse" />
         <RefreshCw className="h-6 w-6 text-blue-500 animate-spin mt-2" />
-        <span className="text-slate-400 text-sm font-semibold">در حال بارگذاری پنل کاردینو...</span>
+        <span className="text-slate-400 text-sm font-semibold">در حال بارگذاری پنل مگاکارت...</span>
       </div>
     }>
       <DashboardContent />
