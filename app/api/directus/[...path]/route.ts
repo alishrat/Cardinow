@@ -13,11 +13,16 @@ async function handleProxy(req: NextRequest, { params }: { params: { path?: stri
 
     // Extract query parameters
     const urlObj = new URL(req.url);
-    const search = urlObj.search;
-    const tokenParam = urlObj.searchParams.get('access_token');
+    const searchParams = new URLSearchParams(urlObj.searchParams);
+    const tokenParam = searchParams.get('access_token');
 
-    // Construct the final Directus URL
-    const targetUrl = `${TARGET_BASE_URL}/${pathStr}${search}`;
+    // Remove access_token from query string to prevent duplicate credential error in Directus (header + query param)
+    if (tokenParam) {
+      searchParams.delete('access_token');
+    }
+
+    const searchStr = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    const targetUrl = `${TARGET_BASE_URL}/${pathStr}${searchStr}`;
 
     // Read the request body if present (using arrayBuffer to preserve binary integrity for file uploads)
     let body: any = null;
@@ -46,11 +51,32 @@ async function handleProxy(req: NextRequest, { params }: { params: { path?: stri
     }
 
     // Send the request to Directus
-    const response = await fetch(targetUrl, {
+    let response = await fetch(targetUrl, {
       method: req.method,
       headers: headers,
       body: body,
     });
+
+    // Special Fallback for File Assets (/assets/*):
+    // If request with token returns 400/401/403 (e.g., due to expired token in browser localStorage),
+    // retry WITHOUT authorization header/token in case the asset is publicly readable in Directus.
+    if (
+      pathSegments[0] === 'assets' &&
+      (response.status === 400 || response.status === 401 || response.status === 403) &&
+      (tokenParam || headers.has('authorization'))
+    ) {
+      const cleanHeaders = new Headers(headers);
+      cleanHeaders.delete('authorization');
+      const fallbackUrl = `${TARGET_BASE_URL}/${pathStr}${searchStr}`;
+      const fallbackResponse = await fetch(fallbackUrl, {
+        method: req.method,
+        headers: cleanHeaders,
+        body: body,
+      });
+      if (fallbackResponse.ok) {
+        response = fallbackResponse;
+      }
+    }
 
     // Parse Response (using arrayBuffer to preserve binary integrity for files/images)
     const responseBody = await response.arrayBuffer();

@@ -36,15 +36,19 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Network first strategy with cache fallback
   if (event.request.method !== 'GET') return;
+  
+  // Ignore unsupported schemes like chrome-extension, data, blob, etc.
+  if (!event.request.url.startsWith('http://') && !event.request.url.startsWith('https://')) return;
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone and put into cache if valid
-        if (response && response.status === 200) {
+        // Clone and put into cache if valid (only basic or cors type)
+        if (response && response.status === 200 && (response.type === 'basic' || response.type === 'cors')) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+            cache.put(event.request, responseToCache).catch(() => {});
+          }).catch(() => {});
         }
         return response;
       })

@@ -706,11 +706,11 @@ export async function ensureValidTenantId(payload: any): Promise<void> {
       const res = await fetch(`${DIRECTUS_BASE_URL}/items/tenants/${payload.tenant_id}`, {
         headers: { ...getAuthHeaders() }
       });
-      if (!res.ok) {
+      if (res.status === 404) {
         payload.tenant_id = null;
       }
     } catch {
-      payload.tenant_id = null;
+      // Keep existing tenant_id on network or auth failure
     }
   }
 }
@@ -722,11 +722,11 @@ export async function ensureValidUserId(payload: any): Promise<void> {
       const res = await fetch(`${DIRECTUS_BASE_URL}/users/${payload.user_id}`, {
         headers: { ...getAuthHeaders() }
       });
-      if (!res.ok) {
+      if (res.status === 404) {
         payload.user_id = null;
       }
     } catch {
-      payload.user_id = null;
+      // Keep existing user_id on network or auth failure
     }
   }
 }
@@ -739,13 +739,12 @@ export async function ensureValidReceiptImage(payload: any): Promise<void> {
       const res = await fetch(`${DIRECTUS_BASE_URL}/files/${receiptId}`, {
         headers: { ...getAuthHeaders() }
       });
-      if (!res.ok) {
+      if (res.status === 404) {
         payload.receipt_Image = null;
         if (payload.receipt_image) payload.receipt_image = null;
       }
     } catch {
-      payload.receipt_Image = null;
-      if (payload.receipt_image) payload.receipt_image = null;
+      // Keep existing receipt_Image on network failure
     }
   }
 }
@@ -753,8 +752,11 @@ export async function ensureValidReceiptImage(payload: any): Promise<void> {
 // Automatically populates empty Directus collections with beautiful, standard seed items
 export async function seedDirectusIfEmpty() {
   if (typeof window === 'undefined') return;
-  console.log('Checking Directus collections to see if seeding is needed...');
   
+  // Skip if we already checked in this browser session
+  if (sessionStorage.getItem('digital_card_seed_checked')) return;
+  sessionStorage.setItem('digital_card_seed_checked', 'true');
+
   const collectionsToSeed: { [key: string]: any[] } = {
     'tenants': SEED_TENANTS,
     'templates': SEED_TEMPLATES,
@@ -769,60 +771,31 @@ export async function seedDirectusIfEmpty() {
     const endpoint = col === 'analytics' ? 'items/card_analytics' : col === 'users' ? 'users' : `items/${col}`;
     try {
       if (col === 'users') {
-        // Direct seeding for users because GET /users is protected by default and returns 403
-        for (const item of seedItems) {
-          const nameParts = (item.name || '').split(' ');
-          const firstName = nameParts[0] || 'کاربر';
-          const lastName = nameParts.slice(1).join(' ') || 'دمو';
-          const resolvedRole = item.role === 'admin' 
-            ? '745c670e-f21a-43de-8a14-0dccf10cb900' 
-            : '05826f60-e759-4348-b4c2-6f085cd5e425'; // customer/tenant valid role
-
-          const cleanItem = {
-            id: toUUID(item.id),
-            first_name: firstName,
-            last_name: lastName,
-            email: item.email,
-            password: 'password123',
-            role: resolvedRole,
-            status: 'active'
-          };
-
-          try {
-            await fetch(`${DIRECTUS_BASE_URL}/${endpoint}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(cleanItem),
-            });
-          } catch (userErr) {
-            // Ignore error if user already exists
-          }
-        }
-        continue;
+        continue; // Users seeding is handled server-side or during setup to avoid browser 400 errors
       }
 
-      const res = await fetch(`${DIRECTUS_BASE_URL}/${endpoint}?limit=1`);
+      const res = await fetch(`${DIRECTUS_BASE_URL}/${endpoint}?limit=1`, {
+        headers: { ...getAuthHeaders() }
+      });
       if (res.ok) {
         const json = await res.json();
         const data = json?.data;
         if (Array.isArray(data) && data.length === 0) {
-          console.log(`Directus collection '${col}' is empty on server. Seeding ${seedItems.length} default items...`);
           for (const item of seedItems) {
             const cleanItem = cleanDataForDirectus(item);
             await fetch(`${DIRECTUS_BASE_URL}/${endpoint}`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                ...getAuthHeaders()
               },
               body: JSON.stringify(cleanItem),
-            });
+            }).catch(() => {});
           }
         }
       }
-    } catch (err) {
-      console.warn(`Seeding check failed/skipped for collection '${col}':`, err);
+    } catch {
+      // Silently ignore seeding errors
     }
   }
 }
