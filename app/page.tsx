@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { dbService, Template, Plan, Card, getImageUrl, toPersianDigits } from '../lib/directus';
+import { dbService, Template, Plan, Card, getImageUrl, toPersianDigits, DEFAULT_DEMO_CARD } from '../lib/directus';
 import BrandLogo from '../components/BrandLogo';
 import { 
   CreditCard, Smartphone, ShieldCheck, Sparkles, Zap, Award, 
@@ -89,13 +89,14 @@ export default function LandingPage() {
     setTimeout(() => setCopiedLink(null), 2000);
   };
 
-  const previewName = demoCard ? `${demoCard.first_name || ''} ${demoCard.last_name || ''}`.trim() : 'مهندس سارا راد';
-  const previewJob = demoCard ? (demoCard.job_title || '') : 'مدیر ارشد محصول (CPO)';
-  const previewCompany = demoCard ? (demoCard.company || '') : 'شرکت دانش بنیان مپنا';
-  const previewBio = demoCard ? (demoCard.bio || '') : 'توسعه‌دهنده محصولات نرم‌افزاری مقیاس‌پذیر و برنده جوایز بین‌المللی طراحی رابط‌های دیجیتال.';
-  const previewProfileImage = (demoCard && demoCard.profile_image) ? (getImageUrl(demoCard.profile_image) || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80') : 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80';
-  const previewCoverImage = (demoCard && demoCard.cover_image) ? (getImageUrl(demoCard.cover_image) || '/cover-fallback.avif') : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
-  const previewViewsCount = demoCard ? `${toPersianDigits(demoCard.views_count)} بازدید` : '۴۵۰ بازدید';
+  const activeCard = demoCard || DEFAULT_DEMO_CARD;
+  const previewName = `${activeCard.first_name || ''} ${activeCard.last_name || ''}`.trim() || 'سارا راد';
+  const previewJob = activeCard.job_title || 'مدیر ارشد محصول (CPO)';
+  const previewCompany = activeCard.company || 'شرکت دانش‌بنیان مپنا';
+  const previewBio = activeCard.bio || 'توسعه‌دهنده محصولات نرم‌افزاری مقیاس‌پذیر و برنده جوایز بین‌المللی طراحی رابط‌های دیجیتال. علاقه‌مند به هوش مصنوعی و طراحی تجربه کاربری.';
+  const previewProfileImage = getImageUrl(activeCard.profile_image) || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&h=300&q=80';
+  const previewCoverImage = getImageUrl(activeCard.cover_image) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+  const previewViewsCount = `${toPersianDigits(activeCard.views_count || 850)} بازدید`;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white rtl" dir="rtl">
@@ -658,10 +659,20 @@ export default function LandingPage() {
 
                         {/* 2. NEON GLASS TEMPLATE PREVIEW */}
                         {isNeonGlass && (
-                          <div className="w-full min-h-full bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 text-slate-100 p-4 space-y-4 flex flex-col justify-between">
-                            <div className="space-y-4 pt-4">
+                          <div className="w-full min-h-full bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 text-slate-100 flex flex-col justify-between">
+                            {/* Cover Image Header */}
+                            <div className="h-24 bg-purple-900/40 relative shrink-0 overflow-hidden">
+                              <img 
+                                src={previewCoverImage} 
+                                alt="cover" 
+                                className="w-full h-full object-cover opacity-80"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-b from-purple-950/30 to-purple-950"></div>
+                            </div>
+
+                            <div className="p-4 space-y-3 -mt-8 relative z-10 flex-grow">
                               <div className="flex justify-between items-center text-[8px]">
-                                <span className="px-2 py-0.5 bg-white/10 rounded-full text-slate-300">
+                                <span className="px-2 py-0.5 bg-white/10 rounded-full text-slate-300 backdrop-blur-sm">
                                   {previewViewsCount}
                                 </span>
                                 <span className="text-purple-400 font-extrabold">NEON GLASS</span>
@@ -683,6 +694,7 @@ export default function LandingPage() {
                                 <div>
                                   <h4 className="text-xs font-black text-white">{previewName}</h4>
                                   <p className="text-[9px] font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mt-0.5">{previewJob}</p>
+                                  <p className="text-[8px] text-purple-300/70">{previewCompany}</p>
                                 </div>
                               </div>
 
@@ -710,7 +722,7 @@ export default function LandingPage() {
                             </div>
 
                             {/* Buttons */}
-                            <div className="space-y-1.5">
+                            <div className="p-4 pt-0 space-y-1.5">
                               <div className="p-2 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between text-[8px] font-bold text-white shadow-sm hover:bg-white/10">
                                 <FileText className="h-3.5 w-3.5 text-purple-400 shrink-0" />
                                 <span>دانلود رزومه (پورتفولیو شیشه‌ای)</span>
@@ -722,16 +734,25 @@ export default function LandingPage() {
 
                         {/* 3. MINIMAL TEMPLATE PREVIEW */}
                         {isMinimal && (
-                          <div className="w-full min-h-full bg-zinc-50 text-zinc-900 p-4 space-y-4 flex flex-col justify-between">
-                            <div className="space-y-4 pt-4">
+                          <div className="w-full min-h-full bg-zinc-50 text-zinc-900 flex flex-col justify-between">
+                            {/* Cover photo */}
+                            <div className="h-20 bg-zinc-200 relative shrink-0">
+                              <img 
+                                src={previewCoverImage} 
+                                alt="cover" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+
+                            <div className="p-4 space-y-3 flex-grow">
                               <div className="flex justify-between items-center text-[8px] opacity-50 font-sans">
-                                <span>{demoCard ? `/${demoCard.slug}` : '/demo'}</span>
+                                <span>{activeCard ? `/${activeCard.slug}` : '/demo'}</span>
                                 <span>MINIMAL</span>
                               </div>
 
                               {/* Portrait Card */}
-                              <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-zinc-200 shadow-sm">
-                                <div className="h-12 w-12 rounded-full overflow-hidden bg-zinc-100 shrink-0">
+                              <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-zinc-200 shadow-sm">
+                                <div className="h-12 w-12 rounded-full overflow-hidden bg-zinc-100 shrink-0 border border-zinc-200">
                                   <img 
                                     src={previewProfileImage} 
                                     alt="profile" 
@@ -756,29 +777,41 @@ export default function LandingPage() {
                                   <span className="p-1 bg-zinc-100 rounded">
                                     <Phone className="h-2.5 w-2.5 text-zinc-700" />
                                   </span>
-                                  <span className="font-sans text-zinc-600">۰۹۱۲۳۴۵۶۷۸۹</span>
+                                  <span className="font-sans text-zinc-600">{toPersianDigits(activeCard.social_links?.phone || '۰۹۱۲۳۴۵۶۷۸۹')}</span>
                                 </div>
                                 <div className="flex items-center gap-2 py-1 text-[8px] font-medium border-b border-zinc-100">
                                   <span className="p-1 bg-zinc-100 rounded">
                                     <MessageSquare className="h-2.5 w-2.5 text-zinc-700" />
                                   </span>
-                                  <span className="text-zinc-600">ارسال در واتساپ</span>
+                                  <span className="text-zinc-600">ارسال پیام مستقیم</span>
                                 </div>
                               </div>
                             </div>
 
                             {/* Buttons */}
-                            <button className="w-full py-2 border border-zinc-900 font-bold flex items-center justify-center gap-1.5 text-[8px] rounded-lg">
-                              <FileText className="h-3 w-3 text-zinc-900 shrink-0" />
-                              <span>دانلود مشخصات تماس سارا</span>
-                            </button>
+                            <div className="p-4 pt-0">
+                              <button className="w-full py-2 border border-zinc-900 font-bold flex items-center justify-center gap-1.5 text-[8px] rounded-lg">
+                                <FileText className="h-3 w-3 text-zinc-900 shrink-0" />
+                                <span>دانلود مشخصات تماس سارا</span>
+                              </button>
+                            </div>
                           </div>
                         )}
 
                         {/* 4. LUXURY GOLD TEMPLATE PREVIEW */}
                         {isLuxuryDark && (
-                          <div className="w-full min-h-full bg-[#0c0a09] text-amber-100 p-4 space-y-4 flex flex-col justify-between border border-amber-500/20">
-                            <div className="space-y-4 pt-4">
+                          <div className="w-full min-h-full bg-[#0c0a09] text-amber-100 flex flex-col justify-between border border-amber-500/20">
+                            {/* Cover photo */}
+                            <div className="h-24 bg-stone-900 relative shrink-0">
+                              <img 
+                                src={previewCoverImage} 
+                                alt="cover" 
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-b from-stone-950/20 to-[#0c0a09]"></div>
+                            </div>
+
+                            <div className="p-4 space-y-3 -mt-8 relative z-10 flex-grow">
                               <div className="flex justify-between items-center text-[8px]">
                                 <span className="px-2 py-0.5 bg-amber-500/10 rounded-full text-amber-400 font-bold border border-amber-500/20">
                                   LUXURY VIP
@@ -798,6 +831,7 @@ export default function LandingPage() {
                                 <div>
                                   <h4 className="text-xs font-black text-amber-100">{previewName}</h4>
                                   <p className="text-[9px] font-bold text-amber-400 mt-0.5">{previewJob}</p>
+                                  <p className="text-[8px] text-stone-400">{previewCompany}</p>
                                 </div>
                               </div>
 
@@ -825,10 +859,10 @@ export default function LandingPage() {
                             </div>
 
                             {/* Luxury actions */}
-                            <div className="space-y-1.5">
+                            <div className="p-4 pt-0 space-y-1.5">
                               <div className="p-2 bg-stone-900 border border-amber-500/30 rounded-xl flex items-center justify-between text-[8px] font-bold text-amber-300">
                                 <FileText className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                                <span>کتابچه سوابق درمانی کلینیک</span>
+                                <span>دانلود رزومه و کاتالوگ پورتفولیو</span>
                                 <span className="opacity-40">➔</span>
                               </div>
                             </div>

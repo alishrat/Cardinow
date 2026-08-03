@@ -1609,6 +1609,17 @@ export default function PublicCardPage() {
                 fontFamily: 'var(--font-vazirmatn), sans-serif'
               }}
             >
+              {/* Cover photo */}
+              {card.cover_image && (
+                <div className="h-36 rounded-2xl overflow-hidden relative border border-slate-200/50 shadow-sm shrink-0">
+                  <img 
+                    src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} 
+                    alt="cover" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
               {/* Header Section */}
               {isSplitHeader ? (
                 <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-100">

@@ -188,12 +188,17 @@ export function getImageUrl(idOrUrl: string | null | undefined): string {
   return idOrUrl;
 }
 
-// Helper to convert English digits (0-9) to Persian digits (۰-۹)
+// Helper to convert English digits (0-9) and Arabic digits (٠-٩) to Persian digits (۰-۹)
 export function toPersianDigits(n: string | number | null | undefined): string {
   if (n === null || n === undefined) return '';
   const str = String(n);
   const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  return str.replace(/[0-9]/g, (w) => farsiDigits[parseInt(w, 10)]);
+  return str
+    .replace(/[0-9]/g, (w) => farsiDigits[parseInt(w, 10)])
+    .replace(/[٠-٩]/g, (w) => {
+      const idx = '٠١٢٣٤٥٦٧٨٩'.indexOf(w);
+      return idx !== -1 ? farsiDigits[idx] : w;
+    });
 }
 
 // Helper to convert Persian/Arabic digits (۰-۹) to English digits (0-9)
@@ -358,7 +363,57 @@ const SEED_PLANS: Plan[] = [
   }
 ];
 
+export const DEFAULT_DEMO_CARD: Card = {
+  id: '9b645595-de36-42cd-98a3-60c3cd3e50bf',
+  user_id: 'u-1',
+  tenant_id: 't-1',
+  template_id: 'temp-1',
+  slug: 'demo',
+  status: 'published',
+  profile_image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&h=300&q=80',
+  cover_image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+  first_name: 'سارا',
+  last_name: 'راد',
+  job_title: 'مدیر ارشد محصول (CPO)',
+  company: 'شرکت دانش‌بنیان مپنا',
+  bio: 'توسعه‌دهنده محصولات نرم‌افزاری مقیاس‌پذیر و برنده جوایز بین‌المللی طراحی رابط‌های دیجیتال. علاقه‌مند به هوش مصنوعی و طراحی تجربه کاربری.',
+  neshan: 'https://neshan.org/maps',
+  balad: 'https://balad.ir',
+  waze: 'https://waze.com',
+  googlemap: 'https://maps.google.com',
+  bank_card: '۶۰۳۷۹۹۱۸۱۲۳۴۵۶۷۸',
+  bank_account: '۰۲۱۵۴۸۷۶۳۲۰۰۱',
+  bank_shaba: 'IR120120000000021548763201',
+  address: 'تهران، میدان ونک، خیابان ملاصدرا، پلاک ۴۵، طبقه ۳',
+  social_links: {
+    phone: '۰۹۱۲۳۴۵۶۷۸۹',
+    mobile: '۰۹۱۲۳۴۵۶۷۸۹',
+    extra_phones: ['۰۲۱۲۲۳۳۴۴۵۵'],
+    whatsapp: '۰۹۱۲۳۴۵۶۷۸۹',
+    telegram: 'sara_rad_demo',
+    instagram: 'sara_rad_cpo',
+    linkedin: 'sara-rad-cpo',
+    website: 'mapna.com',
+    email: 'sara.rad@mapna.com'
+  },
+  custom_buttons: [
+    { id: 'b-demo-1', label: 'دریافت رزومه کاری و پورتفولیو', url: 'https://example.com/resume.pdf', color: '#2563eb' },
+    { id: 'b-demo-2', label: 'رزرو جلسه مشاوره اختصاصی', url: 'https://calendly.com', color: '#10b981' }
+  ],
+  custom_colors: {
+    primary: '#2563eb',
+    secondary: '#1e40af',
+    background: '#f8fafc',
+    text: '#1e293b',
+    card_bg: '#ffffff'
+  },
+  views_count: 850,
+  expiry_date: '2028-01-01',
+  created_at: '2026-01-01T00:00:00Z'
+};
+
 const SEED_CARDS: Card[] = [
+  DEFAULT_DEMO_CARD,
   {
     id: 'c-1',
     user_id: 'u-1',
@@ -647,6 +702,18 @@ export function parseCardFields(card: any): Card {
       parsed.section_orders = JSON.parse(parsed.section_orders);
     } catch (e) {
       console.warn("Failed to parse section_orders", e);
+    }
+  }
+
+  // Convert numeric card fields to Persian digits
+  if (parsed.bank_card) parsed.bank_card = toPersianDigits(parsed.bank_card);
+  if (parsed.bank_account) parsed.bank_account = toPersianDigits(parsed.bank_account);
+  if (parsed.bank_shaba) parsed.bank_shaba = toPersianDigits(parsed.bank_shaba);
+  if (parsed.social_links) {
+    if (parsed.social_links.phone) parsed.social_links.phone = toPersianDigits(parsed.social_links.phone);
+    if (parsed.social_links.mobile) parsed.social_links.mobile = toPersianDigits(parsed.social_links.mobile);
+    if (Array.isArray(parsed.social_links.extra_phones)) {
+      parsed.social_links.extra_phones = parsed.social_links.extra_phones.map((p: string) => toPersianDigits(p));
     }
   }
 

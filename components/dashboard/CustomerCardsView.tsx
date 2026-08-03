@@ -1138,7 +1138,7 @@ export function CustomerCardsView({
                           value={editingCard.social_links?.phone || ''} 
                           onChange={(e) => setEditingCard({
                             ...editingCard,
-                            social_links: { ...(editingCard.social_links || {}), phone: e.target.value }
+                            social_links: { ...(editingCard.social_links || {}), phone: toPersianDigits(e.target.value) }
                           })}
                           className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-[11px] text-white"
                         />
@@ -1151,7 +1151,7 @@ export function CustomerCardsView({
                           value={editingCard.social_links?.mobile || ''} 
                           onChange={(e) => setEditingCard({
                             ...editingCard,
-                            social_links: { ...(editingCard.social_links || {}), mobile: e.target.value }
+                            social_links: { ...(editingCard.social_links || {}), mobile: toPersianDigits(e.target.value) }
                           })}
                           className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-[11px] text-white"
                         />
@@ -1206,7 +1206,7 @@ export function CustomerCardsView({
                           type="text"
                           placeholder="مثلاً: ۰۲۱۸۸۸۸۸۸۸۸ یا ۰۹۱۲۳۴۵۶۷۸۹"
                           value={newExtraPhone}
-                          onChange={(e) => setNewExtraPhone(e.target.value)}
+                          onChange={(e) => setNewExtraPhone(toPersianDigits(e.target.value))}
                           className="flex-grow px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-[11px] text-white"
                         />
                         <button
@@ -1351,7 +1351,7 @@ export function CustomerCardsView({
                           type="text" 
                           maxLength={19}
                           value={editingCard.bank_card || ''} 
-                          onChange={(e) => setEditingCard({ ...editingCard, bank_card: e.target.value })}
+                          onChange={(e) => setEditingCard({ ...editingCard, bank_card: toPersianDigits(e.target.value) })}
                           placeholder="۶۰۳۷۹۹۱۸۱۲۳۴۵۶۷۸"
                           className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-[11px] text-left font-mono text-white"
                         />
@@ -1362,7 +1362,7 @@ export function CustomerCardsView({
                         <input 
                           type="text" 
                           value={editingCard.bank_account || ''} 
-                          onChange={(e) => setEditingCard({ ...editingCard, bank_account: e.target.value })}
+                          onChange={(e) => setEditingCard({ ...editingCard, bank_account: toPersianDigits(e.target.value) })}
                           placeholder="مثلاً: ۱-۲۳۴۵۶-..."
                           className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-[11px] text-left font-mono text-white"
                         />
@@ -1374,7 +1374,7 @@ export function CustomerCardsView({
                           type="text" 
                           maxLength={26}
                           value={editingCard.bank_shaba || ''} 
-                          onChange={(e) => setEditingCard({ ...editingCard, bank_shaba: e.target.value })}
+                          onChange={(e) => setEditingCard({ ...editingCard, bank_shaba: toPersianDigits(e.target.value) })}
                           placeholder="IR1201200000000123456789"
                           className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-[11px] text-left font-mono text-white"
                         />
