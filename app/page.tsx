@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { dbService, Template, Plan, Card } from '../lib/directus';
+import { dbService, Template, Plan, Card, getImageUrl, toPersianDigits } from '../lib/directus';
 import BrandLogo from '../components/BrandLogo';
 import { 
   CreditCard, Smartphone, ShieldCheck, Sparkles, Zap, Award, 
@@ -33,20 +33,20 @@ export default function LandingPage() {
       ]);
       setTemplates(fetchedTemplates);
       
-      // Fetch target card for hero section (9b645595-de36-42cd-98a3-60c3cd3e50bf)
+      // Fetch target demo card (slug 'demo')
       try {
-        const targetCardId = '9b645595-de36-42cd-98a3-60c3cd3e50bf';
-        const fetchedHeroCard = await dbService.getCardById(targetCardId);
-        if (fetchedHeroCard) {
-          setDemoCard(fetchedHeroCard);
+        const fetchedDemo = await dbService.getCardBySlug('demo');
+        if (fetchedDemo) {
+          setDemoCard(fetchedDemo);
         } else {
-          const fetchedDemo = await dbService.getCardBySlug('demo');
-          if (fetchedDemo) {
-            setDemoCard(fetchedDemo);
+          const targetCardId = '9b645595-de36-42cd-98a3-60c3cd3e50bf';
+          const fetchedHeroCard = await dbService.getCardById(targetCardId);
+          if (fetchedHeroCard) {
+            setDemoCard(fetchedHeroCard);
           }
         }
       } catch (demoErr) {
-        console.warn('Could not fetch target hero card:', demoErr);
+        console.warn('Could not fetch demo card:', demoErr);
       }
       
       const targetTenantId = 't-1';
@@ -93,9 +93,9 @@ export default function LandingPage() {
   const previewJob = demoCard ? (demoCard.job_title || '') : 'مدیر ارشد محصول (CPO)';
   const previewCompany = demoCard ? (demoCard.company || '') : 'شرکت دانش بنیان مپنا';
   const previewBio = demoCard ? (demoCard.bio || '') : 'توسعه‌دهنده محصولات نرم‌افزاری مقیاس‌پذیر و برنده جوایز بین‌المللی طراحی رابط‌های دیجیتال.';
-  const previewProfileImage = demoCard?.profile_image || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80';
-  const previewCoverImage = demoCard?.cover_image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
-  const previewViewsCount = demoCard ? `${demoCard.views_count} بازدید` : '۴۵۰ بازدید';
+  const previewProfileImage = (demoCard && demoCard.profile_image) ? (getImageUrl(demoCard.profile_image) || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80') : 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80';
+  const previewCoverImage = (demoCard && demoCard.cover_image) ? (getImageUrl(demoCard.cover_image) || '/cover-fallback.avif') : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+  const previewViewsCount = demoCard ? `${toPersianDigits(demoCard.views_count)} بازدید` : '۴۵۰ بازدید';
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white rtl" dir="rtl">

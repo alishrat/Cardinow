@@ -12,7 +12,9 @@ async function handleProxy(req: NextRequest, { params }: { params: { path?: stri
     const pathStr = pathSegments.join("/");
 
     // Extract query parameters
-    const { search } = new URL(req.url);
+    const urlObj = new URL(req.url);
+    const search = urlObj.search;
+    const tokenParam = urlObj.searchParams.get('access_token');
 
     // Construct the final Directus URL
     const targetUrl = `${TARGET_BASE_URL}/${pathStr}${search}`;
@@ -38,6 +40,10 @@ async function handleProxy(req: NextRequest, { params }: { params: { path?: stri
         headers.set(key, value);
       }
     });
+
+    if (tokenParam && !headers.has('authorization')) {
+      headers.set('authorization', `Bearer ${tokenParam}`);
+    }
 
     // Send the request to Directus
     const response = await fetch(targetUrl, {

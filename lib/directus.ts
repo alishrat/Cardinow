@@ -172,9 +172,18 @@ export function getImageUrl(idOrUrl: string | null | undefined): string {
   // Check if it is a UUID (Directus file ID)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (uuidRegex.test(idOrUrl)) {
-    // ALWAYS return the relative proxy path to ensure browser requests go through the HTTPS proxy
-    // and avoid mixed content blockages or raw URL exposure.
-    return `/api/directus/assets/${idOrUrl}`;
+    let token = '';
+    if (typeof window !== 'undefined') {
+      try {
+        const sessionStr = localStorage.getItem('digital_card_session');
+        if (sessionStr) {
+          const session = JSON.parse(sessionStr);
+          if (session?.access_token) token = session.access_token;
+        }
+      } catch {}
+    }
+    const tokenQuery = token ? `?access_token=${encodeURIComponent(token)}` : '';
+    return `/api/directus/assets/${idOrUrl}${tokenQuery}`;
   }
   return idOrUrl;
 }
@@ -185,6 +194,15 @@ export function toPersianDigits(n: string | number | null | undefined): string {
   const str = String(n);
   const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
   return str.replace(/[0-9]/g, (w) => farsiDigits[parseInt(w, 10)]);
+}
+
+// Helper to convert Persian/Arabic digits (۰-۹) to English digits (0-9)
+export function toEnglishDigits(n: string | number | null | undefined): string {
+  if (n === null || n === undefined) return '';
+  const str = String(n);
+  return str
+    .replace(/[۰-۹]/g, (w) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(w)))
+    .replace(/[٠-٩]/g, (w) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(w)));
 }
 
 // Helper to sanitize any database error messages, removing Directus technical branding
@@ -1034,6 +1052,13 @@ export const dbService = {
     await ensureValidTenantId(cleanPayload);
     const cleanId = toUUID(plan.id);
 
+    // Format allowed_templates as array of clean UUID strings
+    if (Array.isArray(cleanPayload.allowed_templates)) {
+      cleanPayload.allowed_templates = cleanPayload.allowed_templates.map((t: any) =>
+        typeof t === 'object' ? toUUID(t.id || t.templates_id) : toUUID(t)
+      ).filter(Boolean);
+    }
+
     const check = await fetch(`${DIRECTUS_BASE_URL}/items/plans/${cleanId}`, {
       headers: { ...getAuthHeaders() }
     });
@@ -1042,7 +1067,7 @@ export const dbService = {
       ? `${DIRECTUS_BASE_URL}/items/plans/${cleanId}`
       : `${DIRECTUS_BASE_URL}/items/plans`;
 
-    const res = await fetch(url, {
+    let res = await fetch(url, {
       method,
       headers: { 
         'Content-Type': 'application/json',
@@ -1050,7 +1075,31 @@ export const dbService = {
       },
       body: JSON.stringify(cleanPayload)
     });
-    if (!res.ok) throw new Error('خطا در ذخیره‌سازی پلن در پایگاه داده');
+
+    if (!res.ok) {
+      // Retry without allowed_templates in case Directus collection doesn't have allowed_templates field or requires junction format
+      const fallbackPayload = { ...cleanPayload };
+      delete fallbackPayload.allowed_templates;
+      res = await fetch(url, {
+        method,
+        headers: { 
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(fallbackPayload)
+      });
+    }
+
+    if (!res.ok) {
+      let errorDetail = '';
+      try {
+        const errJson = await res.json();
+        errorDetail = errJson?.errors?.[0]?.message || JSON.stringify(errJson);
+      } catch {
+        try { errorDetail = await res.text(); } catch {}
+      }
+      throw new Error(`خطا در ذخیره‌سازی پلن در پایگاه داده: ${errorDetail || res.statusText}`);
+    }
   },
   deletePlan: async (planId: string): Promise<void> => {
     const cleanId = toUUID(planId);

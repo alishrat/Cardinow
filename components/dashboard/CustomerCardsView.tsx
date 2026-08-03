@@ -10,8 +10,9 @@ import {
   GripVertical, MoveUp, MoveDown, Layers, RotateCcw, AlignRight, Share2
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Card, Template, toUUID, getImageUrl, dbService, toJalaliDate, SECTION_DEFINITIONS, getSectionOrders, DEFAULT_SECTION_ORDERS } from '../../lib/directus';
+import { Card, Template, toUUID, getImageUrl, dbService, toJalaliDate, SECTION_DEFINITIONS, getSectionOrders, DEFAULT_SECTION_ORDERS, toPersianDigits, toEnglishDigits } from '../../lib/directus';
 import { saveCardToContacts } from '../../lib/vcard';
+import ProfileImageCropperModal from './ProfileImageCropperModal';
 
 export function getTemplateDefaultColors(templateId?: string | null, templatesList: Template[] = []) {
   const cleanTId = (templateId || '').toLowerCase();
@@ -141,6 +142,7 @@ export function CustomerCardsView({
 }: CustomerCardsViewProps) {
   const [editorTab, setEditorTab] = React.useState<'info' | 'contact' | 'maps' | 'bank' | 'advanced' | 'layout'>('info');
   const [previewCopiedField, setPreviewCopiedField] = React.useState<string | null>(null);
+  const [pendingProfileCropFile, setPendingProfileCropFile] = React.useState<File | null>(null);
 
   // Drag and drop reordering handlers for card builder
   const handleDragEnd = (result: DropResult) => {
@@ -277,7 +279,9 @@ export function CustomerCardsView({
 
   const handlePreviewCopyText = (text: string, fieldName: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
+      const isBankField = fieldName === 'bank_card' || fieldName === 'bank_account' || fieldName === 'bank_shaba';
+      const textToCopy = isBankField ? toEnglishDigits(text) : text;
+      navigator.clipboard.writeText(textToCopy);
     }
     setPreviewCopiedField(fieldName);
     setTimeout(() => setPreviewCopiedField(null), 2000);
@@ -733,7 +737,7 @@ export function CustomerCardsView({
                         onDrop={(e) => {
                           e.preventDefault();
                           if (e.dataTransfer.files?.[0]) {
-                            handleFileUpload(e.dataTransfer.files[0], 'profile');
+                            setPendingProfileCropFile(e.dataTransfer.files[0]);
                           }
                         }}
                         onClick={() => document.getElementById('profile-file-input')?.click()}
@@ -745,8 +749,9 @@ export function CustomerCardsView({
                           accept="image/*"
                           onChange={(e) => {
                             if (e.target.files?.[0]) {
-                              handleFileUpload(e.target.files[0], 'profile');
+                              setPendingProfileCropFile(e.target.files[0]);
                             }
+                            e.target.value = '';
                           }}
                           className="hidden" 
                         />
@@ -811,6 +816,7 @@ export function CustomerCardsView({
                             if (e.target.files?.[0]) {
                               handleFileUpload(e.target.files[0], 'cover');
                             }
+                            e.target.value = '';
                           }}
                           className="hidden" 
                         />
@@ -1672,7 +1678,7 @@ export function CustomerCardsView({
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <div key="sec_classic_bio" className="p-2 bg-white/60 rounded-xl text-[8px] leading-relaxed border border-slate-200/50 opacity-90" style={{ color: textColor }}>
+                                    <div key="sec_classic_bio" className="p-2 bg-white/60 rounded-xl text-[8px] leading-relaxed border border-slate-200/50 opacity-90 whitespace-pre-line" style={{ color: textColor }}>
                                       {editingCard.bio}
                                     </div>
                                   ) : null;
@@ -1903,7 +1909,7 @@ export function CustomerCardsView({
                             </div>
 
                             {editingCard.bio && (
-                              <p className="text-[8px] text-zinc-400 leading-relaxed bg-zinc-950/60 p-2 border border-zinc-850 rounded-xl">
+                              <p className="text-[8px] text-zinc-400 leading-relaxed bg-zinc-950/60 p-2 border border-zinc-850 rounded-xl whitespace-pre-line">
                                 {editingCard.bio}
                               </p>
                             )}
@@ -1926,7 +1932,7 @@ export function CustomerCardsView({
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_neon_bio" className="text-[8px] text-zinc-400 leading-relaxed bg-zinc-950/60 p-2 border border-zinc-850 rounded-xl">
+                                    <p key="sec_neon_bio" className="text-[8px] text-zinc-400 leading-relaxed bg-zinc-950/60 p-2 border border-zinc-850 rounded-xl whitespace-pre-line">
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
@@ -2141,7 +2147,7 @@ export function CustomerCardsView({
                             </div>
 
                             {editingCard.bio && (
-                              <p className="text-[8px] text-stone-600 leading-relaxed text-center px-2">
+                              <p className="text-[8px] text-stone-600 leading-relaxed text-center px-2 whitespace-pre-line">
                                 {editingCard.bio}
                               </p>
                             )}
@@ -2163,7 +2169,7 @@ export function CustomerCardsView({
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_min_bio" className="text-[8px] text-stone-600 leading-relaxed text-center px-2">
+                                    <p key="sec_min_bio" className="text-[8px] text-stone-600 leading-relaxed text-center px-2 whitespace-pre-line">
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
@@ -2406,7 +2412,7 @@ export function CustomerCardsView({
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_lux_bio" className="text-[7.5px] text-stone-400 leading-relaxed bg-stone-950/40 p-2 rounded-lg border border-stone-800/40 text-justify">
+                                    <p key="sec_lux_bio" className="text-[7.5px] text-stone-400 leading-relaxed bg-stone-950/40 p-2 rounded-lg border border-stone-800/40 text-justify whitespace-pre-line">
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
@@ -2609,6 +2615,16 @@ export function CustomerCardsView({
                             }}
                           >
                             <div className="space-y-3.5 flex-grow">
+                              {/* Cover photo for Custom Template */}
+                              <div className="h-20 bg-slate-200 relative shrink-0 overflow-hidden -mx-3.5 -mt-3.5 mb-2.5">
+                                <img 
+                                  src={getImageUrl(editingCard.cover_image) || '/cover-fallback.avif'} 
+                                  alt="cover" 
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30"></div>
+                              </div>
+
                               <div className="flex justify-between items-center text-[7px]">
                                 <span className="px-1.5 py-0.5 rounded-full text-[6px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
                                   {activeTemplate?.name || 'قالب اختصاصی'}
@@ -2663,7 +2679,7 @@ export function CustomerCardsView({
                                     );
                                   case 'bio':
                                     return editingCard.bio ? (
-                                      <p key="sec_cust_bio" className="text-[7.5px] leading-relaxed text-center" style={{ color: txtSecColor }}>
+                                      <p key="sec_cust_bio" className="text-[7.5px] leading-relaxed text-center whitespace-pre-line" style={{ color: txtSecColor }}>
                                         {editingCard.bio}
                                       </p>
                                     ) : null;
@@ -2953,6 +2969,17 @@ export function CustomerCardsView({
           </div>
         </div>
       )}
+
+      {/* Profile Image Cropper Modal */}
+      <ProfileImageCropperModal
+        imageFile={pendingProfileCropFile}
+        isOpen={!!pendingProfileCropFile}
+        onClose={() => setPendingProfileCropFile(null)}
+        onConfirmCrop={(croppedFile) => {
+          handleFileUpload(croppedFile, 'profile');
+          setPendingProfileCropFile(null);
+        }}
+      />
 
     </div>
   );

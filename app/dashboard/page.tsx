@@ -953,7 +953,7 @@ function DashboardContent() {
         <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden p-6 lg:p-10 relative">
           
           {/* Brand/Information column */}
-          <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
+          <div className="order-2 lg:order-1 lg:col-span-5 space-y-6 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-semibold">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -988,7 +988,7 @@ function DashboardContent() {
           </div>
 
           {/* Form column */}
-          <div className="lg:col-span-7 bg-slate-950 p-6 rounded-2xl border border-slate-800/80 flex flex-col justify-center space-y-6">
+          <div className="order-1 lg:order-2 lg:col-span-7 bg-slate-950 p-6 rounded-2xl border border-slate-800/80 flex flex-col justify-center space-y-6">
             
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">

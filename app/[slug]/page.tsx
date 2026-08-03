@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { dbService, Card, Template, getImageUrl, parseCardFields, getSectionOrders, toUUID } from '../../lib/directus';
+import { dbService, Card, Template, getImageUrl, parseCardFields, getSectionOrders, toUUID, toPersianDigits, toEnglishDigits } from '../../lib/directus';
 import { saveCardToContacts } from '../../lib/vcard';
 import BrandLogo from '../../components/BrandLogo';
 import { 
@@ -101,7 +101,9 @@ export default function PublicCardPage() {
   };
 
   const handleCopyText = (text: string, fieldName: string) => {
-    navigator.clipboard.writeText(text);
+    const isBankField = fieldName === 'bank_card' || fieldName === 'bank_account' || fieldName === 'bank_shaba';
+    const textToCopy = isBankField ? toEnglishDigits(text) : text;
+    navigator.clipboard.writeText(textToCopy);
     setCopiedField(fieldName);
     setTimeout(() => setCopiedField(null), 2000);
   };
@@ -498,7 +500,7 @@ export default function PublicCardPage() {
 
                   case 'bio':
                     return card.bio ? (
-                      <div key="sec_bio" className="p-4 bg-slate-50 rounded-2xl text-xs leading-relaxed border border-slate-100 opacity-90" style={{ color: textCol }}>
+                      <div key="sec_bio" className="p-4 bg-slate-50 rounded-2xl text-xs leading-relaxed border border-slate-100 opacity-90 whitespace-pre-line" style={{ color: textCol }}>
                         {card.bio}
                       </div>
                     ) : null;
@@ -514,16 +516,16 @@ export default function PublicCardPage() {
                                 <Phone className="h-4 w-4 text-blue-600" />
                                 تلفن همراه (موبایل):
                               </span>
-                              <span className="font-mono text-slate-600 font-bold">{mobile}</span>
+                              <span className="font-sans text-slate-600 font-bold">{toPersianDigits(mobile)}</span>
                             </a>
                           )}
                           {extra_phones && extra_phones.map((ph: string, idx: number) => (
                             <a key={idx} href={`tel:${ph}`} className="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition border border-slate-100 text-xs">
                               <span className="flex items-center gap-2 font-semibold">
                                 <Phone className="h-4 w-4 text-slate-500" />
-                                شماره تماس جانبی {idx + 1}:
+                                شماره تماس جانبی {toPersianDigits(idx + 1)}:
                               </span>
-                              <span className="font-mono text-slate-600 font-bold">{ph}</span>
+                              <span className="font-sans text-slate-600 font-bold">{toPersianDigits(ph)}</span>
                             </a>
                           ))}
                         </div>
@@ -638,7 +640,7 @@ export default function PublicCardPage() {
                         )}
                         {card.address && (
                           <div className="p-4 bg-slate-50 rounded-2xl text-xs leading-relaxed border border-slate-100 font-medium text-slate-700">
-                            {card.address}
+                            {toPersianDigits(card.address)}
                           </div>
                         )}
                       </div>
@@ -660,7 +662,7 @@ export default function PublicCardPage() {
                             >
                               <div>
                                 <span className="text-[10px] text-slate-400 block mb-1 font-semibold">شماره کارت</span>
-                                <span className="font-mono font-bold tracking-widest text-slate-700">{card.bank_card}</span>
+                                <span className="font-mono font-bold tracking-widest text-slate-700 dir-ltr select-all">{toEnglishDigits(card.bank_card)}</span>
                               </div>
                               <div className="p-1.5 hover:bg-slate-200/60 rounded-lg text-slate-500 hover:text-slate-700 transition flex items-center gap-1">
                                 {copiedField === 'bank_card' ? <span className="text-[10px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-4 w-4" />}
@@ -675,7 +677,7 @@ export default function PublicCardPage() {
                             >
                               <div>
                                 <span className="text-[10px] text-slate-400 block mb-1 font-semibold">شماره حساب</span>
-                                <span className="font-mono font-bold text-slate-700">{card.bank_account}</span>
+                                <span className="font-mono font-bold text-slate-700 dir-ltr select-all">{toEnglishDigits(card.bank_account)}</span>
                               </div>
                               <div className="p-1.5 hover:bg-slate-200/60 rounded-lg text-slate-500 hover:text-slate-700 transition flex items-center gap-1">
                                 {copiedField === 'bank_account' ? <span className="text-[10px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-4 w-4" />}
@@ -690,7 +692,7 @@ export default function PublicCardPage() {
                             >
                               <div>
                                 <span className="text-[10px] text-slate-400 block mb-1 font-semibold">شماره شبا (IR)</span>
-                                <span className="font-mono font-bold text-slate-700 text-left" dir="ltr">{card.bank_shaba}</span>
+                                <span className="font-mono font-bold text-slate-700 text-left dir-ltr select-all">{toEnglishDigits(card.bank_shaba)}</span>
                               </div>
                               <div className="p-1.5 hover:bg-slate-200/60 rounded-lg text-slate-500 hover:text-slate-700 transition flex items-center gap-1">
                                 {copiedField === 'bank_shaba' ? <span className="text-[10px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-4 w-4" />}
@@ -802,7 +804,7 @@ export default function PublicCardPage() {
                   );
                 case 'bio':
                   return card.bio ? (
-                    <div key="sec_temp2_bio" className="p-4 bg-white/5 rounded-2xl text-xs leading-relaxed border border-white/10 text-slate-300">
+                    <div key="sec_temp2_bio" className="p-4 bg-white/5 rounded-2xl text-xs leading-relaxed border border-white/10 text-slate-300 whitespace-pre-line">
                       {card.bio}
                     </div>
                   ) : null;
@@ -1086,7 +1088,7 @@ export default function PublicCardPage() {
                   );
                 case 'bio':
                   return card.bio ? (
-                    <p key="sec_temp3_bio" className="text-xs leading-relaxed opacity-75 border-r-2 border-slate-200 pr-3 font-normal">
+                    <p key="sec_temp3_bio" className="text-xs leading-relaxed opacity-75 border-r-2 border-slate-200 pr-3 font-normal whitespace-pre-line">
                       {card.bio}
                     </p>
                   ) : null;
@@ -1358,7 +1360,7 @@ export default function PublicCardPage() {
                   );
                 case 'bio':
                   return card.bio ? (
-                    <div key="sec_temp4_bio" className="p-4 bg-stone-900 rounded-xl text-xs leading-relaxed border border-amber-500/10 text-stone-300 text-center relative">
+                    <div key="sec_temp4_bio" className="p-4 bg-stone-900 rounded-xl text-xs leading-relaxed border border-amber-500/10 text-stone-300 text-center relative whitespace-pre-line">
                       <span className="absolute -top-3 right-4 bg-[#0c0a09] px-2 text-[10px] text-[#e2b53e] font-bold">درباره من</span>
                       {card.bio}
                     </div>
@@ -1699,7 +1701,7 @@ export default function PublicCardPage() {
                     return card.bio ? (
                       <div 
                         key="sec_cust_bio"
-                        className="p-3.5 rounded-2xl text-xs leading-relaxed text-center relative border"
+                        className="p-3.5 rounded-2xl text-xs leading-relaxed text-center relative border whitespace-pre-line"
                         style={{ 
                           borderColor: sColor, 
                           backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
