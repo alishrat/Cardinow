@@ -69,6 +69,7 @@ export default function LandingPage() {
   };
 
   useEffect(() => {
+    document.title = '59563559';
     let active = true;
     const load = async () => {
       await new Promise(resolve => setTimeout(resolve, 0));
