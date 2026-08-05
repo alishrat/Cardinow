@@ -10,7 +10,7 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: 'مگاکارت (MegaCard) | کارت ویزیت دیجیتال هوشمند',
+  title: '59563559',
   description: 'سامانه هوشمند طراحی، مدیریت و اشتراک‌گذاری کارت ویزیت دیجیتال',
   manifest: '/manifest.json',
   appleWebApp: {
