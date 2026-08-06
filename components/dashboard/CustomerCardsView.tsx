@@ -13,6 +13,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { Card, Template, toUUID, getImageUrl, dbService, toJalaliDate, SECTION_DEFINITIONS, getSectionOrders, DEFAULT_SECTION_ORDERS, toPersianDigits, toEnglishDigits } from '../../lib/directus';
 import { saveCardToContacts } from '../../lib/vcard';
 import ProfileImageCropperModal from './ProfileImageCropperModal';
+import ImageCropperModal from './ImageCropperModal';
 
 export function getTemplateDefaultColors(templateId?: string | null, templatesList: Template[] = []) {
   const cleanTId = (templateId || '').toLowerCase();
@@ -143,6 +144,7 @@ export function CustomerCardsView({
   const [editorTab, setEditorTab] = React.useState<'info' | 'contact' | 'maps' | 'bank' | 'advanced' | 'layout'>('info');
   const [previewCopiedField, setPreviewCopiedField] = React.useState<string | null>(null);
   const [pendingProfileCropFile, setPendingProfileCropFile] = React.useState<File | null>(null);
+  const [pendingCoverCropFile, setPendingCoverCropFile] = React.useState<File | null>(null);
 
   // Drag and drop reordering handlers for card builder
   const handleDragEnd = (result: DropResult) => {
@@ -802,7 +804,7 @@ export function CustomerCardsView({
                         onDrop={(e) => {
                           e.preventDefault();
                           if (e.dataTransfer.files?.[0]) {
-                            handleFileUpload(e.dataTransfer.files[0], 'cover');
+                            setPendingCoverCropFile(e.dataTransfer.files[0]);
                           }
                         }}
                         onClick={() => document.getElementById('cover-file-input')?.click()}
@@ -814,7 +816,7 @@ export function CustomerCardsView({
                           accept="image/*"
                           onChange={(e) => {
                             if (e.target.files?.[0]) {
-                              handleFileUpload(e.target.files[0], 'cover');
+                              setPendingCoverCropFile(e.target.files[0]);
                             }
                             e.target.value = '';
                           }}
@@ -2971,13 +2973,26 @@ export function CustomerCardsView({
       )}
 
       {/* Profile Image Cropper Modal */}
-      <ProfileImageCropperModal
+      <ImageCropperModal
+        mode="profile"
         imageFile={pendingProfileCropFile}
         isOpen={!!pendingProfileCropFile}
         onClose={() => setPendingProfileCropFile(null)}
         onConfirmCrop={(croppedFile) => {
           handleFileUpload(croppedFile, 'profile');
           setPendingProfileCropFile(null);
+        }}
+      />
+
+      {/* Cover Image Cropper Modal */}
+      <ImageCropperModal
+        mode="cover"
+        imageFile={pendingCoverCropFile}
+        isOpen={!!pendingCoverCropFile}
+        onClose={() => setPendingCoverCropFile(null)}
+        onConfirmCrop={(croppedFile) => {
+          handleFileUpload(croppedFile, 'cover');
+          setPendingCoverCropFile(null);
         }}
       />
 
