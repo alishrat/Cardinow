@@ -62,6 +62,35 @@ export interface Transaction {
   receipt_Image?: string | null;
 }
 
+export interface Wallet {
+  id: number | string;
+  user_id: string;
+  tenant_id?: string | null;
+  balance: number;
+  status: 'active' | 'frozen' | 'blocked';
+  created_at?: string;
+  updated_at?: string;
+  user_name?: string;
+  user_email?: string;
+  user_phone?: string;
+}
+
+export interface WalletTransaction {
+  id?: number | string;
+  user_created?: string;
+  date_created?: string;
+  user_updated?: string;
+  date_updated?: string;
+  wallet_id: number | string;
+  type: 'credit' | 'debit';
+  amount: number;
+  balance_after: number;
+  reference_id?: string | null;
+  status: 'pending' | 'completed' | 'failed' | 'rejected';
+  user_email?: string;
+  user_name?: string;
+}
+
 export interface Card {
   id: string;
   user_id: string;
@@ -1554,6 +1583,390 @@ export const dbService = {
       }
     } catch (err: any) {
       throw new Error('خطا در ذخیره تنظیمات حساب بانکی: ' + err.message);
+    }
+  },
+
+  // ---- WALLETS & WALLET TRANSACTIONS ----
+  getWallet: async (userId: string, tenantId?: string | null): Promise<Wallet> => {
+    const cleanUserId = toUUID(userId);
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/wallets?filter[user_id][_eq]=${cleanUserId}`, {
+        headers: { ...getAuthHeaders() }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const walletsList = json?.data || [];
+        if (walletsList.length > 0) {
+          const w = walletsList[0];
+          return {
+            id: w.id,
+            user_id: typeof w.user_id === 'object' ? w.user_id?.id || cleanUserId : w.user_id,
+            tenant_id: w.tenant_id ? (typeof w.tenant_id === 'object' ? w.tenant_id?.id : w.tenant_id) : null,
+            balance: Number(w.balance || 0),
+            status: w.status || 'active',
+            created_at: w.created_at,
+            updated_at: w.updated_at
+          };
+        }
+      }
+
+      // Wallet doesn't exist yet: Auto-create a new active wallet for this user
+      const newWalletPayload = {
+        user_id: cleanUserId,
+        tenant_id: tenantId ? toUUID(tenantId) : null,
+        balance: 0,
+        status: 'active'
+      };
+
+      const createRes = await fetch(`${DIRECTUS_BASE_URL}/items/wallets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(newWalletPayload)
+      });
+
+      if (createRes.ok) {
+        const createJson = await createRes.json();
+        const created = createJson?.data;
+        return {
+          id: created?.id || Date.now(),
+          user_id: cleanUserId,
+          tenant_id: tenantId ? toUUID(tenantId) : null,
+          balance: 0,
+          status: 'active',
+          created_at: created?.created_at,
+          updated_at: created?.updated_at
+        };
+      }
+    } catch (e) {
+      console.warn("Directus getWallet error:", e);
+    }
+
+    // Fallback default active wallet
+    return {
+      id: 1,
+      user_id: cleanUserId,
+      tenant_id: tenantId ? toUUID(tenantId) : null,
+      balance: 0,
+      status: 'active'
+    };
+  },
+
+  getAllWallets: async (): Promise<Wallet[]> => {
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/wallets?fields=*,user_id.first_name,user_id.last_name,user_id.email,user_id.location`, {
+        headers: { ...getAuthHeaders() }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const rawWallets = json?.data || [];
+        return rawWallets.map((w: any) => {
+          const userObj = typeof w.user_id === 'object' ? w.user_id : null;
+          const uName = userObj ? `${userObj.first_name || ''} ${userObj.last_name || ''}`.trim() : '';
+          return {
+            id: w.id,
+            user_id: userObj ? userObj.id : (w.user_id || ''),
+            tenant_id: w.tenant_id ? (typeof w.tenant_id === 'object' ? w.tenant_id?.id : w.tenant_id) : null,
+            balance: Number(w.balance || 0),
+            status: w.status || 'active',
+            created_at: w.created_at,
+            updated_at: w.updated_at,
+            user_name: uName || 'کاربر سیستم',
+            user_email: userObj?.email || '',
+            user_phone: userObj?.location || ''
+          };
+        });
+      }
+    } catch (e) {
+      console.warn("Directus getAllWallets error:", e);
+    }
+    return [];
+  },
+
+  getWalletTransactions: async (walletId: number | string): Promise<WalletTransaction[]> => {
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/wallet_transactions?filter[wallet_id][_eq]=${walletId}&sort=-date_created`, {
+        headers: { ...getAuthHeaders() }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const txs = json?.data || [];
+        return txs.map((t: any) => ({
+          id: t.id,
+          user_created: t.user_created,
+          date_created: t.date_created,
+          wallet_id: typeof t.wallet_id === 'object' ? t.wallet_id?.id : t.wallet_id,
+          type: t.type || 'credit',
+          amount: Number(t.amount || 0),
+          balance_after: Number(t.balance_after || 0),
+          reference_id: t.reference_id || null,
+          status: t.status || 'completed'
+        }));
+      }
+    } catch (e) {
+      console.warn("Directus getWalletTransactions error:", e);
+    }
+    return [];
+  },
+
+  getAllWalletTransactions: async (): Promise<WalletTransaction[]> => {
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/wallet_transactions?fields=*,wallet_id.id,wallet_id.user_id.first_name,wallet_id.user_id.last_name,wallet_id.user_id.email&sort=-date_created`, {
+        headers: { ...getAuthHeaders() }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const txs = json?.data || [];
+        return txs.map((t: any) => {
+          const wObj = typeof t.wallet_id === 'object' ? t.wallet_id : null;
+          const uObj = wObj && typeof wObj.user_id === 'object' ? wObj.user_id : null;
+          const uName = uObj ? `${uObj.first_name || ''} ${uObj.last_name || ''}`.trim() : '';
+          return {
+            id: t.id,
+            user_created: t.user_created,
+            date_created: t.date_created,
+            wallet_id: wObj ? wObj.id : t.wallet_id,
+            type: t.type || 'credit',
+            amount: Number(t.amount || 0),
+            balance_after: Number(t.balance_after || 0),
+            reference_id: t.reference_id || null,
+            status: t.status || 'completed',
+            user_name: uName || '',
+            user_email: uObj?.email || ''
+          };
+        });
+      }
+    } catch (e) {
+      console.warn("Directus getAllWalletTransactions error:", e);
+    }
+    return [];
+  },
+
+  createWalletTransaction: async (data: {
+    wallet_id: number | string;
+    type: 'credit' | 'debit';
+    amount: number;
+    reference_id?: string;
+    status?: 'pending' | 'completed' | 'failed' | 'rejected';
+  }): Promise<WalletTransaction> => {
+    // 1. Fetch current wallet balance
+    const walletRes = await fetch(`${DIRECTUS_BASE_URL}/items/wallets/${data.wallet_id}`, {
+      headers: { ...getAuthHeaders() }
+    });
+    let currentBalance = 0;
+    if (walletRes.ok) {
+      const wJson = await walletRes.json();
+      currentBalance = Number(wJson?.data?.balance || 0);
+    }
+
+    const txStatus = data.status || 'completed';
+    const amountNum = Number(data.amount);
+
+    if (data.type === 'debit' && currentBalance < amountNum && txStatus === 'completed') {
+      throw new Error('موجودی کیف پول شما برای انجام این تراکنش کافی نیست.');
+    }
+
+    const balanceAfter = txStatus === 'completed'
+      ? (data.type === 'credit' ? currentBalance + amountNum : currentBalance - amountNum)
+      : currentBalance;
+
+    // 2. Post transaction record
+    const txPayload = {
+      wallet_id: data.wallet_id,
+      type: data.type,
+      amount: amountNum,
+      balance_after: balanceAfter,
+      reference_id: data.reference_id || `WTX-${Date.now()}`,
+      status: txStatus
+    };
+
+    const txRes = await fetch(`${DIRECTUS_BASE_URL}/items/wallet_transactions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(txPayload)
+    });
+
+    if (!txRes.ok) {
+      const errText = await txRes.text().catch(() => '');
+      throw new Error('خطا در ثبت تراکنش کیف پول: ' + errText);
+    }
+
+    const createdTxData = await txRes.json();
+
+    // 3. If transaction status is completed, update wallet balance
+    if (txStatus === 'completed') {
+      await fetch(`${DIRECTUS_BASE_URL}/items/wallets/${data.wallet_id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({
+          balance: balanceAfter,
+          updated_at: new Date().toISOString()
+        })
+      });
+    }
+
+    return createdTxData?.data;
+  },
+
+  adminAdjustWallet: async (
+    walletId: number | string,
+    type: 'credit' | 'debit',
+    amount: number,
+    referenceId?: string
+  ): Promise<void> => {
+    await dbService.createWalletTransaction({
+      wallet_id: walletId,
+      type,
+      amount,
+      reference_id: referenceId || `ADMIN-ADJUST-${Date.now()}`,
+      status: 'completed'
+    });
+  },
+
+  adminUpdateWalletStatus: async (
+    walletId: number | string,
+    status: 'active' | 'frozen' | 'blocked'
+  ): Promise<void> => {
+    const res = await fetch(`${DIRECTUS_BASE_URL}/items/wallets/${walletId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({ status, updated_at: new Date().toISOString() })
+    });
+
+    if (!res.ok) {
+      throw new Error('خطا در تغییر وضعیت کیف پول');
+    }
+  },
+
+  updateWalletTransactionStatus: async (
+    txId: number | string,
+    walletId: number | string,
+    newStatus: 'completed' | 'rejected' | 'failed'
+  ): Promise<void> => {
+    // 1. Fetch the transaction details
+    const txRes = await fetch(`${DIRECTUS_BASE_URL}/items/wallet_transactions/${txId}`, {
+      headers: { ...getAuthHeaders() }
+    });
+    if (!txRes.ok) throw new Error('تراکنش یافت نشد.');
+    const txJson = await txRes.json();
+    const txData = txJson?.data;
+
+    if (!txData) throw new Error('اطلاعات تراکنش در پایگاه داده وجود ندارد.');
+    if (txData.status === newStatus) return; // Already updated
+
+    // If approving a pending credit transaction, update wallet balance!
+    if (newStatus === 'completed' && txData.status !== 'completed') {
+      const walletRes = await fetch(`${DIRECTUS_BASE_URL}/items/wallets/${walletId}`, {
+        headers: { ...getAuthHeaders() }
+      });
+      if (walletRes.ok) {
+        const wJson = await walletRes.json();
+        const currentBalance = Number(wJson?.data?.balance || 0);
+        const amountNum = Number(txData.amount || 0);
+        const newBalance = txData.type === 'credit' ? currentBalance + amountNum : Math.max(0, currentBalance - amountNum);
+
+        // Update transaction balance_after & status
+        await fetch(`${DIRECTUS_BASE_URL}/items/wallet_transactions/${txId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({
+            status: newStatus,
+            balance_after: newBalance
+          })
+        });
+
+        // Update wallet balance
+        await fetch(`${DIRECTUS_BASE_URL}/items/wallets/${walletId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({
+            balance: newBalance,
+            updated_at: new Date().toISOString()
+          })
+        });
+        return;
+      }
+    }
+
+    // Otherwise just update transaction status
+    await fetch(`${DIRECTUS_BASE_URL}/items/wallet_transactions/${txId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+  },
+
+  getZarinpalMerchant: async (): Promise<string> => {
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
+        headers: { ...getAuthHeaders() }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const data = Array.isArray(json?.data) ? json.data[0] : json?.data;
+        if (data?.zarinpal_merchant) {
+          return data.zarinpal_merchant;
+        }
+      }
+    } catch (e) {
+      console.warn("Directus getZarinpalMerchant error:", e);
+    }
+    return '';
+  },
+
+  saveZarinpalMerchant: async (merchantId: string): Promise<void> => {
+    try {
+      // Try PATCH to /items/settings or POST
+      let res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ zarinpal_merchant: merchantId })
+      });
+      if (res.ok) return;
+
+      res = await fetch(`${DIRECTUS_BASE_URL}/items/settings/1`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ zarinpal_merchant: merchantId })
+      });
+      if (res.ok) return;
+
+      res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ id: 1, zarinpal_merchant: merchantId })
+      });
+    } catch (err: any) {
+      throw new Error('خطا در ذخیره‌سازی مرچنت زرین‌پال: ' + err.message);
     }
   },
 

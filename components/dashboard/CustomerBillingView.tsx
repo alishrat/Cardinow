@@ -1,23 +1,29 @@
 'use client';
 
 import React from 'react';
-import { CreditCard, Check } from 'lucide-react';
-import { Plan, Transaction, toUUID, toJalaliDate } from '../../lib/directus';
+import { CreditCard, Check, Wallet as WalletIcon, ArrowRight } from 'lucide-react';
+import { Plan, Transaction, Wallet, toUUID, toJalaliDate } from '../../lib/directus';
 
 export interface CustomerBillingViewProps {
   user: any;
   plans: Plan[];
   transactions: Transaction[];
+  wallet?: Wallet | null;
   setSimulatedGateway: (gateway: string) => void;
   handleInitiatePayment: (plan: Plan) => void;
+  handlePayWithWallet?: (plan: Plan) => void;
+  onNavigateToWallet?: () => void;
 }
 
 export function CustomerBillingView({
   user,
   plans,
   transactions,
+  wallet,
   setSimulatedGateway,
-  handleInitiatePayment
+  handleInitiatePayment,
+  handlePayWithWallet,
+  onNavigateToWallet
 }: CustomerBillingViewProps) {
   const resolvedPlans = Array.isArray(plans) ? plans : [];
   const userTenantId = user?.tenant_id || 't-1';
@@ -37,6 +43,34 @@ export function CustomerBillingView({
         <h2 className="text-xl font-bold text-white">شارژ کیف پول و ارتقای طرح اشتراک</h2>
         <p className="text-xs text-slate-400 mt-1">با خرید اشتراک، سقف ساخت کارت و تم‌های اختصاصی برای شما افزایش می‌یابد.</p>
       </div>
+
+      {/* Wallet Balance Banner */}
+      {wallet && (
+        <div className="bg-gradient-to-r from-blue-950/60 to-slate-950 p-4 rounded-2xl border border-blue-900/30 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400">
+              <WalletIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="text-xs text-slate-400 block">موجودی کیف پول شما:</span>
+              <span className="text-lg font-bold text-white">
+                {(wallet.balance || 0).toLocaleString('fa-IR')} <span className="text-xs text-blue-400">تومان</span>
+              </span>
+            </div>
+          </div>
+
+          {onNavigateToWallet && (
+            <button
+              type="button"
+              onClick={onNavigateToWallet}
+              className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 font-bold rounded-xl text-xs transition flex items-center gap-1.5"
+            >
+              <span>مدیریت و شارژ کیف پول</span>
+              <ArrowRight className="h-3.5 w-3.5 rotate-180" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Offline & Online payment user guide */}
       <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-850/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
@@ -122,12 +156,22 @@ export function CustomerBillingView({
               </button>
             ) : (
               <div className="space-y-2 pt-2 border-t border-slate-900">
+                {handlePayWithWallet && (
+                  <button
+                    onClick={() => handlePayWithWallet(plan)}
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs transition shadow shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <WalletIcon className="h-4 w-4" />
+                    <span>پرداخت با موجودی کیف پول</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
                     setSimulatedGateway('کارت به کارت (پرداخت آفلاین)');
                     handleInitiatePayment(plan);
                   }}
-                  className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs transition shadow shadow-blue-600/10 flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full py-2 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-750 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1 cursor-pointer"
                 >
                   ثبت فیش واریزی (کارت به کارت)
                 </button>

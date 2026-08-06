@@ -3,14 +3,15 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
-  dbService, authService, initializeDB, Card, Tenant, Template, Plan, Subscription, Transaction, UserSession, CardAnalytics, toUUID, sanitizeDbError, getImageUrl, toJalaliDate, onTokenExpired
+  dbService, authService, initializeDB, Card, Tenant, Template, Plan, Subscription, Transaction, Wallet, WalletTransaction, UserSession, CardAnalytics, toUUID, sanitizeDbError, getImageUrl, toJalaliDate, onTokenExpired
 } from '../../lib/directus';
 import { 
   Plus, Edit2, Trash2, Globe, ExternalLink, Copy, Check, Eye, Save, Search, 
   Settings, User, LogOut, LayoutGrid, CreditCard, BarChart2, ShieldCheck, 
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
-  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, UserCheck, List, X
+  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, UserCheck, List, X,
+  Wallet as WalletIcon
 } from 'lucide-react';
 
 // Modular Subcomponents Imports
@@ -19,6 +20,8 @@ import { AdminTemplatesView } from '../../components/dashboard/AdminTemplatesVie
 import { AdminPlansView } from '../../components/dashboard/AdminPlansView';
 import { CustomerBillingView } from '../../components/dashboard/CustomerBillingView';
 import { CustomerAnalyticsView } from '../../components/dashboard/CustomerAnalyticsView';
+import { CustomerWalletView } from '../../components/dashboard/CustomerWalletView';
+import { AdminWalletsView } from '../../components/dashboard/AdminWalletsView';
 import BrandLogo from '../../components/BrandLogo';
 
 function generateRandomUUID(): string {
@@ -56,6 +59,13 @@ function DashboardContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [analytics, setAnalytics] = useState<CardAnalytics[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
+
+  // Wallet States
+  const [userWallet, setUserWallet] = useState<Wallet | null>(null);
+  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
+  const [allWallets, setAllWallets] = useState<Wallet[]>([]);
+  const [allWalletTransactions, setAllWalletTransactions] = useState<WalletTransaction[]>([]);
+  const [zarinpalMerchant, setZarinpalMerchant] = useState<string>('');
 
   // Auth Forms
   const [loginEmail, setLoginEmail] = useState(''); // also serves as loginId (email or mobile)
@@ -419,6 +429,18 @@ function DashboardContent() {
           if (found) setSelectedTenant(found);
         }
 
+        // Load Wallet for logged-in user
+        try {
+          const w = await dbService.getWallet(session.id, session.tenant_id);
+          setUserWallet(w);
+          if (w?.id) {
+            const wtxs = await dbService.getWalletTransactions(w.id);
+            setWalletTransactions(wtxs);
+          }
+        } catch (walletErr) {
+          console.warn('Could not fetch user wallet:', walletErr);
+        }
+
         // Fetch users for admin/tenant to manage
         if (session.role === 'admin' || session.role === 'tenant') {
           try {
@@ -426,6 +448,22 @@ function DashboardContent() {
             setAllUsers(fetchedUsers);
           } catch (usersErr) {
             console.warn('Could not fetch users list:', usersErr);
+          }
+        }
+
+        // Fetch admin wallet data
+        if (session.role === 'admin') {
+          try {
+            const [allW, allWtx, merchantKey] = await Promise.all([
+              dbService.getAllWallets(),
+              dbService.getAllWalletTransactions(),
+              dbService.getZarinpalMerchant()
+            ]);
+            setAllWallets(allW);
+            setAllWalletTransactions(allWtx);
+            setZarinpalMerchant(merchantKey);
+          } catch (adminWalletErr) {
+            console.warn('Could not fetch admin wallet data:', adminWalletErr);
           }
         }
       }
@@ -666,6 +704,50 @@ function DashboardContent() {
   const handleInitiatePayment = (plan: Plan) => {
     setModalError(null);
     setPayingPlan(plan);
+  };
+
+  const handlePayWithWallet = async (plan: Plan) => {
+    if (!user || !userWallet) {
+      showToast('اطلاعات کاربر یا کیف پول یافت نشد.', 'error');
+      return;
+    }
+
+    if (userWallet.status !== 'active') {
+      showToast('کیف پول شما غیرفعال یا مسدود است.', 'error');
+      return;
+    }
+
+    if (userWallet.balance < plan.price) {
+      showToast(`موجودی کیف پول شما کافی نیست. (موجودی فعلی: ${userWallet.balance.toLocaleString('fa-IR')} تومان - مبلغ پلن: ${plan.price.toLocaleString('fa-IR')} تومان)`, 'error');
+      setActiveTab('wallet');
+      return;
+    }
+
+    try {
+      await dbService.createWalletTransaction({
+        wallet_id: userWallet.id,
+        type: 'debit',
+        amount: plan.price,
+        reference_id: `PLAN-${plan.id.slice(0, 8)}-${Date.now()}`,
+        status: 'completed'
+      });
+
+      const newSub: Subscription = {
+        id: generateRandomUUID(),
+        user_id: user.id,
+        plan_id: plan.id,
+        status: 'active',
+        start_date: new Date().toISOString(),
+        end_date: plan.duration_days === -1 ? '2099-12-31T23:59:59.000Z' : new Date(Date.now() + plan.duration_days * 86400000).toISOString()
+      };
+      await dbService.saveSubscription(newSub);
+
+      showToast(`اشتراک «${plan.title}» با موفقیت از محل کیف پول خریداری گردید!`, 'success');
+      await refreshData();
+      setActiveTab('cards');
+    } catch (err: any) {
+      showToast(err.message || 'خطا در پرداخت با کیف پول.', 'error');
+    }
   };
 
   const handleReceiptUpload = async (file: File) => {
@@ -1294,6 +1376,25 @@ function DashboardContent() {
                   </button>
 
                   <button
+                    onClick={() => { setEditingCard(null); setActiveTab('wallet'); }}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-between gap-2.5 ${
+                      activeTab === 'wallet' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <WalletIcon className="h-4 w-4 text-blue-400" />
+                      <span>کیف پول من</span>
+                    </div>
+                    {userWallet && (
+                      <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded-full dir-ltr">
+                        {(userWallet.balance || 0).toLocaleString('fa-IR')}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
                     onClick={() => { setEditingCard(null); setActiveTab('billing'); }}
                     className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-2.5 ${
                       activeTab === 'billing' 
@@ -1409,6 +1510,18 @@ function DashboardContent() {
                   >
                     <DollarSign className="h-4 w-4" />
                     کل تراکنش‌های مالی پلتفرم
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('admin-wallets')}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-2.5 ${
+                      activeTab === 'admin-wallets' 
+                      ? 'bg-amber-600 text-white' 
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <WalletIcon className="h-4 w-4 text-amber-400" />
+                    مدیریت کیف‌پول‌ها و شارژ دستی
                   </button>
 
                   <button
@@ -1744,6 +1857,22 @@ function DashboardContent() {
             />
           )}
           {/* ==============================================
+              CUSTOMER MODE: WALLET TAB
+             ============================================== */}
+          {user.role === 'customer' && activeTab === 'wallet' && (
+            <CustomerWalletView
+              user={user}
+              wallet={userWallet}
+              transactions={walletTransactions}
+              bankCardInfo={{
+                bank_card: siteSettings?.bank_card,
+                bank_name: siteSettings?.bank_name
+              }}
+              onRefreshWallet={refreshData}
+            />
+          )}
+
+          {/* ==============================================
               CUSTOMER MODE: BILLING TAB
              ============================================== */}
           {user.role === 'customer' && activeTab === 'billing' && (
@@ -1751,8 +1880,11 @@ function DashboardContent() {
               user={user}
               plans={plans}
               transactions={transactions}
+              wallet={userWallet}
               setSimulatedGateway={setSimulatedGateway}
               handleInitiatePayment={handleInitiatePayment}
+              handlePayWithWallet={handlePayWithWallet}
+              onNavigateToWallet={() => setActiveTab('wallet')}
             />
           )}
           {/* ==============================================
@@ -2343,6 +2475,18 @@ function DashboardContent() {
               templates={templates}
               refreshData={refreshData}
               showToast={showToast}
+            />
+          )}
+
+          {/* ==============================================
+              ADMIN MODE: WALLETS MANAGEMENT TAB
+             ============================================== */}
+          {user.role === 'admin' && activeTab === 'admin-wallets' && (
+            <AdminWalletsView
+              wallets={allWallets}
+              transactions={allWalletTransactions}
+              zarinpalMerchant={zarinpalMerchant}
+              onRefreshData={refreshData}
             />
           )}
           {/* ==============================================
