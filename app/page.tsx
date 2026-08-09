@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { dbService, Template, Plan, Card, getImageUrl, toPersianDigits, DEFAULT_DEMO_CARD } from '../lib/directus';
+import { dbService, Template, Plan, Card, getImageUrl, toPersianDigits, DEFAULT_DEMO_CARD, toUUID } from '../lib/directus';
 import BrandLogo from '../components/BrandLogo';
 import { 
   CreditCard, Smartphone, ShieldCheck, Sparkles, Zap, Award, 
@@ -433,10 +433,13 @@ export default function LandingPage() {
             </div>
           ) : (() => {
             const activeTemplate = templates[currentSlide] || templates[0];
-            const isClassic = activeTemplate.slug === 'classic' || activeTemplate.id === 'temp-1' || activeTemplate.id === '11111111-1111-1111-1111-111111111111';
-            const isNeonGlass = activeTemplate.slug === 'neon-glass' || activeTemplate.id === 'temp-2' || activeTemplate.id === '22222222-2222-2222-2222-222222222222';
-            const isMinimal = activeTemplate.slug === 'minimal' || activeTemplate.id === 'temp-3' || activeTemplate.id === '33333333-3333-3333-3333-333333333333';
-            const isLuxuryDark = activeTemplate.slug === 'luxury-dark' || activeTemplate.id === 'temp-4' || activeTemplate.id === '44444444-4444-4444-4444-444444444444';
+            const cleanTId = (activeTemplate.id || activeTemplate.slug || '').toLowerCase();
+            const cleanTUuid = toUUID(activeTemplate.id);
+
+            const isClassic = !activeTemplate.id || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
+            const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
+            const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
+            const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
 
             const templateMeta: Record<string, { desc: string; styleName: string; features: string[]; bgClass: string; cardStyle: React.CSSProperties; mockCover: string; accentColor: string }> = {
               'classic': {
@@ -477,9 +480,11 @@ export default function LandingPage() {
               }
             };
 
-            const meta = templateMeta[activeTemplate.slug] || {
+            const metaKey = isClassic ? 'classic' : isNeonGlass ? 'neon-glass' : isMinimal ? 'minimal' : isLuxuryDark ? 'luxury-dark' : (activeTemplate.slug || 'classic');
+
+            const meta = templateMeta[metaKey] || {
               desc: 'قالب سفارشی‌سازی شده و منعطف برای هماهنگی کامل با هویت بصری منحصربه‌فرد کسب‌وکار شما.',
-              styleName: activeTemplate.name,
+              styleName: activeTemplate.name || 'قالب اختصاصی',
               features: ['بارگذاری فوق‌العاده سریع به صورت استاتیک', 'پنل تنظیمات کاربری پویا و جامع', 'دسترسی مستقیم و امن به دیتابیس ابری'],
               bgClass: 'bg-slate-900 text-white',
               accentColor: 'bg-blue-500',
@@ -580,20 +585,26 @@ export default function LandingPage() {
                   </div>
 
                   {/* Right Side: Virtual Interactive Mobile Phone Preview */}
-                  <div className="lg:col-span-5 flex justify-center">
-                    <div className="w-[280px] h-[540px] rounded-[40px] border-[6px] border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden flex flex-col ring-1 ring-white/10 shrink-0">
-                      
+                  <div className="lg:col-span-5 flex justify-center w-full">
+                    <div 
+                      className="w-[300px] sm:w-[320px] h-[560px] rounded-[38px] border-[6px] border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden flex flex-col ring-1 ring-white/10 shrink-0"
+                      style={{ isolation: 'isolate', transform: 'translateZ(0)' }}
+                    >
                       {/* Notch */}
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4 bg-slate-800 rounded-b-2xl z-20"></div>
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4 bg-slate-800 rounded-b-2xl z-30 pointer-events-none"></div>
 
                       {/* Phone Screen Canvas container */}
-                      <div className="flex-grow flex flex-col overflow-y-auto overflow-x-hidden relative scrollbar-hide text-right select-none font-sans p-3 space-y-3" dir="rtl">
+                      <div 
+                        className="flex-grow flex flex-col overflow-y-auto overflow-x-hidden relative phone-scrollbar text-right font-sans p-3 space-y-3" 
+                        dir="rtl"
+                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+                      >
                         
                         {/* 1. CLASSIC TEMPLATE PREVIEW */}
                         {isClassic && (
-                          <div className="w-full bg-slate-100 text-slate-850 flex flex-col rounded-2xl overflow-hidden pb-4">
+                          <div className="w-full bg-slate-100 text-slate-850 flex flex-col rounded-2xl overflow-hidden pb-4 shadow-sm border border-slate-200">
                             {/* Cover photo */}
-                            <div className="h-24 bg-slate-300 relative shrink-0">
+                            <div className="h-28 bg-slate-300 relative shrink-0">
                               <img 
                                 src={previewCoverImage} 
                                 alt="cover" 
@@ -603,51 +614,51 @@ export default function LandingPage() {
                             </div>
 
                             {/* Profile Pic overlapping cover */}
-                            <div className="px-3 -mt-8 relative z-10 flex justify-between items-end">
-                              <div className="h-16 w-16 rounded-xl border-2 border-white overflow-hidden shadow-sm bg-white">
+                            <div className="px-3.5 -mt-10 relative z-10 flex justify-between items-end">
+                              <div className="h-20 w-20 rounded-2xl border-2 border-white overflow-hidden shadow-md bg-white shrink-0">
                                 <img 
                                   src={previewProfileImage} 
                                   alt="profile" 
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <span className="text-[8px] bg-slate-200/85 px-2 py-0.5 rounded-full text-slate-600 font-bold">
+                              <span className="text-[9px] bg-slate-200/90 px-2.5 py-0.5 rounded-full text-slate-700 font-bold border border-slate-300/50">
                                 {previewViewsCount}
                               </span>
                             </div>
 
                             {/* Info */}
-                            <div className="p-3 space-y-3">
+                            <div className="p-3.5 space-y-3">
                               <div>
-                                <h4 className="text-xs font-black text-slate-900">{previewName}</h4>
-                                <p className="text-[9px] font-bold text-blue-600 mt-0.5">{previewJob}</p>
-                                <p className="text-[8px] text-slate-500">{previewCompany}</p>
+                                <h4 className="text-sm font-black text-slate-900">{previewName}</h4>
+                                <p className="text-xs font-bold text-blue-600 mt-0.5">{previewJob}</p>
+                                <p className="text-[10px] text-slate-500">{previewCompany}</p>
                               </div>
 
-                              <div className="p-2 bg-white rounded-xl text-[8px] leading-relaxed border border-slate-200/80 text-slate-600 shadow-sm">
+                              <div className="p-2.5 bg-white rounded-xl text-[10px] leading-relaxed border border-slate-200 text-slate-600 shadow-sm">
                                 {previewBio}
                               </div>
 
                               {/* Primary Action Buttons */}
                               <div className="grid grid-cols-2 gap-2">
-                                <button className="py-1.5 px-2 bg-blue-600 text-white rounded-xl text-[8px] font-bold flex items-center justify-center gap-1 shadow-sm">
-                                  <UserPlus className="h-3 w-3 shrink-0" />
+                                <button className="py-2 px-2 bg-blue-600 text-white rounded-xl text-[9px] font-bold flex items-center justify-center gap-1 shadow-sm">
+                                  <UserPlus className="h-3.5 w-3.5 shrink-0" />
                                   <span>ذخیره در مخاطبان</span>
                                 </button>
-                                <button className="py-1.5 px-2 bg-slate-800 text-white rounded-xl text-[8px] font-bold flex items-center justify-center gap-1 shadow-sm">
-                                  <Bell className="h-3 w-3 shrink-0" />
+                                <button className="py-2 px-2 bg-slate-800 text-white rounded-xl text-[9px] font-bold flex items-center justify-center gap-1 shadow-sm">
+                                  <Bell className="h-3.5 w-3.5 shrink-0" />
                                   <span>عضویت در کلاب</span>
                                 </button>
                               </div>
 
                               {/* Phone Numbers */}
-                              <div className="p-2 bg-white rounded-xl border border-slate-200/80 space-y-1 text-[8px]">
+                              <div className="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1.5 text-[9px]">
                                 <div className="flex items-center justify-between text-slate-700">
                                   <span className="font-bold">شماره تماس اصلی:</span>
                                   <span className="font-sans font-bold text-blue-600">{toPersianDigits(activeCard.social_links?.phone || '۰۹۱۲۳۴۵۶۷۸۹')}</span>
                                 </div>
                                 {activeCard.social_links?.extra_phones && activeCard.social_links.extra_phones.length > 0 && (
-                                  <div className="flex items-center justify-between text-slate-500 border-t border-slate-100 pt-1">
+                                  <div className="flex items-center justify-between text-slate-500 border-t border-slate-100 pt-1.5">
                                     <span>تلفن ثابت / دوم:</span>
                                     <span className="font-sans">{toPersianDigits(activeCard.social_links.extra_phones[0])}</span>
                                   </div>
@@ -655,49 +666,49 @@ export default function LandingPage() {
                               </div>
 
                               {/* Responsive Contact buttons */}
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-slate-500 block">راه‌های ارتباطی</span>
+                              <div className="space-y-1.5">
+                                <span className="text-[9px] font-bold text-slate-500 block">راه‌های ارتباطی</span>
                                 <div className="flex flex-wrap gap-1.5">
                                   {activeCard.social_links?.phone && (
-                                    <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white rounded-xl border border-slate-200 text-blue-600">
-                                      <Phone className="h-3.5 w-3.5" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-slate-600">تماس</span>
+                                    <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 text-blue-600">
+                                      <Phone className="h-4 w-4" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-slate-600">تماس</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.email && (
-                                    <a href={`mailto:${activeCard.social_links.email}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white rounded-xl border border-slate-200 text-amber-500">
-                                      <Mail className="h-3.5 w-3.5" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-slate-600">ایمیل</span>
+                                    <a href={`mailto:${activeCard.social_links.email}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 text-amber-500">
+                                      <Mail className="h-4 w-4" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-slate-600">ایمیل</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.telegram && (
-                                    <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white rounded-xl border border-slate-200 text-sky-500">
-                                      <Send className="h-3.5 w-3.5" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-slate-600">تلگرام</span>
+                                    <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 text-sky-500">
+                                      <Send className="h-4 w-4" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-slate-600">تلگرام</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.whatsapp && (
-                                    <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white rounded-xl border border-slate-200 text-emerald-500">
-                                      <MessageCircle className="h-3.5 w-3.5" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-slate-600">واتساپ</span>
+                                    <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 text-emerald-500">
+                                      <MessageCircle className="h-4 w-4" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-slate-600">واتساپ</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.instagram && (
-                                    <a href={`https://instagram.com/${activeCard.social_links.instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white rounded-xl border border-slate-200 text-pink-500">
-                                      <Instagram className="h-3.5 w-3.5" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-slate-600">اینستا</span>
+                                    <a href={`https://instagram.com/${activeCard.social_links.instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 text-pink-500">
+                                      <Instagram className="h-4 w-4" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-slate-600">اینستا</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.linkedin && (
-                                    <a href={`https://linkedin.com/in/${activeCard.social_links.linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white rounded-xl border border-slate-200 text-indigo-600">
-                                      <Linkedin className="h-3.5 w-3.5" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-slate-600">لینکدین</span>
+                                    <a href={`https://linkedin.com/in/${activeCard.social_links.linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 text-indigo-600">
+                                      <Linkedin className="h-4 w-4" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-slate-600">لینکدین</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.website && (
-                                    <a href={`https://${activeCard.social_links.website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white rounded-xl border border-slate-200 text-violet-600">
-                                      <Globe className="h-3.5 w-3.5" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-slate-600">سایت</span>
+                                    <a href={`https://${activeCard.social_links.website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 text-violet-600">
+                                      <Globe className="h-4 w-4" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-slate-600">سایت</span>
                                     </a>
                                   )}
                                 </div>
@@ -706,9 +717,9 @@ export default function LandingPage() {
                               {/* Custom buttons */}
                               {activeCard.custom_buttons && activeCard.custom_buttons.length > 0 && (
                                 <div className="space-y-1.5">
-                                  <span className="text-[8px] font-bold text-slate-500 block">لینک‌های کاربردی</span>
+                                  <span className="text-[9px] font-bold text-slate-500 block">لینک‌های کاربردی</span>
                                   {activeCard.custom_buttons.map((btn) => (
-                                    <div key={btn.id} className="p-2 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-[8px] font-bold text-slate-700 shadow-sm">
+                                    <div key={btn.id} className="p-2 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-[9px] font-bold text-slate-700 shadow-sm">
                                       <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                                       <span className="truncate">{btn.label}</span>
                                       <span className="opacity-30">➔</span>
@@ -719,17 +730,17 @@ export default function LandingPage() {
 
                               {/* Address & Navigation */}
                               {(activeCard.address || activeCard.neshan || activeCard.googlemap) && (
-                                <div className="p-2 bg-white rounded-xl border border-slate-200 space-y-1.5 text-[8px]">
+                                <div className="p-2 bg-white rounded-xl border border-slate-200 space-y-1.5 text-[9px]">
                                   <div className="flex items-start gap-1 text-slate-700">
-                                    <MapPin className="h-3 w-3 text-red-500 shrink-0 mt-0.5" />
+                                    <MapPin className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
                                     <span className="leading-tight">{activeCard.address || 'تهران، میدان ونک، خیابان ملاصدرا'}</span>
                                   </div>
                                   <div className="grid grid-cols-2 gap-1 pt-1 border-t border-slate-100">
                                     {activeCard.neshan && (
-                                      <span className="p-1 bg-slate-50 rounded text-center text-[7px] text-blue-600 font-bold border border-slate-100">مسیریابی نشان</span>
+                                      <span className="p-1 bg-slate-50 rounded text-center text-[8px] text-blue-600 font-bold border border-slate-100">مسیریابی نشان</span>
                                     )}
                                     {activeCard.googlemap && (
-                                      <span className="p-1 bg-slate-50 rounded text-center text-[7px] text-emerald-600 font-bold border border-slate-100">گوگل مپ</span>
+                                      <span className="p-1 bg-slate-50 rounded text-center text-[8px] text-emerald-600 font-bold border border-slate-100">گوگل مپ</span>
                                     )}
                                   </div>
                                 </div>
@@ -737,18 +748,18 @@ export default function LandingPage() {
 
                               {/* Bank Details */}
                               {activeCard.bank_card && (
-                                <div className="p-2 bg-blue-50/50 rounded-xl border border-blue-100 space-y-1 text-[8px] text-slate-700">
+                                <div className="p-2.5 bg-blue-50/60 rounded-xl border border-blue-100 space-y-1 text-[9px] text-slate-700">
                                   <div className="flex items-center justify-between font-bold text-blue-900">
                                     <div className="flex items-center gap-1">
-                                      <CreditCard className="h-3 w-3 text-blue-600" />
+                                      <CreditCard className="h-3.5 w-3.5 text-blue-600" />
                                       <span>اطلاعات حساب بانکی</span>
                                     </div>
                                   </div>
-                                  <div className="font-mono text-[9px] text-center bg-white py-1 rounded border border-blue-100 dir-ltr font-bold text-slate-800">
+                                  <div className="font-mono text-[10px] text-center bg-white py-1 rounded border border-blue-100 dir-ltr font-bold text-slate-800">
                                     {toPersianDigits(activeCard.bank_card)}
                                   </div>
                                   {activeCard.bank_shaba && (
-                                    <div className="text-[7px] text-slate-500 truncate dir-ltr text-center">
+                                    <div className="text-[8px] text-slate-500 truncate dir-ltr text-center">
                                       {activeCard.bank_shaba}
                                     </div>
                                   )}
@@ -760,9 +771,9 @@ export default function LandingPage() {
 
                         {/* 2. NEON GLASS TEMPLATE PREVIEW */}
                         {isNeonGlass && (
-                          <div className="w-full bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 text-slate-100 flex flex-col rounded-2xl overflow-hidden pb-4 border border-purple-500/20">
+                          <div className="w-full bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 text-slate-100 flex flex-col rounded-2xl overflow-hidden pb-4 border border-purple-500/30 shadow-lg">
                             {/* Cover Image Header */}
-                            <div className="h-24 bg-purple-900/40 relative shrink-0 overflow-hidden">
+                            <div className="h-28 bg-purple-900/40 relative shrink-0 overflow-hidden">
                               <img 
                                 src={previewCoverImage} 
                                 alt="cover" 
@@ -771,19 +782,19 @@ export default function LandingPage() {
                               <div className="absolute inset-0 bg-gradient-to-b from-purple-950/30 to-purple-950"></div>
                             </div>
 
-                            <div className="p-3 space-y-3 -mt-8 relative z-10 flex-grow">
-                              <div className="flex justify-between items-center text-[8px]">
-                                <span className="px-2 py-0.5 bg-white/10 rounded-full text-slate-300 backdrop-blur-sm">
+                            <div className="p-3.5 space-y-3 -mt-10 relative z-10 flex-grow">
+                              <div className="flex justify-between items-center text-[9px]">
+                                <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-slate-200 backdrop-blur-md border border-white/10">
                                   {previewViewsCount}
                                 </span>
-                                <span className="text-purple-400 font-extrabold">NEON GLASS</span>
+                                <span className="text-purple-300 font-extrabold tracking-wider">NEON GLASS</span>
                               </div>
 
                               {/* Profile Visual */}
-                              <div className="flex flex-col items-center text-center space-y-1.5">
+                              <div className="flex flex-col items-center text-center space-y-2">
                                 <div className="relative">
-                                  <div className="absolute -inset-1 rounded-full blur bg-gradient-to-r from-purple-500 to-pink-500 opacity-40 animate-pulse"></div>
-                                  <div className="h-16 w-16 rounded-full border border-white/30 overflow-hidden relative bg-slate-950">
+                                  <div className="absolute -inset-1 rounded-full blur bg-gradient-to-r from-purple-500 to-pink-500 opacity-50 animate-pulse"></div>
+                                  <div className="h-20 w-20 rounded-full border-2 border-white/40 overflow-hidden relative bg-slate-950 shadow-xl">
                                     <img 
                                       src={previewProfileImage} 
                                       alt="profile" 
@@ -793,72 +804,72 @@ export default function LandingPage() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-xs font-black text-white">{previewName}</h4>
-                                  <p className="text-[9px] font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mt-0.5">{previewJob}</p>
-                                  <p className="text-[8px] text-purple-300/70">{previewCompany}</p>
+                                  <h4 className="text-sm font-black text-white">{previewName}</h4>
+                                  <p className="text-xs font-bold bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent mt-0.5">{previewJob}</p>
+                                  <p className="text-[10px] text-purple-300/70">{previewCompany}</p>
                                 </div>
                               </div>
 
-                              <div className="p-2 bg-white/5 rounded-xl text-[8px] leading-relaxed border border-white/10 text-slate-300 backdrop-blur-sm">
+                              <div className="p-2.5 bg-white/10 rounded-xl text-[10px] leading-relaxed border border-white/15 text-slate-200 backdrop-blur-md">
                                 {previewBio}
                               </div>
 
                               {/* Primary Actions */}
                               <div className="grid grid-cols-2 gap-2">
-                                <button className="py-1.5 px-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-[8px] font-bold flex items-center justify-center gap-1 shadow-md">
-                                  <UserPlus className="h-3 w-3 shrink-0" />
+                                <button className="py-2 px-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-[9px] font-bold flex items-center justify-center gap-1 shadow-md">
+                                  <UserPlus className="h-3.5 w-3.5 shrink-0" />
                                   <span>ذخیره کارت</span>
                                 </button>
-                                <button className="py-1.5 px-2 bg-white/10 border border-white/20 text-white rounded-xl text-[8px] font-bold flex items-center justify-center gap-1">
-                                  <Bell className="h-3 w-3 shrink-0 text-pink-400" />
+                                <button className="py-2 px-2 bg-white/10 border border-white/20 text-white rounded-xl text-[9px] font-bold flex items-center justify-center gap-1">
+                                  <Bell className="h-3.5 w-3.5 shrink-0 text-pink-400" />
                                   <span>عضویت کلاب</span>
                                 </button>
                               </div>
 
                               {/* Responsive Neon Contact Buttons */}
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-purple-300 block">راه‌های ارتباطی</span>
+                              <div className="space-y-1.5">
+                                <span className="text-[9px] font-bold text-purple-300 block">راه‌های ارتباطی</span>
                                 <div className="flex flex-wrap gap-1.5">
                                   {activeCard.social_links?.phone && (
-                                    <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
-                                      <Phone className="h-3.5 w-3.5 text-purple-400" />
-                                      <span className="text-[7px] font-bold mt-0.5">تماس</span>
+                                    <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
+                                      <Phone className="h-4 w-4 text-purple-400" />
+                                      <span className="text-[8px] font-bold mt-0.5">تماس</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.email && (
-                                    <a href={`mailto:${activeCard.social_links.email}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
-                                      <Mail className="h-3.5 w-3.5 text-amber-400" />
-                                      <span className="text-[7px] font-bold mt-0.5">ایمیل</span>
+                                    <a href={`mailto:${activeCard.social_links.email}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
+                                      <Mail className="h-4 w-4 text-amber-400" />
+                                      <span className="text-[8px] font-bold mt-0.5">ایمیل</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.telegram && (
-                                    <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
-                                      <Send className="h-3.5 w-3.5 text-sky-400" />
-                                      <span className="text-[7px] font-bold mt-0.5">تلگرام</span>
+                                    <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
+                                      <Send className="h-4 w-4 text-sky-400" />
+                                      <span className="text-[8px] font-bold mt-0.5">تلگرام</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.whatsapp && (
-                                    <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
-                                      <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
-                                      <span className="text-[7px] font-bold mt-0.5">واتساپ</span>
+                                    <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
+                                      <MessageCircle className="h-4 w-4 text-emerald-400" />
+                                      <span className="text-[8px] font-bold mt-0.5">واتساپ</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.instagram && (
-                                    <a href={`https://instagram.com/${activeCard.social_links.instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
-                                      <Instagram className="h-3.5 w-3.5 text-pink-400" />
-                                      <span className="text-[7px] font-bold mt-0.5">اینستا</span>
+                                    <a href={`https://instagram.com/${activeCard.social_links.instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
+                                      <Instagram className="h-4 w-4 text-pink-400" />
+                                      <span className="text-[8px] font-bold mt-0.5">اینستا</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.linkedin && (
-                                    <a href={`https://linkedin.com/in/${activeCard.social_links.linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
-                                      <Linkedin className="h-3.5 w-3.5 text-indigo-400" />
-                                      <span className="text-[7px] font-bold mt-0.5">لینکدین</span>
+                                    <a href={`https://linkedin.com/in/${activeCard.social_links.linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
+                                      <Linkedin className="h-4 w-4 text-indigo-400" />
+                                      <span className="text-[8px] font-bold mt-0.5">لینکدین</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.website && (
-                                    <a href={`https://${activeCard.social_links.website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
-                                      <Globe className="h-3.5 w-3.5 text-violet-400" />
-                                      <span className="text-[7px] font-bold mt-0.5">سایت</span>
+                                    <a href={`https://${activeCard.social_links.website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white/5 border border-purple-500/30 rounded-xl text-purple-300">
+                                      <Globe className="h-4 w-4 text-violet-400" />
+                                      <span className="text-[8px] font-bold mt-0.5">سایت</span>
                                     </a>
                                   )}
                                 </div>
@@ -868,7 +879,7 @@ export default function LandingPage() {
                               {activeCard.custom_buttons && activeCard.custom_buttons.length > 0 && (
                                 <div className="space-y-1.5">
                                   {activeCard.custom_buttons.map((btn) => (
-                                    <div key={btn.id} className="p-2 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between text-[8px] font-bold text-white shadow-sm">
+                                    <div key={btn.id} className="p-2 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between text-[9px] font-bold text-white shadow-sm">
                                       <FileText className="h-3.5 w-3.5 text-purple-400 shrink-0" />
                                       <span className="truncate">{btn.label}</span>
                                       <span className="opacity-40">➔</span>
@@ -879,20 +890,20 @@ export default function LandingPage() {
 
                               {/* Address */}
                               {activeCard.address && (
-                                <div className="p-2 bg-white/5 border border-white/10 rounded-xl text-[8px] text-slate-300 flex items-start gap-1">
-                                  <MapPin className="h-3 w-3 text-purple-400 shrink-0 mt-0.5" />
+                                <div className="p-2 bg-white/5 border border-white/10 rounded-xl text-[9px] text-slate-300 flex items-start gap-1">
+                                  <MapPin className="h-3.5 w-3.5 text-purple-400 shrink-0 mt-0.5" />
                                   <span>{activeCard.address}</span>
                                 </div>
                               )}
 
                               {/* Bank Card */}
                               {activeCard.bank_card && (
-                                <div className="p-2 bg-purple-950/40 border border-purple-500/30 rounded-xl space-y-1 text-[8px] text-purple-200">
+                                <div className="p-2.5 bg-purple-950/50 border border-purple-500/30 rounded-xl space-y-1 text-[9px] text-purple-200">
                                   <div className="flex items-center gap-1 font-bold text-purple-300">
-                                    <CreditCard className="h-3 w-3 text-purple-400" />
+                                    <CreditCard className="h-3.5 w-3.5 text-purple-400" />
                                     <span>کارت بانکی</span>
                                   </div>
-                                  <div className="font-mono text-[9px] text-center bg-black/40 py-1 rounded border border-purple-500/20 font-bold text-purple-100">
+                                  <div className="font-mono text-[10px] text-center bg-black/40 py-1 rounded border border-purple-500/20 font-bold text-purple-100">
                                     {toPersianDigits(activeCard.bank_card)}
                                   </div>
                                 </div>
@@ -903,9 +914,9 @@ export default function LandingPage() {
 
                         {/* 3. MINIMAL TEMPLATE PREVIEW */}
                         {isMinimal && (
-                          <div className="w-full bg-zinc-50 text-zinc-900 flex flex-col rounded-2xl overflow-hidden pb-4 border border-zinc-200">
+                          <div className="w-full bg-zinc-50 text-zinc-900 flex flex-col rounded-2xl overflow-hidden pb-4 border border-zinc-200 shadow-sm">
                             {/* Cover photo */}
-                            <div className="h-20 bg-zinc-200 relative shrink-0">
+                            <div className="h-24 bg-zinc-200 relative shrink-0">
                               <img 
                                 src={previewCoverImage} 
                                 alt="cover" 
@@ -913,15 +924,15 @@ export default function LandingPage() {
                               />
                             </div>
 
-                            <div className="p-3 space-y-3">
-                              <div className="flex justify-between items-center text-[8px] opacity-50 font-sans">
+                            <div className="p-3.5 space-y-3">
+                              <div className="flex justify-between items-center text-[9px] opacity-60 font-sans">
                                 <span>{activeCard ? `/${activeCard.slug}` : '/demo'}</span>
-                                <span>MINIMAL</span>
+                                <span className="font-bold tracking-widest">MINIMAL</span>
                               </div>
 
                               {/* Portrait Card */}
-                              <div className="flex items-center gap-2.5 bg-white p-2 rounded-xl border border-zinc-200 shadow-sm">
-                                <div className="h-12 w-12 rounded-full overflow-hidden bg-zinc-100 shrink-0 border border-zinc-200">
+                              <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-zinc-200 shadow-sm">
+                                <div className="h-14 w-14 rounded-full overflow-hidden bg-zinc-100 shrink-0 border border-zinc-200">
                                   <img 
                                     src={previewProfileImage} 
                                     alt="profile" 
@@ -929,48 +940,48 @@ export default function LandingPage() {
                                   />
                                 </div>
                                 <div className="text-right">
-                                  <h4 className="text-xs font-black text-zinc-900">{previewName}</h4>
-                                  <p className="text-[8px] font-bold text-zinc-600">{previewJob}</p>
-                                  <p className="text-[7px] text-zinc-400">{previewCompany}</p>
+                                  <h4 className="text-sm font-black text-zinc-900">{previewName}</h4>
+                                  <p className="text-xs font-bold text-zinc-700">{previewJob}</p>
+                                  <p className="text-[10px] text-zinc-500">{previewCompany}</p>
                                 </div>
                               </div>
 
-                              <p className="text-[8px] leading-relaxed opacity-75 border-r-2 border-zinc-300 pr-2 text-zinc-700">
+                              <p className="text-[9px] leading-relaxed opacity-80 border-r-2 border-zinc-400 pr-2.5 text-zinc-800">
                                 {previewBio}
                               </p>
 
                               {/* Save Contact */}
-                              <button className="w-full py-1.5 bg-zinc-900 text-white font-bold flex items-center justify-center gap-1 text-[8px] rounded-lg">
-                                <UserPlus className="h-3 w-3 shrink-0" />
+                              <button className="w-full py-2 bg-zinc-900 text-white font-bold flex items-center justify-center gap-1.5 text-[9px] rounded-xl shadow-sm">
+                                <UserPlus className="h-3.5 w-3.5 shrink-0" />
                                 <span>ذخیره در مخاطبان</span>
                               </button>
 
                               {/* Responsive Contact buttons */}
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold opacity-40 block">تماس سریع</span>
+                              <div className="space-y-1.5">
+                                <span className="text-[9px] font-bold opacity-50 block">تماس سریع</span>
                                 <div className="flex flex-wrap gap-1.5">
                                   {activeCard.social_links?.phone && (
-                                    <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white border border-zinc-200 rounded-lg text-zinc-800">
-                                      <Phone className="h-3 w-3" />
-                                      <span className="text-[7px] mt-0.5">تماس</span>
+                                    <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white border border-zinc-200 rounded-xl text-zinc-800">
+                                      <Phone className="h-3.5 w-3.5" />
+                                      <span className="text-[8px] font-bold mt-0.5">تماس</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.email && (
-                                    <a href={`mailto:${activeCard.social_links.email}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white border border-zinc-200 rounded-lg text-zinc-800">
-                                      <Mail className="h-3 w-3" />
-                                      <span className="text-[7px] mt-0.5">ایمیل</span>
+                                    <a href={`mailto:${activeCard.social_links.email}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white border border-zinc-200 rounded-xl text-zinc-800">
+                                      <Mail className="h-3.5 w-3.5" />
+                                      <span className="text-[8px] font-bold mt-0.5">ایمیل</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.telegram && (
-                                    <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white border border-zinc-200 rounded-lg text-zinc-800">
-                                      <Send className="h-3 w-3" />
-                                      <span className="text-[7px] mt-0.5">تلگرام</span>
+                                    <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white border border-zinc-200 rounded-xl text-zinc-800">
+                                      <Send className="h-3.5 w-3.5" />
+                                      <span className="text-[8px] font-bold mt-0.5">تلگرام</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.whatsapp && (
-                                    <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-white border border-zinc-200 rounded-lg text-zinc-800">
-                                      <MessageCircle className="h-3 w-3" />
-                                      <span className="text-[7px] mt-0.5">واتساپ</span>
+                                    <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-white border border-zinc-200 rounded-xl text-zinc-800">
+                                      <MessageCircle className="h-3.5 w-3.5" />
+                                      <span className="text-[8px] font-bold mt-0.5">واتساپ</span>
                                     </a>
                                   )}
                                 </div>
@@ -978,9 +989,9 @@ export default function LandingPage() {
 
                               {/* Custom Buttons */}
                               {activeCard.custom_buttons && activeCard.custom_buttons.length > 0 && (
-                                <div className="space-y-1">
+                                <div className="space-y-1.5">
                                   {activeCard.custom_buttons.map((btn) => (
-                                    <div key={btn.id} className="p-1.5 bg-white border border-zinc-200 rounded-lg text-[8px] font-bold text-zinc-800 flex justify-between items-center">
+                                    <div key={btn.id} className="p-2 bg-white border border-zinc-200 rounded-xl text-[9px] font-bold text-zinc-800 flex justify-between items-center shadow-sm">
                                       <span>{btn.label}</span>
                                       <span className="text-zinc-400">➔</span>
                                     </div>
@@ -990,8 +1001,8 @@ export default function LandingPage() {
 
                               {/* Address */}
                               {activeCard.address && (
-                                <div className="p-2 bg-white border border-zinc-200 rounded-lg text-[7px] text-zinc-600 flex items-start gap-1">
-                                  <MapPin className="h-3 w-3 text-zinc-500 shrink-0" />
+                                <div className="p-2 bg-white border border-zinc-200 rounded-xl text-[8px] text-zinc-600 flex items-start gap-1">
+                                  <MapPin className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
                                   <span>{activeCard.address}</span>
                                 </div>
                               )}
@@ -1001,28 +1012,28 @@ export default function LandingPage() {
 
                         {/* 4. LUXURY GOLD TEMPLATE PREVIEW */}
                         {isLuxuryDark && (
-                          <div className="w-full bg-[#0c0a09] text-amber-100 flex flex-col rounded-2xl overflow-hidden pb-4 border border-amber-500/30">
+                          <div className="w-full bg-[#0c0a09] text-amber-100 flex flex-col rounded-2xl overflow-hidden pb-4 border border-amber-500/40 shadow-xl">
                             {/* Cover photo */}
-                            <div className="h-24 bg-stone-900 relative shrink-0">
+                            <div className="h-28 bg-stone-900 relative shrink-0">
                               <img 
                                 src={previewCoverImage} 
                                 alt="cover" 
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover opacity-90"
                               />
                               <div className="absolute inset-0 bg-gradient-to-b from-stone-950/20 to-[#0c0a09]"></div>
                             </div>
 
-                            <div className="p-3 space-y-3 -mt-8 relative z-10 flex-grow">
-                              <div className="flex justify-between items-center text-[8px]">
-                                <span className="px-2 py-0.5 bg-amber-500/10 rounded-full text-amber-400 font-bold border border-amber-500/20">
+                            <div className="p-3.5 space-y-3 -mt-10 relative z-10 flex-grow">
+                              <div className="flex justify-between items-center text-[9px]">
+                                <span className="px-2.5 py-0.5 bg-amber-500/15 rounded-full text-amber-400 font-bold border border-amber-500/30">
                                   LUXURY VIP
                                 </span>
-                                <span className="text-amber-500">★</span>
+                                <span className="text-amber-400 font-bold">★ ★ ★</span>
                               </div>
 
                               {/* Centered Luxury Avatar */}
-                              <div className="flex flex-col items-center text-center space-y-1.5">
-                                <div className="h-16 w-16 rounded-full border-2 border-amber-500 overflow-hidden shadow-lg p-0.5 bg-[#0c0a09]">
+                              <div className="flex flex-col items-center text-center space-y-2">
+                                <div className="h-20 w-20 rounded-full border-2 border-amber-500 overflow-hidden shadow-2xl p-0.5 bg-[#0c0a09] shrink-0">
                                   <img 
                                     src={previewProfileImage} 
                                     alt="profile" 
@@ -1030,54 +1041,54 @@ export default function LandingPage() {
                                   />
                                 </div>
                                 <div>
-                                  <h4 className="text-xs font-black text-amber-100">{previewName}</h4>
-                                  <p className="text-[9px] font-bold text-amber-400 mt-0.5">{previewJob}</p>
-                                  <p className="text-[8px] text-stone-400">{previewCompany}</p>
+                                  <h4 className="text-sm font-black text-amber-100">{previewName}</h4>
+                                  <p className="text-xs font-bold text-amber-400 mt-0.5">{previewJob}</p>
+                                  <p className="text-[10px] text-stone-400">{previewCompany}</p>
                                 </div>
                               </div>
 
-                              <p className="text-[8px] leading-relaxed text-stone-300 text-center px-1">
+                              <p className="text-[9px] leading-relaxed text-stone-300 text-center px-1">
                                 {previewBio}
                               </p>
 
                               {/* Luxury Save Contact Button */}
-                              <button className="w-full py-1.5 bg-gradient-to-r from-amber-600 to-amber-500 text-stone-950 font-bold flex items-center justify-center gap-1 text-[8px] rounded-xl shadow-md">
-                                <UserPlus className="h-3 w-3 shrink-0" />
+                              <button className="w-full py-2 bg-gradient-to-r from-amber-600 to-amber-500 text-stone-950 font-bold flex items-center justify-center gap-1.5 text-[9px] rounded-xl shadow-md">
+                                <UserPlus className="h-3.5 w-3.5 shrink-0" />
                                 <span>ذخیره در مخاطبان VIP</span>
                               </button>
 
                               {/* Luxury Gold Responsive Buttons */}
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-amber-400 block">ارتباط اختصاصی</span>
+                              <div className="space-y-1.5">
+                                <span className="text-[9px] font-bold text-amber-400 block">ارتباط اختصاصی</span>
                                 <div className="flex flex-wrap gap-1.5">
                                   {activeCard.social_links?.phone && (
-                                    <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
-                                      <Phone className="h-3.5 w-3.5 text-amber-400" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-stone-400">تماس</span>
+                                    <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
+                                      <Phone className="h-4 w-4 text-amber-400" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-stone-300">تماس</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.email && (
-                                    <a href={`mailto:${activeCard.social_links.email}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
-                                      <Mail className="h-3.5 w-3.5 text-amber-400" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-stone-400">ایمیل</span>
+                                    <a href={`mailto:${activeCard.social_links.email}`} className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
+                                      <Mail className="h-4 w-4 text-amber-400" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-stone-300">ایمیل</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.telegram && (
-                                    <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
-                                      <Send className="h-3.5 w-3.5 text-amber-400" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-stone-400">تلگرام</span>
+                                    <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
+                                      <Send className="h-4 w-4 text-amber-400" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-stone-300">تلگرام</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.whatsapp && (
-                                    <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
-                                      <MessageCircle className="h-3.5 w-3.5 text-amber-400" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-stone-400">واتساپ</span>
+                                    <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
+                                      <MessageCircle className="h-4 w-4 text-amber-400" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-stone-300">واتساپ</span>
                                     </a>
                                   )}
                                   {activeCard.social_links?.instagram && (
-                                    <a href={`https://instagram.com/${activeCard.social_links.instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-1.5 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
-                                      <Instagram className="h-3.5 w-3.5 text-amber-400" />
-                                      <span className="text-[7px] font-bold mt-0.5 text-stone-400">اینستا</span>
+                                    <a href={`https://instagram.com/${activeCard.social_links.instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[55px] flex flex-col items-center justify-center p-2 bg-stone-900 border border-amber-500/30 rounded-xl text-amber-300">
+                                      <Instagram className="h-4 w-4 text-amber-400" />
+                                      <span className="text-[8px] font-bold mt-0.5 text-stone-300">اینستا</span>
                                     </a>
                                   )}
                                 </div>
@@ -1087,7 +1098,7 @@ export default function LandingPage() {
                               {activeCard.custom_buttons && activeCard.custom_buttons.length > 0 && (
                                 <div className="space-y-1.5">
                                   {activeCard.custom_buttons.map((btn) => (
-                                    <div key={btn.id} className="p-2 bg-stone-900 border border-amber-500/30 rounded-xl flex items-center justify-between text-[8px] font-bold text-amber-300">
+                                    <div key={btn.id} className="p-2 bg-stone-900 border border-amber-500/30 rounded-xl flex items-center justify-between text-[9px] font-bold text-amber-300">
                                       <FileText className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                                       <span className="truncate">{btn.label}</span>
                                       <span className="opacity-40">➔</span>
@@ -1098,20 +1109,20 @@ export default function LandingPage() {
 
                               {/* Address */}
                               {activeCard.address && (
-                                <div className="p-2 bg-stone-900 border border-amber-500/20 rounded-xl text-[7px] text-stone-300 flex items-start gap-1">
-                                  <MapPin className="h-3 w-3 text-amber-400 shrink-0" />
+                                <div className="p-2 bg-stone-900 border border-amber-500/20 rounded-xl text-[8px] text-stone-300 flex items-start gap-1">
+                                  <MapPin className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
                                   <span>{activeCard.address}</span>
                                 </div>
                               )}
 
                               {/* Bank card */}
                               {activeCard.bank_card && (
-                                <div className="p-2 bg-stone-900 border border-amber-500/30 rounded-xl space-y-1 text-[8px] text-amber-200">
+                                <div className="p-2.5 bg-stone-900 border border-amber-500/30 rounded-xl space-y-1 text-[9px] text-amber-200">
                                   <div className="flex items-center gap-1 font-bold text-amber-400">
-                                    <CreditCard className="h-3 w-3 text-amber-400" />
+                                    <CreditCard className="h-3.5 w-3.5 text-amber-400" />
                                     <span>شماره کارت بانکی</span>
                                   </div>
-                                  <div className="font-mono text-[9px] text-center bg-black/60 py-1 rounded border border-amber-500/30 font-bold text-amber-300">
+                                  <div className="font-mono text-[10px] text-center bg-black/60 py-1 rounded border border-amber-500/30 font-bold text-amber-300">
                                     {toPersianDigits(activeCard.bank_card)}
                                   </div>
                                 </div>
@@ -1130,17 +1141,16 @@ export default function LandingPage() {
 
                           const pColor = tColors.primary || '#8d5b4c';
                           const sColor = tColors.secondary || '#f4ece1';
-                          const bColor = tColors.background || '#faf6f0';
-                          const txtColor = tColors.text || '#2d221e';
-                          const txtSecColor = tColors.text_secondary || '#6e5a53';
                           const cardBg = isDarkTheme ? '#18181b' : '#ffffff';
+                          const txtColor = tColors.text || (isDarkTheme ? '#f4f4f5' : '#2d221e');
+                          const txtSecColor = tColors.text_secondary || (isDarkTheme ? '#a1a1aa' : '#6e5a53');
                           
                           const isCircleAvatar = (tLayout.avatar_shape || 'circle') === 'circle';
                           const isSplitHeader = tLayout.header_style === 'split';
 
                           return (
                             <div 
-                              className="w-full transition-all p-3 space-y-3 flex flex-col text-right rounded-2xl overflow-hidden border"
+                              className="w-full transition-all p-3.5 space-y-3 flex flex-col text-right rounded-2xl overflow-hidden border shadow-sm"
                               dir="rtl"
                               style={{ 
                                 backgroundColor: cardBg, 
@@ -1149,16 +1159,16 @@ export default function LandingPage() {
                               }}
                             >
                               <div className="space-y-3">
-                                <div className="flex justify-between items-center text-[8px]">
-                                  <span className="px-2 py-0.5 rounded-full text-[7px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
+                                <div className="flex justify-between items-center text-[9px]">
+                                  <span className="px-2.5 py-0.5 rounded-full text-[8px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
                                     {activeTemplate.name}
                                   </span>
-                                  <span className="font-bold" style={{ color: pColor }}>قالب اختصاصی</span>
+                                  <span className="font-bold text-[9px]" style={{ color: pColor }}>قالب اختصاصی</span>
                                 </div>
 
                                 {isSplitHeader ? (
-                                  <div className="flex items-center gap-2.5 pb-2 border-b" style={{ borderColor: sColor }}>
-                                    <div className="h-10 w-10 overflow-hidden border shrink-0" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '8px' }}>
+                                  <div className="flex items-center gap-3 pb-2 border-b" style={{ borderColor: sColor }}>
+                                    <div className="h-12 w-12 overflow-hidden border shrink-0" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '10px' }}>
                                       <img 
                                         src={previewProfileImage} 
                                         alt="profile" 
@@ -1166,13 +1176,13 @@ export default function LandingPage() {
                                       />
                                     </div>
                                     <div>
-                                      <h4 className="text-[10px] font-black" style={{ fontSize: tTypography.title_size || '11px' }}>{previewName}</h4>
-                                      <p className="text-[8px] font-bold" style={{ color: pColor }}>{previewJob}</p>
+                                      <h4 className="text-xs font-black" style={{ fontSize: tTypography.title_size || '12px' }}>{previewName}</h4>
+                                      <p className="text-[10px] font-bold" style={{ color: pColor }}>{previewJob}</p>
                                     </div>
                                   </div>
                                 ) : (
-                                  <div className="flex flex-col items-center text-center space-y-1.5">
-                                    <div className="h-14 w-14 overflow-hidden border p-0.5" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '12px' }}>
+                                  <div className="flex flex-col items-center text-center space-y-2">
+                                    <div className="h-16 w-16 overflow-hidden border p-0.5" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '12px' }}>
                                       <img 
                                         src={previewProfileImage} 
                                         alt="profile" 
@@ -1181,46 +1191,46 @@ export default function LandingPage() {
                                       />
                                     </div>
                                     <div>
-                                      <h4 className="text-[11px] font-black" style={{ fontSize: tTypography.title_size || '12px' }}>{previewName}</h4>
-                                      <p className="text-[8px] font-bold mt-0.5" style={{ color: pColor }}>{previewJob}</p>
+                                      <h4 className="text-xs font-black" style={{ fontSize: tTypography.title_size || '13px' }}>{previewName}</h4>
+                                      <p className="text-[10px] font-bold mt-0.5" style={{ color: pColor }}>{previewJob}</p>
                                     </div>
                                   </div>
                                 )}
 
-                                <p className="text-[7px] leading-relaxed text-center" style={{ color: txtSecColor, fontSize: tTypography.body_size || '8px' }}>
+                                <p className="text-[9px] leading-relaxed text-center" style={{ color: txtSecColor, fontSize: tTypography.body_size || '9px' }}>
                                   {previewBio}
                                 </p>
 
                                 {/* Mini Contact Buttons */}
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-1.5">
                                   {activeCard.social_links?.phone && (
-                                    <div className="flex-1 min-w-[50px] flex flex-col items-center justify-center p-1 rounded-lg border text-[7px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                                      <Phone className="h-3 w-3" style={{ color: pColor }} />
-                                      <span className="text-[6px] font-bold mt-0.5" style={{ color: txtSecColor }}>تماس</span>
+                                    <div className="flex-1 min-w-[50px] flex flex-col items-center justify-center p-1.5 rounded-xl border text-[8px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                      <Phone className="h-3.5 w-3.5" style={{ color: pColor }} />
+                                      <span className="text-[7px] font-bold mt-0.5" style={{ color: txtSecColor }}>تماس</span>
                                     </div>
                                   )}
                                   {activeCard.social_links?.email && (
-                                    <div className="flex-1 min-w-[50px] flex flex-col items-center justify-center p-1 rounded-lg border text-[7px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                                      <Mail className="h-3 w-3" style={{ color: pColor }} />
-                                      <span className="text-[6px] font-bold mt-0.5" style={{ color: txtSecColor }}>ایمیل</span>
+                                    <div className="flex-1 min-w-[50px] flex flex-col items-center justify-center p-1.5 rounded-xl border text-[8px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                      <Mail className="h-3.5 w-3.5" style={{ color: pColor }} />
+                                      <span className="text-[7px] font-bold mt-0.5" style={{ color: txtSecColor }}>ایمیل</span>
                                     </div>
                                   )}
                                   {activeCard.social_links?.telegram && (
-                                    <div className="flex-1 min-w-[50px] flex flex-col items-center justify-center p-1 rounded-lg border text-[7px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                                      <Send className="h-3 w-3" style={{ color: pColor }} />
-                                      <span className="text-[6px] font-bold mt-0.5" style={{ color: txtSecColor }}>تلگرام</span>
+                                    <div className="flex-1 min-w-[50px] flex flex-col items-center justify-center p-1.5 rounded-xl border text-[8px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                      <Send className="h-3.5 w-3.5" style={{ color: pColor }} />
+                                      <span className="text-[7px] font-bold mt-0.5" style={{ color: txtSecColor }}>تلگرام</span>
                                     </div>
                                   )}
                                   {activeCard.social_links?.website && (
-                                    <div className="flex-1 min-w-[50px] flex flex-col items-center justify-center p-1 rounded-lg border text-[7px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                                      <Globe className="h-3 w-3" style={{ color: pColor }} />
-                                      <span className="text-[6px] font-bold mt-0.5" style={{ color: txtSecColor }}>سایت</span>
+                                    <div className="flex-1 min-w-[50px] flex flex-col items-center justify-center p-1.5 rounded-xl border text-[8px]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                      <Globe className="h-3.5 w-3.5" style={{ color: pColor }} />
+                                      <span className="text-[7px] font-bold mt-0.5" style={{ color: txtSecColor }}>سایت</span>
                                     </div>
                                   )}
                                 </div>
                               </div>
 
-                              <button className="w-full py-1.5 font-bold text-white text-[8px] rounded-lg transition hover:opacity-90" style={{ backgroundColor: pColor }}>
+                              <button className="w-full py-2 font-bold text-white text-[9px] rounded-xl transition hover:opacity-90 shadow-sm" style={{ backgroundColor: pColor }}>
                                 انتخاب قالب {activeTemplate.name}
                               </button>
                             </div>

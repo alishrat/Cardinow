@@ -25,6 +25,39 @@ select {
   cursor: pointer !important;
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Custom sleek scrollbar for virtual phone screen */
+.phone-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.phone-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 9999px;
+}
+.phone-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+.phone-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(203, 213, 225, 0.8);
+}
+.phone-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) rgba(15, 23, 42, 0.6);
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
 /* Except when disabled */
 button:disabled,
 input:disabled,
