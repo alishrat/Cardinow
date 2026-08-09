@@ -39,6 +39,18 @@ export interface Plan {
   remove_branding?: boolean;
 }
 
+export interface ProductService {
+  id: string;
+  tenant_id?: string | null;
+  name: string;
+  description?: string | null;
+  price: number;
+  image?: string | null;
+  is_active: boolean;
+  type?: 'product' | 'service';
+  created_at?: string;
+}
+
 export interface Subscription {
   id: string;
   user_id: string;
@@ -389,6 +401,49 @@ const SEED_PLANS: Plan[] = [
     allowed_templates: ['temp-1', 'temp-2', 'temp-3', 'temp-4'],
     custom_domain: false,
     remove_branding: true
+  }
+];
+
+export const SEED_PRODUCTS: ProductService[] = [
+  {
+    id: 'prod-1',
+    tenant_id: 't-1',
+    name: 'کارت NFC چوبی با حک لیزری اختصاصی',
+    description: 'کارت فیزیکی هوشمند NFC با بدنه چوب بامبو مقاوم، شامل تراشه NFC NTAG216 و حک لیزری لوگو و کد QR شما.',
+    price: 350000,
+    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80',
+    is_active: true,
+    type: 'product'
+  },
+  {
+    id: 'prod-2',
+    tenant_id: 't-1',
+    name: 'کارت NFC فلزی طلایی VIP',
+    description: 'کارت فیزیکی لوکس فلزی مشکی-طلایی با کیفیت فوق‌العاده، تراشه NFC تقویت شده و ضمانت ۲ ساله.',
+    price: 790000,
+    image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=400&q=80',
+    is_active: true,
+    type: 'product'
+  },
+  {
+    id: 'prod-3',
+    tenant_id: 't-1',
+    name: 'خدمات عکاسی پرتره و برندینگ شخصی',
+    description: 'یک جلسه عکاسی حرفه‌ای در آتلیه اختصاصی جهت تهیه عکس پرتره و کاور کارت ویزیت دیجیتال.',
+    price: 1200000,
+    image: 'https://images.unsplash.com/photo-1554048612-b6a482bc67e5?auto=format&fit=crop&w=400&q=80',
+    is_active: true,
+    type: 'service'
+  },
+  {
+    id: 'prod-4',
+    tenant_id: 't-1',
+    name: 'طراحی اختصاصی قالب و ست اداری',
+    description: 'طراحی سفارشی قالب کارت ویزیت دیجیتال طبق هویت بصری برند شما توسط گرافیست ارشد.',
+    price: 1800000,
+    image: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=400&q=80',
+    is_active: true,
+    type: 'service'
   }
 ];
 
@@ -1177,6 +1232,109 @@ export const dbService = {
       headers: { ...getAuthHeaders() }
     });
     if (!res.ok) throw new Error('خطا در حذف پلن از پایگاه داده');
+  },
+
+  // ---- PRODUCTS & SERVICES ----
+  getProducts: async (): Promise<ProductService[]> => {
+    let remoteProds: ProductService[] = [];
+    try {
+      const res = await fetch(`${DIRECTUS_BASE_URL}/items/products`, {
+        headers: { ...getAuthHeaders() }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        remoteProds = json?.data || [];
+      }
+    } catch (e) {
+      console.warn('Failed to fetch remote products from Directus:', e);
+    }
+
+    let localProds: ProductService[] = [];
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('local_products');
+        if (stored) {
+          localProds = JSON.parse(stored);
+        }
+      }
+    } catch {}
+
+    const prodMap = new Map<string, ProductService>();
+    for (const p of SEED_PRODUCTS) {
+      prodMap.set(p.id, p);
+    }
+    for (const p of remoteProds) {
+      if (p && p.id) prodMap.set(p.id, p);
+    }
+    for (const p of localProds) {
+      if (p && p.id) prodMap.set(p.id, p);
+    }
+
+    return Array.from(prodMap.values());
+  },
+  saveProduct: async (prod: ProductService): Promise<void> => {
+    const cleanPayload = cleanDataForDirectus(prod);
+    await ensureValidTenantId(cleanPayload);
+    const cleanId = toUUID(prod.id);
+
+    try {
+      const check = await fetch(`${DIRECTUS_BASE_URL}/items/products/${cleanId}`, {
+        headers: { ...getAuthHeaders() }
+      });
+      const method = check.ok ? 'PATCH' : 'POST';
+      const url = check.ok 
+        ? `${DIRECTUS_BASE_URL}/items/products/${cleanId}`
+        : `${DIRECTUS_BASE_URL}/items/products`;
+
+      await fetch(url, {
+        method,
+        headers: { 
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(cleanPayload)
+      });
+    } catch (e) {
+      console.warn('Could not sync product with Directus remote, caching locally:', e);
+    }
+
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('local_products');
+        const list: ProductService[] = stored ? JSON.parse(stored) : [...SEED_PRODUCTS];
+        const existingIdx = list.findIndex(item => item.id === prod.id);
+        if (existingIdx >= 0) {
+          list[existingIdx] = prod;
+        } else {
+          list.push(prod);
+        }
+        localStorage.setItem('local_products', JSON.stringify(list));
+      }
+    } catch (e) {
+      console.warn('Failed to update local products cache:', e);
+    }
+  },
+  deleteProduct: async (id: string): Promise<void> => {
+    const cleanId = toUUID(id);
+    try {
+      await fetch(`${DIRECTUS_BASE_URL}/items/products/${cleanId}`, {
+        method: 'DELETE',
+        headers: { ...getAuthHeaders() }
+      });
+    } catch (e) {
+      console.warn('Failed to delete product from Directus:', e);
+    }
+
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('local_products');
+        const list: ProductService[] = stored ? JSON.parse(stored) : [...SEED_PRODUCTS];
+        const filtered = list.filter(item => item.id !== id && item.id !== cleanId);
+        localStorage.setItem('local_products', JSON.stringify(filtered));
+      }
+    } catch (e) {
+      console.warn('Failed to update local products cache on delete:', e);
+    }
   },
 
   // ---- CARDS ----

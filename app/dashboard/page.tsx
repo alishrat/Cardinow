@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
-  dbService, authService, initializeDB, Card, Tenant, Template, Plan, Subscription, Transaction, Wallet, WalletTransaction, UserSession, CardAnalytics, toUUID, sanitizeDbError, getImageUrl, toJalaliDate, onTokenExpired
+  dbService, authService, initializeDB, Card, Tenant, Template, Plan, ProductService, Subscription, Transaction, Wallet, WalletTransaction, UserSession, CardAnalytics, toUUID, sanitizeDbError, getImageUrl, toJalaliDate, onTokenExpired
 } from '../../lib/directus';
 import { 
   Plus, Edit2, Trash2, Globe, ExternalLink, Copy, Check, Eye, Save, Search, 
@@ -11,7 +11,7 @@ import {
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
   Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, UserCheck, List, X,
-  Wallet as WalletIcon
+  Wallet as WalletIcon, ShoppingBag
 } from 'lucide-react';
 
 // Modular Subcomponents Imports
@@ -22,6 +22,8 @@ import { CustomerBillingView } from '../../components/dashboard/CustomerBillingV
 import { CustomerAnalyticsView } from '../../components/dashboard/CustomerAnalyticsView';
 import { CustomerWalletView } from '../../components/dashboard/CustomerWalletView';
 import { AdminWalletsView } from '../../components/dashboard/AdminWalletsView';
+import { AdminProductsView } from '../../components/dashboard/AdminProductsView';
+import { CustomerProductsView } from '../../components/dashboard/CustomerProductsView';
 import BrandLogo from '../../components/BrandLogo';
 
 function generateRandomUUID(): string {
@@ -54,6 +56,7 @@ function DashboardContent() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [products, setProducts] = useState<ProductService[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -358,6 +361,7 @@ function DashboardContent() {
         fetchedTenants,
         fetchedTemplates,
         fetchedPlans,
+        fetchedProducts,
         fetchedSubscriptions,
         fetchedTransactions,
         fetchedAnalytics,
@@ -367,6 +371,7 @@ function DashboardContent() {
         dbService.getTenants(),
         dbService.getTemplates(),
         dbService.getPlans(),
+        dbService.getProducts(),
         dbService.getSubscriptions(),
         dbService.getTransactions(),
         dbService.getAllAnalytics(),
@@ -377,6 +382,7 @@ function DashboardContent() {
       setTenants(fetchedTenants);
       setTemplates(fetchedTemplates);
       setPlans(fetchedPlans);
+      setProducts(fetchedProducts);
       setSubscriptions(fetchedSubscriptions);
       setTransactions(fetchedTransactions);
       setAnalytics(fetchedAnalytics);
@@ -1417,6 +1423,18 @@ function DashboardContent() {
                     <BarChart2 className="h-4 w-4" />
                     آمار بازدید کارت‌ها
                   </button>
+
+                  <button
+                    onClick={() => { setEditingCard(null); setActiveTab('products-shop'); }}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-2.5 ${
+                      activeTab === 'products-shop' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <ShoppingBag className="h-4 w-4 text-emerald-400" />
+                    فروشگاه محصولات و خدمات
+                  </button>
                 </>
               )}
 
@@ -1546,6 +1564,18 @@ function DashboardContent() {
                   >
                     <Sliders className="h-4 w-4" />
                     مدیریت پلن‌های تعرفه‌ای
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('admin-products')}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-2.5 ${
+                      activeTab === 'admin-products' 
+                      ? 'bg-amber-600 text-white' 
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <ShoppingBag className="h-4 w-4 text-emerald-400" />
+                    مدیریت محصولات و خدمات
                   </button>
                 </>
               )}
@@ -2045,6 +2075,21 @@ function DashboardContent() {
               </div>
             </div>
           )}
+
+          {/* ==============================================
+              CUSTOMER MODE: PRODUCTS & SERVICES SHOP TAB
+             ============================================== */}
+          {user.role === 'customer' && activeTab === 'products-shop' && (
+            <CustomerProductsView
+              user={user}
+              products={products}
+              userWallet={userWallet}
+              refreshData={refreshData}
+              showToast={showToast}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
           {/* ==============================================
               TENANT MODE: SETTINGS TAB
              ============================================== */}
@@ -2473,6 +2518,18 @@ function DashboardContent() {
               user={user}
               plans={plans}
               templates={templates}
+              refreshData={refreshData}
+              showToast={showToast}
+            />
+          )}
+
+          {/* ==============================================
+              ADMIN MODE: PRODUCTS & SERVICES MANAGEMENT TAB
+             ============================================== */}
+          {user.role === 'admin' && activeTab === 'admin-products' && (
+            <AdminProductsView
+              user={user}
+              products={products}
               refreshData={refreshData}
               showToast={showToast}
             />

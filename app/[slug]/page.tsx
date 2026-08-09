@@ -548,45 +548,45 @@ export default function PublicCardPage() {
                     return (
                       <div key="sec_social_links" className="space-y-3">
                         <h3 className="text-xs font-bold uppercase tracking-wider opacity-60">راه‌های ارتباطی</h3>
-                        <div className={`grid ${socialColsClass} gap-3`}>
+                        <div className="flex flex-wrap gap-2.5">
                           {phone && (
-                            <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
+                            <a href={`tel:${phone}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Phone className="h-5 w-5 mb-1" style={{ color: primaryColor }} />
                               <span className="text-[10px] font-medium opacity-80">تماس</span>
                             </a>
                           )}
                           {email && (
-                            <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
+                            <a href={`mailto:${email}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Mail className="h-5 w-5 text-amber-500 mb-1" />
                               <span className="text-[10px] font-medium opacity-80">ایمیل</span>
                             </a>
                           )}
                           {telegram && (
-                            <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
+                            <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Send className="h-5 w-5 text-sky-500 mb-1" />
                               <span className="text-[10px] font-medium opacity-80">تلگرام</span>
                             </a>
                           )}
                           {whatsapp && (
-                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
+                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <MessageCircle className="h-5 w-5 text-emerald-500 mb-1" />
                               <span className="text-[10px] font-medium opacity-80">واتساپ</span>
                             </a>
                           )}
                           {instagram && (
-                            <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
+                            <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Instagram className="h-5 w-5 text-pink-500 mb-1" />
                               <span className="text-[10px] font-medium opacity-80">اینستا</span>
                             </a>
                           )}
                           {linkedin && (
-                            <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
+                            <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Linkedin className="h-5 w-5 text-indigo-600 mb-1" />
                               <span className="text-[10px] font-medium opacity-80">لینکدین</span>
                             </a>
                           )}
                           {website && (
-                            <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
+                            <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Globe className="h-5 w-5 text-violet-600 mb-1" />
                               <span className="text-[10px] font-medium opacity-80">وبسایت</span>
                             </a>
@@ -850,45 +850,45 @@ export default function PublicCardPage() {
                   return (
                     <div key="sec_temp2_social" className="space-y-3">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">راه‌های ارتباطی سریع</h3>
-                      <div className={`grid ${socialColsClass} gap-3`}>
+                      <div className="flex flex-wrap gap-2.5">
                         {phone && (
-                          <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                          <a href={`tel:${phone}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
                             <Phone className="h-5 w-5 text-cyan-400 mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-slate-400">تماس</span>
                           </a>
                         )}
                         {email && (
-                          <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                          <a href={`mailto:${email}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
                             <Mail className="h-5 w-5 text-amber-400 mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-slate-400">ایمیل</span>
                           </a>
                         )}
                         {telegram && (
-                          <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                          <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
                             <Send className="h-5 w-5 text-sky-400 mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-slate-400">تلگرام</span>
                           </a>
                         )}
                         {whatsapp && (
-                          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
                             <MessageCircle className="h-5 w-5 text-emerald-400 mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-slate-400">واتساپ</span>
                           </a>
                         )}
                         {instagram && (
-                          <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                          <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
                             <Instagram className="h-5 w-5 text-pink-400 mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-slate-400">اینستا</span>
                           </a>
                         )}
                         {linkedin && (
-                          <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                          <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
                             <Linkedin className="h-5 w-5 text-indigo-400 mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-slate-400">لینکدین</span>
                           </a>
                         )}
                         {website && (
-                          <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
+                          <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
                             <Globe className="h-5 w-5 text-violet-400 mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-slate-400">وبسایت</span>
                           </a>
@@ -1402,45 +1402,45 @@ export default function PublicCardPage() {
                   return (
                     <div key="sec_temp4_social" className="space-y-3">
                       <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">کانال‌های ارتباطی لوکس</h3>
-                      <div className={`grid ${socialColsClass} gap-3`}>
+                      <div className="flex flex-wrap gap-2.5">
                         {phone && (
-                          <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                          <a href={`tel:${phone}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
                             <Phone className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-stone-400">تماس</span>
                           </a>
                         )}
                         {email && (
-                          <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                          <a href={`mailto:${email}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
                             <Mail className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-stone-400">ایمیل</span>
                           </a>
                         )}
                         {telegram && (
-                          <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                          <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
                             <Send className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-stone-400">تلگرام</span>
                           </a>
                         )}
                         {whatsapp && (
-                          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
                             <MessageCircle className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-stone-400">واتساپ</span>
                           </a>
                         )}
                         {instagram && (
-                          <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                          <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
                             <Instagram className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-stone-400">اینستا</span>
                           </a>
                         )}
                         {linkedin && (
-                          <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                          <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
                             <Linkedin className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-stone-400">لینکدین</span>
                           </a>
                         )}
                         {website && (
-                          <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
+                          <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
                             <Globe className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
                             <span className="text-[10px] text-stone-400">وبسایت</span>
                           </a>
@@ -1759,45 +1759,45 @@ export default function PublicCardPage() {
                     return (
                       <div key="sec_cust_social" className="space-y-2">
                         <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>اطلاعات تماس</span>
-                        <div className="grid grid-cols-4 gap-2.5">
+                        <div className="flex flex-wrap gap-2.5">
                           {phone && (
-                            <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                            <a href={`tel:${phone}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
                               <Phone className="h-4 w-4 mb-1" style={{ color: pColor }} />
                               <span className="text-[9px]" style={{ color: txtSecColor }}>تماس</span>
                             </a>
                           )}
                           {email && (
-                            <a href={`mailto:${email}`} className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                            <a href={`mailto:${email}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
                               <Mail className="h-4 w-4 mb-1" style={{ color: pColor }} />
                               <span className="text-[9px]" style={{ color: txtSecColor }}>ایمیل</span>
                             </a>
                           )}
                           {telegram && (
-                            <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                            <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
                               <Send className="h-4 w-4 mb-1" style={{ color: pColor }} />
                               <span className="text-[9px]" style={{ color: txtSecColor }}>تلگرام</span>
                             </a>
                           )}
                           {whatsapp && (
-                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
                               <MessageCircle className="h-4 w-4 mb-1" style={{ color: pColor }} />
                               <span className="text-[9px]" style={{ color: txtSecColor }}>واتساپ</span>
                             </a>
                           )}
                           {instagram && (
-                            <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                            <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
                               <Instagram className="h-4 w-4 mb-1" style={{ color: pColor }} />
                               <span className="text-[9px]" style={{ color: txtSecColor }}>اینستا</span>
                             </a>
                           )}
                           {linkedin && (
-                            <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                            <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
                               <Linkedin className="h-4 w-4 mb-1" style={{ color: pColor }} />
                               <span className="text-[9px]" style={{ color: txtSecColor }}>لینکدین</span>
                             </a>
                           )}
                           {website && (
-                            <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                            <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
                               <Globe className="h-4 w-4 mb-1" style={{ color: pColor }} />
                               <span className="text-[9px]" style={{ color: txtSecColor }}>سایت</span>
                             </a>
