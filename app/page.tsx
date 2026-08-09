@@ -432,19 +432,34 @@ export default function LandingPage() {
               ))}
             </div>
           ) : (() => {
-            const activeTemplate = templates[currentSlide] || templates[0];
-            const cleanTId = (activeTemplate.id || activeTemplate.slug || '').toLowerCase();
+            const activeTemplate = templates[currentSlide] || templates[0] || {};
+            const cleanTId = String(activeTemplate.id || '').toLowerCase();
+            const cleanTSlug = String(activeTemplate.slug || '').toLowerCase();
+            const cleanTName = String(activeTemplate.name || '').toLowerCase();
             const cleanTUuid = toUUID(activeTemplate.id);
 
-            const isClassic = !activeTemplate.id || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
-            const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
-            const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
-            const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+            // Robust theme determination matching Directus slugs, names, IDs, or slide index fallback
+            let isClassic = cleanTId === 'temp-1' || cleanTSlug === 'classic' || cleanTName.includes('کلاسیک') || cleanTName.includes('classic') || cleanTUuid === '11111111-1111-1111-1111-111111111111' || (currentSlide % 4 === 0 && !cleanTSlug);
+
+            let isNeonGlass = !isClassic && (cleanTId === 'temp-2' || cleanTSlug === 'neon-glass' || cleanTName.includes('کهکشانی') || cleanTName.includes('نئون') || cleanTName.includes('neon') || cleanTUuid === '22222222-2222-2222-2222-222222222222' || (currentSlide % 4 === 1 && !cleanTSlug));
+
+            let isMinimal = !isClassic && !isNeonGlass && (cleanTId === 'temp-3' || cleanTSlug === 'minimal' || cleanTName.includes('مینیمال') || cleanTName.includes('minimal') || cleanTUuid === '33333333-3333-3333-3333-333333333333' || (currentSlide % 4 === 2 && !cleanTSlug));
+
+            let isLuxuryDark = !isClassic && !isNeonGlass && !isMinimal && (cleanTId === 'temp-4' || cleanTSlug === 'luxury-dark' || cleanTName.includes('تاریک') || cleanTName.includes('لاکچری') || cleanTName.includes('luxury') || cleanTUuid === '44444444-4444-4444-4444-444444444444' || (currentSlide % 4 === 3 && !cleanTSlug));
+
+            // Guarantee exactly one template theme is active
+            if (!isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark) {
+              const modulo = Math.abs(currentSlide) % 4;
+              if (modulo === 1) isNeonGlass = true;
+              else if (modulo === 2) isMinimal = true;
+              else if (modulo === 3) isLuxuryDark = true;
+              else isClassic = true;
+            }
 
             const templateMeta: Record<string, { desc: string; styleName: string; features: string[]; bgClass: string; cardStyle: React.CSSProperties; mockCover: string; accentColor: string }> = {
               'classic': {
                 desc: 'مناسب شرکت‌ها، سازمان‌ها و کسب‌وکارهای رسمی که به دنبال ارائه اطلاعات با ساختار کلاسیک، آیکون‌های استاندارد و چیدمان منظم اداری هستند.',
-                styleName: 'کلاسیک اداری (Classic)',
+                styleName: activeTemplate.name || 'کلاسیک اداری (Classic)',
                 features: ['رنگ‌بندی پایدار و رسمی با کنتراست بالا', 'چیدمان هوشمند اطلاعات تماس و دکمه‌ها', 'طراحی مینیمال و همه‌پسند با کاربری آسان'],
                 bgClass: 'bg-slate-100 text-slate-800',
                 accentColor: 'bg-blue-600',
@@ -453,7 +468,7 @@ export default function LandingPage() {
               },
               'neon-glass': {
                 desc: 'ظاهری مدرن با افکت شیشه‌ای فرست‌شده (Glassmorphism) و لبه‌های درخشان نئونی، همراه با پس‌زمینه گرادینت کهکشانی متحرک.',
-                styleName: 'گرادینت کهکشانی (Neon Glass)',
+                styleName: activeTemplate.name || 'گرادینت کهکشانی (Neon Glass)',
                 features: ['افکت شیشه‌ای جذاب نیمه شفاف', 'گرادینت کهکشانی بنفش و سورمه‌ای', 'آیکون‌های تماس دایره‌ای با سایه نئون'],
                 bgClass: 'bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 text-slate-100',
                 accentColor: 'bg-purple-500',
@@ -462,7 +477,7 @@ export default function LandingPage() {
               },
               'minimal': {
                 desc: 'طراحی کاملاً مینیمال، متوازن و مدرن با بیشترین تمرکز بر روی خوانایی بالا، فونت‌های شارپ و فاصله خالی مناسب.',
-                styleName: 'مینیمال مدرن (Minimal)',
+                styleName: activeTemplate.name || 'مینیمال مدرن (Minimal)',
                 features: ['تایپوگرافی بسیار خوانا و با اصالت', 'چیدمان ردیفی بدون شلوغی اضافه', 'دکمه‌های با کادر ظریف و استایل تخت'],
                 bgClass: 'bg-zinc-50 text-zinc-900 border border-zinc-200',
                 accentColor: 'bg-zinc-900',
@@ -471,7 +486,7 @@ export default function LandingPage() {
               },
               'luxury-dark': {
                 desc: 'تم مشکی عمیق با رگه‌های طلایی اشرافی و جزئیات لوکس، فوق‌العاده برای پزشکان، طراحان خاص، وکلا و مدیران ارشد اجرایی.',
-                styleName: 'تاریک و طلایی لاکچری (Luxury Dark)',
+                styleName: activeTemplate.name || 'تاریک و طلایی لاکچری (Luxury Dark)',
                 features: ['خطوط جداکننده طلایی متالیک با ظرافت بالا', 'دکمه‌های شیب‌رنگ با تم زرد طلایی', 'آواتار دایره‌ای با قاب طلایی مجلل'],
                 bgClass: 'bg-gradient-to-br from-stone-900 via-neutral-950 to-stone-900 text-amber-100',
                 accentColor: 'bg-amber-500',
@@ -480,17 +495,9 @@ export default function LandingPage() {
               }
             };
 
-            const metaKey = isClassic ? 'classic' : isNeonGlass ? 'neon-glass' : isMinimal ? 'minimal' : isLuxuryDark ? 'luxury-dark' : (activeTemplate.slug || 'classic');
+            const metaKey = isClassic ? 'classic' : isNeonGlass ? 'neon-glass' : isMinimal ? 'minimal' : 'luxury-dark';
 
-            const meta = templateMeta[metaKey] || {
-              desc: 'قالب سفارشی‌سازی شده و منعطف برای هماهنگی کامل با هویت بصری منحصربه‌فرد کسب‌وکار شما.',
-              styleName: activeTemplate.name || 'قالب اختصاصی',
-              features: ['بارگذاری فوق‌العاده سریع به صورت استاتیک', 'پنل تنظیمات کاربری پویا و جامع', 'دسترسی مستقیم و امن به دیتابیس ابری'],
-              bgClass: 'bg-slate-900 text-white',
-              accentColor: 'bg-blue-500',
-              mockCover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
-              cardStyle: { backgroundColor: '#0f172a', color: '#f8fafc' }
-            };
+            const meta = templateMeta[metaKey] || templateMeta['classic'];
 
             const handleNext = () => {
               setCurrentSlide((prev) => (prev + 1) % templates.length);
@@ -587,15 +594,14 @@ export default function LandingPage() {
                   {/* Right Side: Virtual Interactive Mobile Phone Preview */}
                   <div className="lg:col-span-5 flex justify-center w-full">
                     <div 
-                      className="w-[300px] sm:w-[320px] h-[560px] max-h-[560px] rounded-[38px] border-[6px] border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden flex flex-col ring-1 ring-white/10 shrink-0"
-                      style={{ isolation: 'isolate', transform: 'translateZ(0)' }}
+                      className="w-[300px] sm:w-[320px] h-[560px] rounded-[38px] border-[6px] border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden ring-1 ring-white/10 shrink-0"
                     >
                       {/* Notch */}
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4 bg-slate-800 rounded-b-2xl z-30 pointer-events-none"></div>
 
-                      {/* Phone Screen Canvas container */}
+                      {/* Phone Screen Canvas container with smooth scroll */}
                       <div 
-                        className="h-full w-full min-h-0 overflow-y-auto overflow-x-hidden relative phone-scrollbar text-right font-sans pt-6 pb-4 px-3 space-y-3" 
+                        className="absolute inset-0 overflow-y-auto overflow-x-hidden phone-scrollbar text-right font-sans pt-6 pb-6 px-3 space-y-3 z-10" 
                         dir="rtl"
                         style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
                       >
