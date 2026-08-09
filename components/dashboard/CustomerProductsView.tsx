@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ShoppingBag, Check, CreditCard, Wallet as WalletIcon, RefreshCw, Sparkles, Send, PhoneCall, ShieldCheck, Tag } from 'lucide-react';
-import { ProductService, Wallet, dbService, toPersianDigits } from '../../lib/directus';
+import { ProductService, Wallet, dbService, toPersianDigits, getImageUrl } from '../../lib/directus';
 
 export interface CustomerProductsViewProps {
   user: any;
@@ -126,7 +126,7 @@ export function CustomerProductsView({
               {/* Image Banner */}
               <div className="h-44 bg-slate-950 relative overflow-hidden group">
                 <img
-                  src={prod.image || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80'}
+                  src={getImageUrl(prod.image) || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80'}
                   alt={prod.name}
                   className="w-full h-full object-cover transition transform group-hover:scale-105"
                 />
@@ -192,7 +192,7 @@ export function CustomerProductsView({
             </div>
 
             <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 flex items-center gap-3">
-              <img src={buyingProd.image || ''} alt="" className="w-12 h-12 rounded-lg object-cover" />
+              <img src={getImageUrl(buyingProd.image) || ''} alt="" className="w-12 h-12 rounded-lg object-cover" />
               <div>
                 <h4 className="font-bold text-white text-xs">{buyingProd.name}</h4>
                 <p className="text-emerald-400 font-bold text-xs mt-0.5">

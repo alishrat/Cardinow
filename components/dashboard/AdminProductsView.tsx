@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Plus, Save, Trash2, Check, RefreshCw, X, ShoppingBag, Tag, Image, DollarSign, Database, Info, Edit3 } from 'lucide-react';
-import { ProductService, dbService, toPersianDigits } from '../../lib/directus';
+import React, { useState, useRef } from 'react';
+import { Plus, Save, Trash2, RefreshCw, X, ShoppingBag, Image as ImageIcon, Edit3, Upload, Check } from 'lucide-react';
+import { ProductService, dbService, toPersianDigits, getImageUrl } from '../../lib/directus';
 
 export interface AdminProductsViewProps {
   user: any;
@@ -19,8 +19,9 @@ export function AdminProductsView({
 }: AdminProductsViewProps) {
   const [editingProduct, setEditingProduct] = useState<ProductService | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [search, setSearch] = useState('');
-  const [showDirectusInfo, setShowDirectusInfo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleStartEdit = (prod: ProductService) => {
     setEditingProduct({ ...prod });
@@ -29,14 +30,42 @@ export function AdminProductsView({
   const handleStartCreate = () => {
     const newProd: ProductService = {
       id: crypto.randomUUID ? crypto.randomUUID() : `prod-${Date.now()}`,
-      name: 'محصول / خدمت جدید',
-      description: 'توضیحات تکمیلی محصول یا خدمت جدید...',
-      price: 250000,
-      image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80',
+      name: '',
+      description: '',
+      price: 0,
+      image: '',
       is_active: true,
       type: 'product'
     };
     setEditingProduct(newProd);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingProduct) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast?.('لطفاً یک فایل تصویری معتبر انتخاب کنید.', 'error');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileId = await dbService.uploadFile(file);
+      setEditingProduct({
+        ...editingProduct,
+        image: fileId
+      });
+      showToast?.('تصویر محصول با موفقیت آپلود شد.', 'success');
+    } catch (err: any) {
+      console.error('Error uploading product image:', err);
+      showToast?.(err.message || 'خطا در آپلود تصویر', 'error');
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -82,7 +111,7 @@ export function AdminProductsView({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Info */}
+      {/* Top Banner & Actions */}
       <div className="bg-gradient-to-r from-emerald-900/40 via-teal-900/20 to-slate-900 border border-emerald-500/20 rounded-2xl p-5 shadow-lg">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -99,63 +128,14 @@ export function AdminProductsView({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowDirectusInfo(!showDirectusInfo)}
-              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl border border-slate-700 transition flex items-center gap-1.5"
-            >
-              <Database className="w-4 h-4 text-cyan-400" />
-              <span>راهنمای دایرکتوس</span>
-            </button>
-
-            <button
-              onClick={handleStartCreate}
-              className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>افزودن محصول / خدمت جدید</span>
-            </button>
-          </div>
+          <button
+            onClick={handleStartCreate}
+            className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>افزودن محصول / خدمت جدید</span>
+          </button>
         </div>
-
-        {/* Directus Schema Guide Toggle */}
-        {showDirectusInfo && (
-          <div className="mt-4 p-4 bg-slate-950/80 border border-cyan-500/30 rounded-xl text-xs space-y-3 text-slate-300">
-            <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm">
-              <Info className="w-4 h-4" />
-              <span>مشخصات ساخت کالکشن در Directus (برای ادمین)</span>
-            </div>
-            <p className="text-slate-400">
-              برای هماهنگی با دایرکتوس، یک کالکشن جدید با نام <code className="text-emerald-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 font-mono">products</code> بپازید و فیلدهای زیر را در آن ایجاد کنید:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 font-mono text-[11px]">
-              <div className="p-2 bg-slate-900/90 rounded border border-slate-800">
-                <span className="text-emerald-400 font-bold">id</span> (UUID - Primary Key)
-              </div>
-              <div className="p-2 bg-slate-900/90 rounded border border-slate-800">
-                <span className="text-emerald-400 font-bold">name</span> (String - نام محصول)
-              </div>
-              <div className="p-2 bg-slate-900/90 rounded border border-slate-800">
-                <span className="text-emerald-400 font-bold">description</span> (Text - توضیحات)
-              </div>
-              <div className="p-2 bg-slate-900/90 rounded border border-slate-800">
-                <span className="text-emerald-400 font-bold">price</span> (Integer - قیمت به تومان)
-              </div>
-              <div className="p-2 bg-slate-900/90 rounded border border-slate-800">
-                <span className="text-emerald-400 font-bold">image</span> (String - لینک تصویر)
-              </div>
-              <div className="p-2 bg-slate-900/90 rounded border border-slate-800">
-                <span className="text-emerald-400 font-bold">is_active</span> (Boolean - فعال/غیرفعال)
-              </div>
-              <div className="p-2 bg-slate-900/90 rounded border border-slate-800">
-                <span className="text-emerald-400 font-bold">type</span> (String - product / service)
-              </div>
-              <div className="p-2 bg-slate-900/90 rounded border border-slate-800">
-                <span className="text-emerald-400 font-bold">tenant_id</span> (String - آیدی نماینده)
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Filter & Search */}
@@ -181,16 +161,17 @@ export function AdminProductsView({
           >
             <div>
               {/* Product Image */}
-              <div className="h-36 bg-slate-950 relative overflow-hidden group">
+              <div className="h-40 bg-slate-950 relative overflow-hidden group">
                 {prod.image ? (
                   <img
-                    src={prod.image}
+                    src={getImageUrl(prod.image)}
                     alt={prod.name}
                     className="w-full h-full object-cover transition transform group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-600">
-                    <Image className="w-8 h-8" />
+                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 space-y-1">
+                    <ImageIcon className="w-8 h-8" />
+                    <span className="text-[10px]">بدون تصویر</span>
                   </div>
                 )}
                 <div className="absolute top-2 right-2 flex items-center gap-1.5">
@@ -213,14 +194,14 @@ export function AdminProductsView({
 
               {/* Product Info */}
               <div className="p-4 space-y-2">
-                <h3 className="font-bold text-white text-sm line-clamp-1">{prod.name}</h3>
+                <h3 className="font-bold text-white text-sm line-clamp-1">{prod.name || 'بدون عنوان'}</h3>
                 <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed min-h-[36px]">
                   {prod.description || 'بدون توضیح'}
                 </p>
                 <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
                   <span className="text-xs text-slate-400">قیمت:</span>
                   <span className="text-sm font-black text-emerald-400">
-                    {toPersianDigits(prod.price.toLocaleString())} <span className="text-[10px] font-normal text-slate-400">تومان</span>
+                    {toPersianDigits((prod.price || 0).toLocaleString())} <span className="text-[10px] font-normal text-slate-400">تومان</span>
                   </span>
                 </div>
               </div>
@@ -251,7 +232,7 @@ export function AdminProductsView({
       {filteredProducts.length === 0 && (
         <div className="text-center py-12 bg-slate-900/40 border border-slate-800 rounded-2xl text-slate-400 space-y-2">
           <ShoppingBag className="w-10 h-10 mx-auto text-slate-600" />
-          <p className="text-sm">هیچ محصول یا خدماتی یافت نشد.</p>
+          <p className="text-sm">هیچ محصول یا خدماتی در پایگاه داده ثبت نشده است.</p>
         </div>
       )}
 
@@ -305,7 +286,7 @@ export function AdminProductsView({
 
               {/* Title */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">نام محصول / خدمت</label>
+                <label className="block text-slate-300 font-semibold mb-1">نام محصول / خدمت *</label>
                 <input
                   type="text"
                   value={editingProduct.name}
@@ -320,23 +301,79 @@ export function AdminProductsView({
                 <label className="block text-slate-300 font-semibold mb-1">قیمت (تومان)</label>
                 <input
                   type="number"
-                  value={editingProduct.price}
+                  value={editingProduct.price || 0}
                   onChange={e => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500 font-mono"
                   placeholder="350000"
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Image Upload (File Only) */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">لینک تصویر (URL)</label>
+                <label className="block text-slate-300 font-semibold mb-1.5">تصویر محصول / خدمت</label>
                 <input
-                  type="text"
-                  value={editingProduct.image || ''}
-                  onChange={e => setEditingProduct({ ...editingProduct, image: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500 dir-ltr text-left font-mono"
-                  placeholder="https://..."
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
                 />
+
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col items-center justify-center gap-3 min-h-[120px]">
+                  {editingProduct.image ? (
+                    <div className="relative w-full h-36 rounded-lg overflow-hidden border border-slate-800 group">
+                      <img
+                        src={getImageUrl(editingProduct.image)}
+                        alt="تصویر محصول"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingImage}
+                          className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-lg transition flex items-center gap-1"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>تغییر تصویر</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingProduct({ ...editingProduct, image: '' })}
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>حذف</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center space-y-2 py-2">
+                      <div className="w-10 h-10 mx-auto rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs text-slate-400">تصویری انتخاب نشده است.</p>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImage}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 font-bold text-xs rounded-xl transition inline-flex items-center gap-2"
+                      >
+                        {uploadingImage ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                            <span>در حال آپلود در دایرکتوس...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" />
+                            <span>انتخاب و آپلود تصویر</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Description */}
@@ -362,7 +399,7 @@ export function AdminProductsView({
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || uploadingImage}
                 className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-xl transition flex items-center gap-1.5"
               >
                 {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

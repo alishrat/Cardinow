@@ -1234,6 +1234,24 @@ export const dbService = {
     if (!res.ok) throw new Error('خطا در حذف پلن از پایگاه داده');
   },
 
+  // ---- FILE UPLOAD ----
+  uploadFile: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = getAuthHeaders();
+    const res = await fetch(`${DIRECTUS_BASE_URL}/files`, {
+      method: 'POST',
+      headers: { ...headers },
+      body: formData
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      throw new Error(errData?.errors?.[0]?.message || 'خطا در آپلود تصویر در پایگاه داده');
+    }
+    const json = await res.json();
+    return json?.data?.id;
+  },
+
   // ---- PRODUCTS & SERVICES ----
   getProducts: async (): Promise<ProductService[]> => {
     let remoteProds: ProductService[] = [];
@@ -1260,9 +1278,6 @@ export const dbService = {
     } catch {}
 
     const prodMap = new Map<string, ProductService>();
-    for (const p of SEED_PRODUCTS) {
-      prodMap.set(p.id, p);
-    }
     for (const p of remoteProds) {
       if (p && p.id) prodMap.set(p.id, p);
     }
@@ -1301,7 +1316,7 @@ export const dbService = {
     try {
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('local_products');
-        const list: ProductService[] = stored ? JSON.parse(stored) : [...SEED_PRODUCTS];
+        const list: ProductService[] = stored ? JSON.parse(stored) : [];
         const existingIdx = list.findIndex(item => item.id === prod.id);
         if (existingIdx >= 0) {
           list[existingIdx] = prod;
@@ -1328,7 +1343,7 @@ export const dbService = {
     try {
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('local_products');
-        const list: ProductService[] = stored ? JSON.parse(stored) : [...SEED_PRODUCTS];
+        const list: ProductService[] = stored ? JSON.parse(stored) : [];
         const filtered = list.filter(item => item.id !== id && item.id !== cleanId);
         localStorage.setItem('local_products', JSON.stringify(filtered));
       }
