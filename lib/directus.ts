@@ -1118,6 +1118,15 @@ export const dbService = {
         return tenantPlans.length > 0 ? tenantPlans : SEED_PLANS;
       }
       return data.map((plan: any) => {
+        let parsedPrice = 0;
+        if (plan.price !== undefined && plan.price !== null && plan.price !== '') {
+          const num = Number(plan.price);
+          if (!isNaN(num)) parsedPrice = num;
+        } else {
+          const seedMatch = SEED_PLANS.find(sp => toUUID(sp.id) === toUUID(plan.id) || sp.title === plan.title);
+          if (seedMatch) parsedPrice = seedMatch.price;
+        }
+
         let parsedFeatures: string[] = [];
         if (Array.isArray(plan.features)) {
           parsedFeatures = plan.features;
@@ -1157,6 +1166,7 @@ export const dbService = {
 
         return {
           ...plan,
+          price: parsedPrice,
           features: parsedFeatures,
           allowed_templates: parsedTemplates,
           duration_days: plan.duration_days !== undefined && plan.duration_days !== null ? Number(plan.duration_days) : 30,

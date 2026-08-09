@@ -587,7 +587,7 @@ export default function LandingPage() {
                   {/* Right Side: Virtual Interactive Mobile Phone Preview */}
                   <div className="lg:col-span-5 flex justify-center w-full">
                     <div 
-                      className="w-[300px] sm:w-[320px] h-[560px] rounded-[38px] border-[6px] border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden flex flex-col ring-1 ring-white/10 shrink-0"
+                      className="w-[300px] sm:w-[320px] h-[560px] max-h-[560px] rounded-[38px] border-[6px] border-slate-800 bg-slate-950 shadow-2xl relative overflow-hidden flex flex-col ring-1 ring-white/10 shrink-0"
                       style={{ isolation: 'isolate', transform: 'translateZ(0)' }}
                     >
                       {/* Notch */}
@@ -595,7 +595,7 @@ export default function LandingPage() {
 
                       {/* Phone Screen Canvas container */}
                       <div 
-                        className="flex-grow flex flex-col overflow-y-auto overflow-x-hidden relative phone-scrollbar text-right font-sans p-3 space-y-3" 
+                        className="h-full w-full min-h-0 overflow-y-auto overflow-x-hidden relative phone-scrollbar text-right font-sans pt-6 pb-4 px-3 space-y-3" 
                         dir="rtl"
                         style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
                       >
@@ -1369,12 +1369,12 @@ export default function LandingPage() {
                     </div>
 
                     <div className="py-2 border-t border-b border-slate-800 flex items-baseline gap-1.5">
-                      {plan.price === 0 ? (
+                      {Number(plan.price) === 0 ? (
                         <span className="text-2xl font-black text-white">رایگان</span>
                       ) : (
                         <>
                           <span className="text-3xl font-black text-white">
-                            {plan.price.toLocaleString('fa-IR')}
+                            {toPersianDigits(Number(plan.price || 0).toLocaleString('en-US'))}
                           </span>
                           <span className="text-xs text-slate-400 font-bold">تومان</span>
                         </>
