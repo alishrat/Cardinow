@@ -219,6 +219,16 @@ export default function PublicCardPage() {
         if (apiCard) {
           const parsedCard = parseCardFields(apiCard);
           setCard(parsedCard);
+          
+          const fullName = `${parsedCard.first_name || ''} ${parsedCard.last_name || ''}`.trim();
+          if (fullName) {
+            document.title = `کارت ویزیت ${fullName} | مگاکارت`;
+          } else if (parsedCard.company) {
+            document.title = `کارت ویزیت ${parsedCard.company} | مگاکارت`;
+          } else {
+            document.title = 'کارت ویزیت دیجیتال | مگاکارت';
+          }
+
           dbService.logVisit(parsedCard.id, deviceName, referrerName, randomCountry);
           
           // Fetch templates dynamically
@@ -316,6 +326,8 @@ export default function PublicCardPage() {
 
   // Get social values
   const { phone, mobile, extra_phones, whatsapp, telegram, instagram, linkedin, website, email } = card.social_links || {};
+  const activeSocialCount = [phone, email, telegram, whatsapp, instagram, linkedin, website].filter(Boolean).length;
+  const socialColsClass = activeSocialCount <= 1 ? 'grid-cols-1' : activeSocialCount === 2 ? 'grid-cols-2' : activeSocialCount === 3 ? 'grid-cols-3' : 'grid-cols-4';
 
   // Download VCF Contact Handler
   const handleDownloadVCard = async () => {
@@ -401,7 +413,7 @@ export default function PublicCardPage() {
   const cardBgColor = card.custom_colors?.card_bg?.trim() ? card.custom_colors.card_bg : tmplDefaults.card_bg;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif', fontFeatureSettings: "'ss01'" }}>
+    <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
       {activeShareId && (
         <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[1px]" onClick={() => setActiveShareId(null)} />
       )}
@@ -536,7 +548,7 @@ export default function PublicCardPage() {
                     return (
                       <div key="sec_social_links" className="space-y-3">
                         <h3 className="text-xs font-bold uppercase tracking-wider opacity-60">راه‌های ارتباطی</h3>
-                        <div className="grid grid-cols-4 gap-3">
+                        <div className={`grid ${socialColsClass} gap-3`}>
                           {phone && (
                             <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 rounded-xl transition border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.08)', color: textCol }}>
                               <Phone className="h-5 w-5 mb-1" style={{ color: primaryColor }} />
@@ -798,7 +810,7 @@ export default function PublicCardPage() {
                         className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40 transition-all text-sm"
                       >
                         <Bell className="h-5 w-5 text-emerald-400" />
-                        <span>عضویت در خبرنامه</span>
+                        <span>عضویت در کلاب</span>
                       </button>
                     </div>
                   );
@@ -838,7 +850,7 @@ export default function PublicCardPage() {
                   return (
                     <div key="sec_temp2_social" className="space-y-3">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">راه‌های ارتباطی سریع</h3>
-                      <div className="grid grid-cols-4 gap-3">
+                      <div className={`grid ${socialColsClass} gap-3`}>
                         {phone && (
                           <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 group">
                             <Phone className="h-5 w-5 text-cyan-400 mb-1 group-hover:scale-110 transition" />
@@ -1082,7 +1094,7 @@ export default function PublicCardPage() {
                         className="w-full py-3 rounded-xl border border-emerald-600 font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center gap-2 transition-all text-xs"
                       >
                         <Bell className="h-4 w-4 text-emerald-700" />
-                        <span>عضویت در خبرنامه</span>
+                        <span>عضویت در کلاب</span>
                       </button>
                     </div>
                   );
@@ -1260,8 +1272,8 @@ export default function PublicCardPage() {
                             title="کلیک برای کپی آسان"
                           >
                             <div>
-                              <span className="text-[9px] text-slate-400 block mb-0.5 font-semibold">شماره شبا (IR)</span>
-                              <span className="font-mono font-bold text-slate-700 text-left" dir="ltr">{card.bank_shaba}</span>
+                              <span className="text-[9px] text-slate-400 block mb-0.5 font-semibold">شماره شبا</span>
+                              <span className="font-mono font-bold text-slate-700">{card.bank_shaba}</span>
                             </div>
                             <div className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-750 transition flex items-center gap-1">
                               {copiedField === 'bank_shaba' ? <span className="text-[9px] font-bold text-emerald-600">کپی شد!</span> : <Copy className="h-3.5 w-3.5" />}
@@ -1275,15 +1287,10 @@ export default function PublicCardPage() {
                   return null;
               }
             })}
-
-            {/* Footer */}
-            <div className="text-center pt-8 opacity-20 text-[9px] uppercase tracking-wider font-mono">
-              <span>Minimal System // twin-card</span>
-            </div>
           </div>
         )}
 
-        {/* TEMPLATE 4: LUXURY GOLD (GOLD AND BLACK) */}
+        {/* TEMPLATE 4: LUXURY DARK */}
         {isLuxuryDark && (
           <div 
             className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden border transition-all p-8 space-y-8"
@@ -1354,7 +1361,7 @@ export default function PublicCardPage() {
                         className="w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs bg-amber-500/10 hover:bg-amber-500/20 text-[#e2b53e] border border-amber-500/30"
                       >
                         <Bell className="h-4 w-4 text-[#e2b53e]" />
-                        <span>عضویت در خبرنامه</span>
+                        <span>عضویت در کلاب</span>
                       </button>
                     </div>
                   );
@@ -1395,7 +1402,7 @@ export default function PublicCardPage() {
                   return (
                     <div key="sec_temp4_social" className="space-y-3">
                       <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center">کانال‌های ارتباطی لوکس</h3>
-                      <div className="grid grid-cols-4 gap-3">
+                      <div className={`grid ${socialColsClass} gap-3`}>
                         {phone && (
                           <a href={`tel:${phone}`} className="flex flex-col items-center justify-center p-3 bg-stone-900 hover:bg-stone-800 rounded-xl transition border border-amber-500/5 group">
                             <Phone className="h-4 w-4 text-[#e2b53e] mb-1 group-hover:scale-110 transition" />
@@ -1704,7 +1711,7 @@ export default function PublicCardPage() {
                           style={{ borderColor: pColor, color: pColor, backgroundColor: 'rgba(0,0,0,0.02)' }}
                         >
                           <Bell className="h-4 w-4" />
-                          <span>عضویت در خبرنامه</span>
+                          <span>عضویت در کلاب</span>
                         </button>
                       </div>
                     );
@@ -1935,6 +1942,7 @@ export default function PublicCardPage() {
             </div>
           );
         })()}
+      </div>
 
       {/* NEWSLETTER SUBSCRIBE MODAL */}
       {showSubscribeModal && (
@@ -2042,7 +2050,6 @@ export default function PublicCardPage() {
         </div>
       )}
 
-      </div>
     </div>
   );
 }
