@@ -439,20 +439,21 @@ export default function LandingPage() {
             const cleanTUuid = toUUID(activeTemplate.id);
 
             // Robust theme determination matching Directus slugs, names, IDs, or slide index fallback
-            let isClassic = cleanTId === 'temp-1' || cleanTSlug === 'classic' || cleanTName.includes('کلاسیک') || cleanTName.includes('classic') || cleanTUuid === '11111111-1111-1111-1111-111111111111' || (currentSlide % 4 === 0 && !cleanTSlug);
-
-            let isNeonGlass = !isClassic && (cleanTId === 'temp-2' || cleanTSlug === 'neon-glass' || cleanTName.includes('کهکشانی') || cleanTName.includes('نئون') || cleanTName.includes('neon') || cleanTUuid === '22222222-2222-2222-2222-222222222222' || (currentSlide % 4 === 1 && !cleanTSlug));
-
-            let isMinimal = !isClassic && !isNeonGlass && (cleanTId === 'temp-3' || cleanTSlug === 'minimal' || cleanTName.includes('مینیمال') || cleanTName.includes('minimal') || cleanTUuid === '33333333-3333-3333-3333-333333333333' || (currentSlide % 4 === 2 && !cleanTSlug));
-
-            let isLuxuryDark = !isClassic && !isNeonGlass && !isMinimal && (cleanTId === 'temp-4' || cleanTSlug === 'luxury-dark' || cleanTName.includes('تاریک') || cleanTName.includes('لاکچری') || cleanTName.includes('luxury') || cleanTUuid === '44444444-4444-4444-4444-444444444444' || (currentSlide % 4 === 3 && !cleanTSlug));
+            let isClassic = cleanTId === 'temp-1' || cleanTSlug === 'classic' || cleanTName.includes('کلاسیک') || (currentSlide % 6 === 0 && !cleanTSlug);
+            let isBento = !isClassic && (cleanTId === 'temp-2' || cleanTSlug === 'bento' || cleanTName.includes('بنتو') || (currentSlide % 6 === 1 && !cleanTSlug));
+            let isContentCreator = !isClassic && !isBento && (cleanTId === 'temp-3' || cleanTSlug === 'content-creator' || cleanTName.includes('محتوا') || cleanTName.includes('اینفلوئنسر') || (currentSlide % 6 === 2 && !cleanTSlug));
+            let isNeonGlass = !isClassic && !isBento && !isContentCreator && (cleanTId === 'temp-4' || cleanTSlug === 'neon-glass' || cleanTName.includes('کهکشانی') || cleanTName.includes('نئون') || (currentSlide % 6 === 3 && !cleanTSlug));
+            let isMinimal = !isClassic && !isBento && !isContentCreator && !isNeonGlass && (cleanTId === 'temp-5' || cleanTSlug === 'minimal' || cleanTName.includes('مینیمال') || (currentSlide % 6 === 4 && !cleanTSlug));
+            let isLuxuryDark = !isClassic && !isBento && !isContentCreator && !isNeonGlass && !isMinimal && (cleanTId === 'temp-6' || cleanTSlug === 'luxury-dark' || cleanTName.includes('تاریک') || cleanTName.includes('لاکچری') || (currentSlide % 6 === 5 && !cleanTSlug));
 
             // Guarantee exactly one template theme is active
-            if (!isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark) {
-              const modulo = Math.abs(currentSlide) % 4;
-              if (modulo === 1) isNeonGlass = true;
-              else if (modulo === 2) isMinimal = true;
-              else if (modulo === 3) isLuxuryDark = true;
+            if (!isClassic && !isBento && !isContentCreator && !isNeonGlass && !isMinimal && !isLuxuryDark) {
+              const modulo = Math.abs(currentSlide) % (templates.length || 6);
+              if (modulo === 1) isBento = true;
+              else if (modulo === 2) isContentCreator = true;
+              else if (modulo === 3) isNeonGlass = true;
+              else if (modulo === 4) isMinimal = true;
+              else if (modulo === 5) isLuxuryDark = true;
               else isClassic = true;
             }
 
@@ -465,6 +466,24 @@ export default function LandingPage() {
                 accentColor: 'bg-blue-600',
                 mockCover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
                 cardStyle: { backgroundColor: '#ffffff', color: '#1e293b' }
+              },
+              'bento': {
+                desc: 'چیدمان مدرن شبکه کاشی‌وار (Bento Grid) که اطلاعات، شبکه‌ها، لینک‌ها و نقشه را در باکس‌های کامپوننتمحور و منعطف قرار می‌دهد.',
+                styleName: activeTemplate.name || 'شبکه بنتو (Bento Grid)',
+                features: ['کاشی‌بندی مدرن و هوشمند اطلاعات کلیدی', 'سازماندهی جذاب شبکه‌ها در باکس‌های مجزا', 'فوق‌العاده برای استارتاپ‌ها، طراحان و تکنولوژی'],
+                bgClass: 'bg-slate-900 text-slate-100',
+                accentColor: 'bg-indigo-600',
+                mockCover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+                cardStyle: { backgroundColor: '#1e293b', color: '#f8fafc', borderColor: '#6366f1' }
+              },
+              'content-creator': {
+                desc: 'قالب اختصاصی Bio-Link برای تولیدکنندگان محتوا، بلاگرها و اینفلوئنسرها با تمرکز بر روی لینک‌های دکمه‌ای برجسته و نوار شبکه‌ها.',
+                styleName: activeTemplate.name || 'محتوامحور و اینفلوئنسر (Content Creator)',
+                features: ['طراحی اختصاصی Bio-Link و پورتفولیو', 'دکمه‌های لینک با استایل گرادینت و سایه', 'آواتار برجسته با حلقه‌ درخشان پیرامونی'],
+                bgClass: 'bg-zinc-950 text-zinc-100',
+                accentColor: 'bg-pink-600',
+                mockCover: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+                cardStyle: { backgroundColor: '#18181b', color: '#fafafa', borderColor: '#ec4899' }
               },
               'neon-glass': {
                 desc: 'ظاهری مدرن با افکت شیشه‌ای فرست‌شده (Glassmorphism) و لبه‌های درخشان نئونی، همراه با پس‌زمینه گرادینت کهکشانی متحرک.',
@@ -495,7 +514,7 @@ export default function LandingPage() {
               }
             };
 
-            const metaKey = isClassic ? 'classic' : isNeonGlass ? 'neon-glass' : isMinimal ? 'minimal' : 'luxury-dark';
+            const metaKey = isClassic ? 'classic' : isBento ? 'bento' : isContentCreator ? 'content-creator' : isNeonGlass ? 'neon-glass' : isMinimal ? 'minimal' : 'luxury-dark';
 
             const meta = templateMeta[metaKey] || templateMeta['classic'];
 

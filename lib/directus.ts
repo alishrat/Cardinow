@@ -315,37 +315,103 @@ const SEED_TEMPLATES: Template[] = [
     id: 'temp-1',
     name: 'کلاسیک اداری (Classic)',
     slug: 'classic',
-    thumbnail: 'https://picsum.photos/300/200?random=100',
+    thumbnail: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&q=80',
     is_premium: false,
     is_active: true,
-    schema: {}
+    schema: {
+      default_colors: {
+        primary: '#3b82f6',
+        secondary: '#1d4ed8',
+        background: '#f1f5f9',
+        card_bg: '#ffffff',
+        text: '#1e293b'
+      }
+    }
   },
   {
     id: 'temp-2',
-    name: 'گرادینت کهکشانی (Neon Glass)',
-    slug: 'neon-glass',
-    thumbnail: 'https://picsum.photos/300/200?random=101',
+    name: 'شبکه بنتو (Bento Grid)',
+    slug: 'bento',
+    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
     is_premium: true,
     is_active: true,
-    schema: {}
+    schema: {
+      default_colors: {
+        primary: '#6366f1',
+        secondary: '#8b5cf6',
+        background: '#0f172a',
+        card_bg: '#1e293b',
+        text: '#f8fafc'
+      }
+    }
   },
   {
     id: 'temp-3',
-    name: 'مینیمال مدرن (Minimal)',
-    slug: 'minimal',
-    thumbnail: 'https://picsum.photos/300/200?random=102',
-    is_premium: false,
+    name: 'محتوامحور و اینفلوئنسر (Content Creator)',
+    slug: 'content-creator',
+    thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    is_premium: true,
     is_active: true,
-    schema: {}
+    schema: {
+      default_colors: {
+        primary: '#ec4899',
+        secondary: '#8b5cf6',
+        background: '#09090b',
+        card_bg: '#18181b',
+        text: '#fafafa'
+      }
+    }
   },
   {
     id: 'temp-4',
-    name: 'تاریک و طلایی لاکچری (Luxury Dark)',
-    slug: 'luxury-dark',
-    thumbnail: 'https://picsum.photos/300/200?random=103',
+    name: 'گرادینت کهکشانی (Neon Glass)',
+    slug: 'neon-glass',
+    thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&q=80',
     is_premium: true,
     is_active: true,
-    schema: {}
+    schema: {
+      default_colors: {
+        primary: '#06b6d4',
+        secondary: '#3b82f6',
+        background: '#0f172a',
+        card_bg: 'rgba(15, 23, 42, 0.85)',
+        text: '#ffffff'
+      }
+    }
+  },
+  {
+    id: 'temp-5',
+    name: 'مینیمال مدرن (Minimal)',
+    slug: 'minimal',
+    thumbnail: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
+    is_premium: false,
+    is_active: true,
+    schema: {
+      default_colors: {
+        primary: '#0f172a',
+        secondary: '#475569',
+        background: '#f8fafc',
+        card_bg: '#ffffff',
+        text: '#0f172a'
+      }
+    }
+  },
+  {
+    id: 'temp-6',
+    name: 'تاریک و طلایی لاکچری (Luxury Dark)',
+    slug: 'luxury-dark',
+    thumbnail: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+    is_premium: true,
+    is_active: true,
+    schema: {
+      default_colors: {
+        primary: '#f59e0b',
+        secondary: '#d97706',
+        background: '#0c0a09',
+        card_bg: '#1c1917',
+        text: '#fef3c7'
+      }
+    }
   }
 ];
 

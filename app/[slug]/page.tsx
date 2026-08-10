@@ -353,10 +353,12 @@ export default function PublicCardPage() {
   const cleanTUuid = toUUID(templateId);
 
   const isClassic = !templateId || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
-  const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
-  const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
-  const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
-  const isCustomTemplate = !isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark;
+  const isBento = cleanTId === 'temp-2' || cleanTId === 'bento' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
+  const isContentCreator = cleanTId === 'temp-3' || cleanTId === 'content-creator' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
+  const isNeonGlass = cleanTId === 'temp-4' || cleanTId === 'neon-glass' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+  const isMinimal = cleanTId === 'temp-5' || cleanTId === 'minimal' || cleanTUuid === '55555555-5555-5555-5555-555555555555';
+  const isLuxuryDark = cleanTId === 'temp-6' || cleanTId === 'luxury-dark' || cleanTUuid === '66666666-6666-6666-6666-666666666666';
+  const isCustomTemplate = !isClassic && !isBento && !isContentCreator && !isNeonGlass && !isMinimal && !isLuxuryDark;
 
   // Template Default Colors Fallback
   let tmplDefaults = {
@@ -367,7 +369,23 @@ export default function PublicCardPage() {
     text: '#1e293b',
   };
 
-  if (isLuxuryDark) {
+  if (isBento) {
+    tmplDefaults = {
+      primary: '#6366f1',
+      secondary: '#8b5cf6',
+      background: '#0f172a',
+      card_bg: '#1e293b',
+      text: '#f8fafc',
+    };
+  } else if (isContentCreator) {
+    tmplDefaults = {
+      primary: '#ec4899',
+      secondary: '#8b5cf6',
+      background: '#09090b',
+      card_bg: '#18181b',
+      text: '#fafafa',
+    };
+  } else if (isLuxuryDark) {
     tmplDefaults = {
       primary: '#f59e0b',
       secondary: '#d97706',
@@ -380,7 +398,7 @@ export default function PublicCardPage() {
       primary: '#06b6d4',
       secondary: '#3b82f6',
       background: '#0f172a',
-      card_bg: '#0f172a',
+      card_bg: 'rgba(15, 23, 42, 0.85)',
       text: '#ffffff',
     };
   } else if (isMinimal) {
@@ -726,6 +744,365 @@ export default function PublicCardPage() {
                 <span>قدرت گرفته از سامانه کارت ویزیت دیجیتال مگاکارت</span>
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {/* TEMPLATE 2: BENTO GRID (MODULAR BENTO TILES) */}
+        {isBento && (
+          <div 
+            className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden p-4 sm:p-5 space-y-3.5 transition-all"
+            style={{ backgroundColor: bgColor || '#0f172a', color: textCol || '#f8fafc' }}
+          >
+            {/* Top Header Bento Box: Avatar + Info */}
+            <div 
+              className="p-5 rounded-2xl border relative overflow-hidden flex flex-col items-center text-center space-y-3.5 shadow-md"
+              style={{ backgroundColor: cardBgColor || '#1e293b', borderColor: `${primaryColor}30` }}
+            >
+              {/* Background cover watermark */}
+              <div className="absolute inset-0 opacity-15 pointer-events-none">
+                <img src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} alt="" className="w-full h-full object-cover blur-sm" />
+              </div>
+
+              {/* Share & Views Top Row */}
+              <div className="w-full flex justify-between items-center z-10 text-xs">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full font-semibold text-slate-300">
+                  <Eye className="h-3 w-3 text-indigo-400" />
+                  {card.views_count?.toLocaleString('fa-IR')} بازدید
+                </span>
+                <div className="relative">
+                  <button 
+                    onClick={() => setActiveShareId(activeShareId === 'temp-bento' ? null : 'temp-bento')}
+                    className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition active:scale-95"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                  {renderShareDropdown('temp-bento', true)}
+                </div>
+              </div>
+
+              {/* Avatar */}
+              <div className="relative z-10">
+                <div className="h-24 w-24 rounded-2xl border-2 border-indigo-400/50 overflow-hidden shadow-xl bg-slate-900 mx-auto">
+                  <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className="w-full h-full object-cover" />
+                </div>
+              </div>
+
+              {/* Identity */}
+              <div className="relative z-10 space-y-1">
+                <h1 className="text-2xl font-bold tracking-tight text-white">{card.first_name} {card.last_name}</h1>
+                <p className="text-xs font-extrabold px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 inline-block border border-indigo-500/30">
+                  {card.job_title}
+                </p>
+                {card.company && <p className="text-xs text-slate-400 mt-1">{card.company}</p>}
+              </div>
+            </div>
+
+            {/* Save Contact & Subscribe 2-Column Bento Tile */}
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={handleDownloadVCard}
+                className="py-3.5 px-3 rounded-2xl font-bold text-white flex flex-col items-center justify-center gap-1.5 shadow-lg transition active:scale-95 text-xs text-center"
+                style={{ backgroundColor: primaryColor || '#6366f1' }}
+              >
+                {isVCardGenerated ? <Check className="h-5 w-5" /> : <Download className="h-5 w-5" />}
+                <span>{isVCardGenerated ? 'ذخیره شد' : 'ذخیره مخاطب'}</span>
+              </button>
+              <button 
+                onClick={() => { setShowSubscribeModal(true); setSubscribeStep('mobile'); setSubscribeError(null); setSubscribeMessage(null); }}
+                className="py-3.5 px-3 rounded-2xl font-bold text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/30 flex flex-col items-center justify-center gap-1.5 transition active:scale-95 text-xs text-center"
+              >
+                <Bell className="h-5 w-5 text-emerald-400" />
+                <span>عضویت در خبرنامه</span>
+              </button>
+            </div>
+
+            {/* Bio Bento Tile */}
+            {card.bio && (
+              <div 
+                className="p-4 rounded-2xl border text-xs leading-relaxed text-slate-300 space-y-1.5 relative overflow-hidden"
+                style={{ backgroundColor: cardBgColor || '#1e293b', borderColor: `${primaryColor}20` }}
+              >
+                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">درباره من / بیوگرافی</span>
+                <p className="whitespace-pre-line">{card.bio}</p>
+              </div>
+            )}
+
+            {/* Social Bento Grid Tiles (2x2 or 3x2) */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-400 px-1">شبکه‌ها و راه‌های ارتباطی</span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {phone && (
+                  <a href={`tel:${phone}`} className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-2xl border border-white/5 flex flex-col items-center text-center space-y-1 group transition">
+                    <Phone className="h-5 w-5 text-indigo-400 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-white">تماس مستقیم</span>
+                    <span className="text-[9px] text-slate-400 font-mono">{toPersianDigits(phone)}</span>
+                  </a>
+                )}
+                {email && (
+                  <a href={`mailto:${email}`} className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-2xl border border-white/5 flex flex-col items-center text-center space-y-1 group transition">
+                    <Mail className="h-5 w-5 text-amber-400 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-white">ارسال ایمیل</span>
+                    <span className="text-[9px] text-slate-400 truncate max-w-full">{email}</span>
+                  </a>
+                )}
+                {telegram && (
+                  <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-2xl border border-white/5 flex flex-col items-center text-center space-y-1 group transition">
+                    <Send className="h-5 w-5 text-sky-400 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-white">تلگرام</span>
+                    <span className="text-[9px] text-slate-400">@{telegram}</span>
+                  </a>
+                )}
+                {whatsapp && (
+                  <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-2xl border border-white/5 flex flex-col items-center text-center space-y-1 group transition">
+                    <MessageCircle className="h-5 w-5 text-emerald-400 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-white">واتساپ</span>
+                    <span className="text-[9px] text-slate-400">گفتگو</span>
+                  </a>
+                )}
+                {instagram && (
+                  <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-2xl border border-white/5 flex flex-col items-center text-center space-y-1 group transition">
+                    <Instagram className="h-5 w-5 text-pink-400 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-white">اینستاگرام</span>
+                    <span className="text-[9px] text-slate-400">@{instagram}</span>
+                  </a>
+                )}
+                {linkedin && (
+                  <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-2xl border border-white/5 flex flex-col items-center text-center space-y-1 group transition">
+                    <Linkedin className="h-5 w-5 text-indigo-400 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-white">لینکدین</span>
+                    <span className="text-[9px] text-slate-400">پروفایل</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Custom Link Buttons Bento Tiles */}
+            {card.custom_buttons && card.custom_buttons.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-slate-400 px-1">لینک‌ها و دسترسی سریع</span>
+                <div className="space-y-2">
+                  {card.custom_buttons.map((btn) => (
+                    <a
+                      key={btn.id}
+                      href={btn.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-3.5 bg-slate-800/90 hover:bg-slate-800 rounded-2xl border border-white/10 flex items-center justify-between transition group"
+                    >
+                      <span className="flex items-center gap-2.5 font-bold text-xs text-white">
+                        <LinkIcon className="h-4 w-4 text-indigo-400" />
+                        {btn.label}
+                      </span>
+                      <ChevronLeft className="h-4 w-4 text-slate-400 group-hover:-translate-x-1 transition" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Location & Navigation Bento Tile */}
+            {(card.neshan || card.balad || card.waze || card.googlemap || card.address) && (
+              <div className="p-4 bg-slate-800/90 rounded-2xl border border-white/10 space-y-3">
+                <span className="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" />
+                  <span>نشانی و مسیریابی</span>
+                </span>
+                {card.address && <p className="text-xs text-slate-300 leading-relaxed">{toPersianDigits(card.address)}</p>}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {card.neshan && (
+                    <a href={card.neshan} target="_blank" rel="noreferrer" className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-center font-bold text-emerald-400 border border-emerald-500/20">
+                      مسیریابی نشان
+                    </a>
+                  )}
+                  {card.googlemap && (
+                    <a href={card.googlemap} target="_blank" rel="noreferrer" className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-center font-bold text-cyan-400 border border-cyan-500/20">
+                      گوگل مپ
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Bank Info Bento Tile */}
+            {(card.bank_card || card.bank_account || card.bank_shaba) && (
+              <div className="p-4 bg-slate-800/90 rounded-2xl border border-white/10 space-y-2.5">
+                <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                  <CreditCard className="h-4 w-4" />
+                  <span>اطلاعات حساب و واریز</span>
+                </span>
+                {card.bank_card && (
+                  <div onClick={() => handleCopyText(card.bank_card || '', 'bank_card')} className="p-3 bg-slate-900/80 rounded-xl border border-white/5 flex items-center justify-between text-xs cursor-pointer">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-semibold">شماره کارت</span>
+                      <span className="font-mono font-bold text-white">{card.bank_card}</span>
+                    </div>
+                    <Copy className="h-4 w-4 text-slate-400" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="text-center pt-4 opacity-40 text-[10px] text-slate-400">
+              <span>Bento Card System by MegaCard</span>
+            </div>
+          </div>
+        )}
+
+        {/* TEMPLATE 3: CONTENT CREATOR & INFLUENCER (BIO-LINK SHOWCASE) */}
+        {isContentCreator && (
+          <div 
+            className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden p-5 space-y-5 transition-all relative"
+            style={{ backgroundColor: bgColor || '#09090b', color: textCol || '#fafafa' }}
+          >
+            {/* Top Creator Hero Header */}
+            <div className="relative pt-6 pb-2 text-center space-y-3.5">
+              {/* Cover Banner background with overlay */}
+              <div className="absolute top-0 inset-x-0 h-32 rounded-2xl overflow-hidden border border-white/10 opacity-75">
+                <img src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/60 to-transparent"></div>
+              </div>
+
+              {/* Share Floating Button */}
+              <div className="absolute top-3 left-3 z-20">
+                <button 
+                  onClick={() => setActiveShareId(activeShareId === 'temp-creator' ? null : 'temp-creator')}
+                  className="p-2.5 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-md transition active:scale-95 border border-white/20"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+                {renderShareDropdown('temp-creator', true)}
+              </div>
+
+              {/* Creator Avatar with glowing ring */}
+              <div className="relative z-10 pt-6">
+                <div className="relative inline-block">
+                  <div className="absolute -inset-1 rounded-full blur-md bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-70 animate-pulse"></div>
+                  <div className="h-28 w-28 rounded-full border-4 border-zinc-900 overflow-hidden relative shadow-2xl mx-auto bg-zinc-950">
+                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Name & Title */}
+              <div className="relative z-10 space-y-1">
+                <h1 className="text-2xl font-black text-white tracking-tight">{card.first_name} {card.last_name}</h1>
+                <p className="text-xs font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+                  {card.job_title}
+                </p>
+                {card.company && <p className="text-xs text-zinc-400">{card.company}</p>}
+              </div>
+
+              {/* Views & Follow Pill */}
+              <div className="relative z-10 flex items-center justify-center gap-2 pt-1">
+                <span className="px-3 py-1 bg-pink-500/10 text-pink-400 rounded-full text-[11px] font-bold border border-pink-500/20">
+                  ★ {card.views_count?.toLocaleString('fa-IR')} بازدید کننده
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <button 
+                onClick={handleDownloadVCard}
+                className="py-3 px-4 rounded-xl font-black text-white flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition active:scale-95 text-xs"
+                style={{ backgroundImage: `linear-gradient(to right, ${primaryColor || '#ec4899'}, ${secondaryColor || '#8b5cf6'})` }}
+              >
+                {isVCardGenerated ? <Check className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+                <span>{isVCardGenerated ? 'ذخیره شد' : 'ذخیره مخاطب'}</span>
+              </button>
+              <button 
+                onClick={() => { setShowSubscribeModal(true); setSubscribeStep('mobile'); setSubscribeError(null); setSubscribeMessage(null); }}
+                className="py-3 px-4 rounded-xl font-extrabold text-emerald-300 bg-emerald-950/80 hover:bg-emerald-900/90 border border-emerald-500/30 flex items-center justify-center gap-2 transition active:scale-95 text-xs"
+              >
+                <Bell className="h-4 w-4 text-emerald-400" />
+                <span>عضویت VIP</span>
+              </button>
+            </div>
+
+            {/* Bio Story Box */}
+            {card.bio && (
+              <div className="p-4 bg-zinc-900/90 rounded-2xl border border-zinc-800 text-xs text-zinc-300 leading-relaxed whitespace-pre-line shadow-inner">
+                {card.bio}
+              </div>
+            )}
+
+            {/* Highlighted Bio-Link Buttons Stack */}
+            {card.custom_buttons && card.custom_buttons.length > 0 && (
+              <div className="space-y-2.5 pt-1">
+                <span className="text-xs font-black text-zinc-400 tracking-wider uppercase block">لینک‌های برتر و پورتفولیو</span>
+                {card.custom_buttons.map((btn) => (
+                  <a
+                    key={btn.id}
+                    href={btn.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-3.5 bg-gradient-to-r from-zinc-900 to-zinc-800/90 hover:from-pink-950/40 hover:to-purple-950/40 border border-zinc-800 hover:border-pink-500/40 rounded-2xl flex items-center justify-between font-bold text-xs text-white transition-all shadow-md group"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="p-2 bg-pink-500/20 text-pink-400 rounded-xl group-hover:scale-110 transition">
+                        <LinkIcon className="h-4 w-4" />
+                      </span>
+                      <span>{btn.label}</span>
+                    </span>
+                    <ChevronLeft className="h-4 w-4 text-zinc-400 group-hover:-translate-x-1 transition" />
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {/* Social Icons Bar */}
+            <div className="p-3.5 bg-zinc-900/90 rounded-2xl border border-zinc-800 space-y-2.5">
+              <span className="text-xs font-bold text-zinc-400 block text-center">شبکه‌های اجتماعی و کانال‌ها</span>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {instagram && (
+                  <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="p-3 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 rounded-2xl border border-pink-500/30 transition hover:scale-110">
+                    <Instagram className="h-5 w-5" />
+                  </a>
+                )}
+                {telegram && (
+                  <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="p-3 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 rounded-2xl border border-sky-500/30 transition hover:scale-110">
+                    <Send className="h-5 w-5" />
+                  </a>
+                )}
+                {whatsapp && (
+                  <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="p-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-2xl border border-emerald-500/30 transition hover:scale-110">
+                    <MessageCircle className="h-5 w-5" />
+                  </a>
+                )}
+                {linkedin && (
+                  <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="p-3 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-2xl border border-indigo-500/30 transition hover:scale-110">
+                    <Linkedin className="h-5 w-5" />
+                  </a>
+                )}
+                {phone && (
+                  <a href={`tel:${phone}`} className="p-3 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-2xl border border-purple-500/30 transition hover:scale-110">
+                    <Phone className="h-5 w-5" />
+                  </a>
+                )}
+                {email && (
+                  <a href={`mailto:${email}`} className="p-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-2xl border border-amber-500/30 transition hover:scale-110">
+                    <Mail className="h-5 w-5" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Address & Navigation */}
+            {(card.neshan || card.balad || card.waze || card.googlemap || card.address) && (
+              <div className="p-4 bg-zinc-900/90 rounded-2xl border border-zinc-800 space-y-2 text-xs">
+                <span className="font-bold text-pink-400 flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" />
+                  <span>لوکیشن و آدرس</span>
+                </span>
+                {card.address && <p className="text-zinc-300 leading-relaxed">{toPersianDigits(card.address)}</p>}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="text-center pt-2 opacity-30 text-[10px] text-zinc-500">
+              <span>Bio-Link Creator Template by MegaCard</span>
             </div>
           </div>
         )}

@@ -20,10 +20,30 @@ export function getTemplateDefaultColors(templateId?: string | null, templatesLi
   const cleanTUuid = toUUID(templateId);
 
   const isClassic = !templateId || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
-  const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
-  const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
-  const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+  const isBento = cleanTId === 'temp-2' || cleanTId === 'bento' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
+  const isContentCreator = cleanTId === 'temp-3' || cleanTId === 'content-creator' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
+  const isNeonGlass = cleanTId === 'temp-4' || cleanTId === 'neon-glass' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+  const isMinimal = cleanTId === 'temp-5' || cleanTId === 'minimal' || cleanTUuid === '55555555-5555-5555-5555-555555555555';
+  const isLuxuryDark = cleanTId === 'temp-6' || cleanTId === 'luxury-dark' || cleanTUuid === '66666666-6666-6666-6666-666666666666';
 
+  if (isBento) {
+    return {
+      primary: '#6366f1',
+      secondary: '#8b5cf6',
+      background: '#0f172a',
+      card_bg: '#1e293b',
+      text: '#f8fafc',
+    };
+  }
+  if (isContentCreator) {
+    return {
+      primary: '#ec4899',
+      secondary: '#8b5cf6',
+      background: '#09090b',
+      card_bg: '#18181b',
+      text: '#fafafa',
+    };
+  }
   if (isLuxuryDark) {
     return {
       primary: '#f59e0b',
@@ -888,22 +908,68 @@ export function CustomerCardsView({
 
                   {/* Choose Visual Template */}
                   <div className="space-y-2">
-                    <label className="font-bold text-slate-400 block">انتخاب قالب ظاهری کارت (Template):</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {templates.map((temp) => (
-                        <div 
-                          key={temp.id}
-                          onClick={() => setEditingCard({ ...editingCard, template_id: temp.id })}
-                          className={`p-3 rounded-xl border text-right cursor-pointer transition ${
-                            editingCard.template_id === temp.id 
-                            ? 'border-blue-500 bg-blue-500/10' 
-                            : 'border-slate-850 bg-slate-900/40 hover:bg-slate-900'
-                          }`}
-                        >
-                          <span className="font-bold text-white block text-xs">{temp.name}</span>
-                          <span className="text-[9px] text-slate-400 mt-0.5 block">{temp.is_premium ? 'طرح ویژه (VIP)' : 'طرح استاندارد'}</span>
-                        </div>
-                      ))}
+                    <label className="font-bold text-slate-400 block text-xs flex justify-between items-center">
+                      <span>انتخاب قالب ظاهری کارت (Template):</span>
+                      <span className="text-[10px] text-blue-400 font-normal">نمایش و پیش‌نمایش لحظه‌ای در گوشی</span>
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {templates.map((temp) => {
+                        const isSelected = editingCard.template_id === temp.id || 
+                                           editingCard.template_id === temp.slug || 
+                                           (temp.id && editingCard.template_id && toUUID(editingCard.template_id) === toUUID(temp.id));
+
+                        return (
+                          <div 
+                            key={temp.id}
+                            onClick={() => {
+                              const tmplDefaults = getTemplateDefaultColors(temp.id, templates);
+                              setEditingCard({ 
+                                ...editingCard, 
+                                template_id: temp.id,
+                                custom_colors: {
+                                  primary: tmplDefaults.primary,
+                                  secondary: tmplDefaults.secondary,
+                                  background: tmplDefaults.background,
+                                  card_bg: tmplDefaults.card_bg,
+                                  text: tmplDefaults.text
+                                }
+                              });
+                            }}
+                            className={`p-2.5 rounded-xl border text-right cursor-pointer transition flex flex-col justify-between space-y-2 relative overflow-hidden group ${
+                              isSelected 
+                              ? 'border-blue-500 bg-blue-500/15 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500' 
+                              : 'border-slate-800 bg-slate-900/60 hover:bg-slate-850 hover:border-slate-700'
+                            }`}
+                          >
+                            {/* Thumbnail preview if available */}
+                            {temp.thumbnail && (
+                              <div className="h-16 w-full rounded-lg overflow-hidden bg-slate-950 relative border border-slate-800">
+                                <img 
+                                  src={getImageUrl(temp.thumbnail)} 
+                                  alt={temp.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                              </div>
+                            )}
+
+                            <div>
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="font-bold text-white block text-xs truncate">{temp.name}</span>
+                                {isSelected && (
+                                  <span className="h-2 w-2 rounded-full bg-blue-400 shrink-0 animate-ping"></span>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-[9px] text-slate-400 font-mono">{temp.slug}</span>
+                                <span className={`text-[8.5px] px-1.5 py-0.5 rounded-full font-bold ${temp.is_premium ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-400'}`}>
+                                  {temp.is_premium ? 'VIP' : 'رایگان'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1605,9 +1671,11 @@ export function CustomerCardsView({
                 const cleanTUuid = toUUID(templateId);
 
                 const isClassic = !templateId || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
-                const isNeonGlass = cleanTId === 'temp-2' || cleanTId === 'neon-glass' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
-                const isMinimal = cleanTId === 'temp-3' || cleanTId === 'minimal' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
-                const isLuxuryDark = cleanTId === 'temp-4' || cleanTId === 'luxury-dark' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+                const isBento = cleanTId === 'temp-2' || cleanTId === 'bento' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
+                const isContentCreator = cleanTId === 'temp-3' || cleanTId === 'content-creator' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
+                const isNeonGlass = cleanTId === 'temp-4' || cleanTId === 'neon-glass' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
+                const isMinimal = cleanTId === 'temp-5' || cleanTId === 'minimal' || cleanTUuid === '55555555-5555-5555-5555-555555555555';
+                const isLuxuryDark = cleanTId === 'temp-6' || cleanTId === 'luxury-dark' || cleanTUuid === '66666666-6666-6666-6666-666666666666';
 
                 const tmplDefaults = getTemplateDefaultColors(templateId, templates);
 
@@ -1617,8 +1685,8 @@ export function CustomerCardsView({
                 const textColor = editingCard.custom_colors?.text?.trim() ? editingCard.custom_colors.text : tmplDefaults.text;
                 const bgColor = editingCard.custom_colors?.background?.trim() ? editingCard.custom_colors.background : tmplDefaults.background;
 
-                // Check if it is a custom template from Directus (not one of the 4 hardcoded)
-                const isCustomTemplate = !isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark;
+                // Check if it is a custom template from Directus (not one of the 6 hardcoded)
+                const isCustomTemplate = !isClassic && !isBento && !isContentCreator && !isNeonGlass && !isMinimal && !isLuxuryDark;
                 const activeTemplate = templates.find(t => toUUID(t.id) === toUUID(templateId));
 
                 return (
@@ -1870,6 +1938,186 @@ export function CustomerCardsView({
                             })}
 
                           </div>
+                        </div>
+                      )}
+
+                      {/* Bento Grid Style */}
+                      {isBento && (
+                        <div className="w-full min-h-full bg-slate-900 text-slate-100 p-2.5 flex flex-col font-sans overflow-y-auto space-y-2" style={{ backgroundColor: cardBg || '#0f172a', color: textColor || '#f8fafc' }}>
+                          {/* Profile Card Tile */}
+                          <div className="p-3 bg-slate-800/80 border border-indigo-500/30 rounded-2xl flex items-center gap-2.5 relative overflow-hidden">
+                            <div className="h-11 w-11 rounded-xl border border-indigo-500/50 overflow-hidden shrink-0 bg-slate-950">
+                              <img 
+                                src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
+                                alt="profile" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-grow">
+                              <h4 className="text-xs font-black text-white truncate">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                              <p className="text-[8.5px] font-bold text-indigo-400 truncate">{editingCard.job_title || 'سمت شغلی'}</p>
+                              <p className="text-[7.5px] text-slate-400 truncate">{editingCard.company || 'نام شرکت'}</p>
+                            </div>
+                          </div>
+
+                          {/* Dynamic Bento Sections */}
+                          {getSectionOrders(editingCard).map((secKey) => {
+                            switch (secKey) {
+                              case 'save_contact':
+                                return (
+                                  <div 
+                                    key="sec_bento_save"
+                                    onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                    className="w-full py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-1 text-[8px] font-black cursor-pointer shadow-sm transition active:scale-95 shrink-0" 
+                                    style={{ backgroundColor: primaryColor }}
+                                  >
+                                    <Download className="h-2.5 w-2.5" />
+                                    <span>ذخیره مخاطب</span>
+                                  </div>
+                                );
+                              case 'bio':
+                                return editingCard.bio ? (
+                                  <div key="sec_bento_bio" className="p-2.5 bg-slate-800/60 border border-slate-700/50 rounded-xl text-[7.5px] text-slate-300 leading-relaxed whitespace-pre-line">
+                                    {editingCard.bio}
+                                  </div>
+                                ) : null;
+                              case 'primary_actions':
+                                return (editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) ? (
+                                  <div key="sec_bento_primary" className="p-2 bg-slate-800/60 border border-slate-700/50 rounded-xl space-y-1">
+                                    <span className="text-[7px] text-indigo-300 font-bold block">تلفن‌های همراه:</span>
+                                    {editingCard.social_links?.mobile && (
+                                      <div className="flex justify-between items-center text-[7px] font-mono text-slate-200 p-1 bg-slate-900/60 rounded-lg">
+                                        <span>اصلی:</span>
+                                        <span className="text-indigo-400 font-bold">{editingCard.social_links.mobile}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : null;
+                              case 'social_links':
+                                return (
+                                  <div key="sec_bento_social" className="grid grid-cols-2 gap-1.5">
+                                    {editingCard.social_links?.phone && (
+                                      <div className="p-1.5 bg-slate-800/60 border border-slate-700/40 rounded-xl flex items-center justify-between text-[7px] font-bold text-slate-200">
+                                        <span className="flex items-center gap-1"><Phone className="h-2.5 w-2.5 text-indigo-400" /> تلفن</span>
+                                      </div>
+                                    )}
+                                    {editingCard.social_links?.telegram && (
+                                      <div className="p-1.5 bg-slate-800/60 border border-slate-700/40 rounded-xl flex items-center justify-between text-[7px] font-bold text-slate-200">
+                                        <span className="flex items-center gap-1"><Send className="h-2.5 w-2.5 text-sky-400" /> تلگرام</span>
+                                      </div>
+                                    )}
+                                    {editingCard.social_links?.instagram && (
+                                      <div className="p-1.5 bg-slate-800/60 border border-slate-700/40 rounded-xl flex items-center justify-between text-[7px] font-bold text-slate-200">
+                                        <span className="flex items-center gap-1"><Instagram className="h-2.5 w-2.5 text-pink-400" /> اینستاگرام</span>
+                                      </div>
+                                    )}
+                                    {editingCard.social_links?.whatsapp && (
+                                      <div className="p-1.5 bg-slate-800/60 border border-slate-700/40 rounded-xl flex items-center justify-between text-[7px] font-bold text-slate-200">
+                                        <span className="flex items-center gap-1"><MessageCircle className="h-2.5 w-2.5 text-emerald-400" /> واتساپ</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              case 'custom_buttons':
+                                return (editingCard.custom_buttons && editingCard.custom_buttons.length > 0) ? (
+                                  <div key="sec_bento_custom" className="space-y-1">
+                                    {editingCard.custom_buttons.map((btn) => (
+                                      <div key={btn.id} className="p-1.5 bg-indigo-950/40 border border-indigo-500/40 rounded-xl flex items-center justify-between text-[7.5px] font-bold text-indigo-300">
+                                        <span>{btn.label}</span>
+                                        <span>➔</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null;
+                              case 'bank_info':
+                                return (editingCard.bank_card || editingCard.bank_shaba) ? (
+                                  <div key="sec_bento_bank" className="p-2 bg-slate-800/60 border border-slate-700/50 rounded-xl space-y-1 text-[7px]">
+                                    <span className="text-amber-400 font-bold block">اطلاعات بانکی:</span>
+                                    {editingCard.bank_card && (
+                                      <div className="font-mono text-slate-300 text-[6.5px]">{editingCard.bank_card}</div>
+                                    )}
+                                  </div>
+                                ) : null;
+                              default:
+                                return null;
+                            }
+                          })}
+                        </div>
+                      )}
+
+                      {/* Content Creator Bio-Link Style */}
+                      {isContentCreator && (
+                        <div className="w-full min-h-full bg-zinc-950 text-zinc-100 p-3 flex flex-col items-center font-sans overflow-y-auto space-y-3" style={{ backgroundColor: cardBg || '#09090b', color: textColor || '#fafafa' }}>
+                          {/* Avatar with gradient glow ring */}
+                          <div className="flex flex-col items-center text-center space-y-1.5 pt-1">
+                            <div className="h-14 w-14 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-500 shrink-0 shadow-lg shadow-pink-500/20">
+                              <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 border-2 border-zinc-950">
+                                <img 
+                                  src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
+                                  alt="profile" 
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-white">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                              <p className="text-[8px] font-extrabold text-pink-400 mt-0.5">{editingCard.job_title || 'تولیدکننده محتوا'}</p>
+                            </div>
+                          </div>
+
+                          {/* Bio-Link Dynamic Sections */}
+                          {getSectionOrders(editingCard).map((secKey) => {
+                            switch (secKey) {
+                              case 'save_contact':
+                                return (
+                                  <div 
+                                    key="sec_cc_save"
+                                    onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                    className="w-full py-2 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 text-white flex items-center justify-center gap-1.5 text-[8px] font-black cursor-pointer shadow-lg shadow-pink-600/30 transition active:scale-95 shrink-0"
+                                    style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                    <span>ذخیره مستقیم شماره در مخاطبین</span>
+                                  </div>
+                                );
+                              case 'bio':
+                                return editingCard.bio ? (
+                                  <div key="sec_cc_bio" className="w-full p-2.5 bg-zinc-900/80 border border-zinc-800 rounded-2xl text-[7.5px] text-zinc-300 text-center leading-relaxed whitespace-pre-line">
+                                    {editingCard.bio}
+                                  </div>
+                                ) : null;
+                              case 'social_links':
+                                return (
+                                  <div key="sec_cc_social" className="w-full space-y-1.5">
+                                    {editingCard.social_links?.instagram && (
+                                      <div className="w-full p-2 bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-pink-500/30 rounded-2xl flex items-center justify-between text-[7.5px] font-bold text-pink-200">
+                                        <span className="flex items-center gap-1.5"><Instagram className="h-3.5 w-3.5 text-pink-400" /> اینستاگرام</span>
+                                        <span className="text-[6.5px] opacity-70">@{editingCard.social_links.instagram}</span>
+                                      </div>
+                                    )}
+                                    {editingCard.social_links?.telegram && (
+                                      <div className="w-full p-2 bg-zinc-900/80 border border-zinc-800 rounded-2xl flex items-center justify-between text-[7.5px] font-bold text-sky-200">
+                                        <span className="flex items-center gap-1.5"><Send className="h-3.5 w-3.5 text-sky-400" /> کانال تلگرام</span>
+                                        <span className="text-[6.5px] opacity-70">@{editingCard.social_links.telegram}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              case 'custom_buttons':
+                                return (editingCard.custom_buttons && editingCard.custom_buttons.length > 0) ? (
+                                  <div key="sec_cc_custom" className="w-full space-y-1.5">
+                                    {editingCard.custom_buttons.map((btn) => (
+                                      <div key={btn.id} className="w-full p-2 bg-gradient-to-r from-zinc-900 to-zinc-900/80 border border-pink-500/20 rounded-2xl flex items-center justify-between text-[8px] font-extrabold text-white">
+                                        <span>{btn.label}</span>
+                                        <span className="text-pink-400">⚡</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null;
+                              default:
+                                return null;
+                            }
+                          })}
                         </div>
                       )}
 
