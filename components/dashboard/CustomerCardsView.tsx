@@ -2845,6 +2845,7 @@ export function CustomerCardsView({
                         const isDarkTheme = tSchema.theme === 'dark';
                         const tColors = tSchema.colors || {};
                         const tLayout = tSchema.layout || {};
+                        const tFx = tSchema.effects || {};
 
                         const pColor = editingCard.custom_colors?.primary || tColors.primary || '#8d5b4c';
                         const sColor = editingCard.custom_colors?.secondary || tColors.secondary || '#f4ece1';
@@ -2853,20 +2854,48 @@ export function CustomerCardsView({
                         const txtSecColor = tColors.text_secondary || '#6e5a53';
                         const customCardBg = editingCard.custom_colors?.card_bg || (isDarkTheme ? '#18181b' : '#ffffff');
                         
-                        const isCircleAvatar = (tLayout.avatar_shape || 'circle') === 'circle';
-                        const isSplitHeader = tLayout.header_style === 'split';
+                        const avatarPosition = tLayout.avatar_position || 'overlap-center';
+                        const avatarShape = tLayout.avatar_shape || 'circle';
+                        const headerStyle = tLayout.header_style || 'split';
+                        const buttonStyle = tLayout.button_style || 'pill';
+                        const cardBorder = tLayout.card_border || 'none';
+                        const fxStyle = tFx.style || 'none';
+
+                        const isCircleAvatar = avatarShape === 'circle';
+                        const isGlowingAvatar = avatarShape === 'glowing-ring';
+                        const isSquareAvatar = avatarShape === 'square';
+
+                        const avatarRadiusClass = isCircleAvatar || isGlowingAvatar ? 'rounded-full' : isSquareAvatar ? 'rounded-lg' : 'rounded-xl';
+                        const buttonRadiusClass = buttonStyle === 'pill' ? 'rounded-full' : buttonStyle === 'sharp' ? 'rounded-none' : 'rounded-lg';
 
                         return (
                           <div 
-                            className="w-full min-h-full transition-all p-3.5 space-y-3.5 flex flex-col justify-between text-right font-sans overflow-y-auto"
+                            className={`w-full min-h-full transition-all p-3.5 space-y-3.5 flex flex-col justify-between text-right font-sans overflow-y-auto ${
+                              fxStyle === 'glassmorphism' ? 'backdrop-blur-xl bg-slate-900/80 border border-white/20 shadow-2xl' :
+                              fxStyle === 'neon-glow' ? 'border border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.35)]' :
+                              fxStyle === 'gold-glow' ? 'border border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.35)]' :
+                              fxStyle === 'mesh-gradient' ? 'bg-gradient-to-br from-slate-900 via-indigo-950 to-zinc-900 text-white' : ''
+                            }`}
                             style={{ 
-                              backgroundColor: customCardBg, 
-                              color: txtColor
+                              backgroundColor: fxStyle !== 'glassmorphism' && fxStyle !== 'mesh-gradient' ? customCardBg : undefined, 
+                              color: txtColor,
+                              borderColor: cardBorder === 'solid-accent' ? pColor : cardBorder === 'double' ? pColor : undefined,
+                              borderWidth: cardBorder === 'solid-accent' ? '2px' : cardBorder === 'double' ? '3px' : undefined,
+                              borderStyle: cardBorder === 'double' ? 'double' : undefined
                             }}
                           >
                             <div className="space-y-3.5 flex-grow">
+                              {/* Floating Top Avatar Position */}
+                              {avatarPosition === 'floating-top' && (
+                                <div className="flex justify-center -mb-1 z-10 relative">
+                                  <div className={`h-14 w-14 overflow-hidden border-2 p-0.5 shadow-lg bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''}`} style={{ borderColor: pColor }}>
+                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Cover photo for Custom Template */}
-                              <div className="h-20 bg-slate-200 relative shrink-0 overflow-hidden -mx-3.5 -mt-3.5 mb-2.5">
+                              <div className="h-20 bg-slate-200 relative shrink-0 overflow-hidden -mx-3.5 -mt-3.5 mb-2.5 rounded-b-xl">
                                 <img 
                                   src={getImageUrl(editingCard.cover_image) || '/cover-fallback.avif'} 
                                   alt="cover" 
@@ -2875,39 +2904,61 @@ export function CustomerCardsView({
                                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30"></div>
                               </div>
 
-                              <div className="flex justify-between items-center text-[7px]">
-                                <span className="px-1.5 py-0.5 rounded-full text-[6px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
-                                  {activeTemplate?.name || 'قالب اختصاصی'}
-                                </span>
-                              </div>
-
-                              {isSplitHeader ? (
-                                <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100">
-                                  <div className="h-10 w-10 overflow-hidden border shrink-0" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '6px' }}>
-                                    <img 
-                                      src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
-                                      alt="profile" 
-                                      className="w-full h-full object-cover"
-                                    />
+                              {/* Overlapping Avatar Positions */}
+                              {avatarPosition.startsWith('overlap-') && (
+                                <div className={`-mt-10 z-10 relative flex ${
+                                  avatarPosition === 'overlap-right' ? 'justify-start pr-2' :
+                                  avatarPosition === 'overlap-left' ? 'justify-end pl-2' : 'justify-center'
+                                }`}>
+                                  <div className={`h-14 w-14 overflow-hidden border-2 p-0.5 shadow-md bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''}`} style={{ borderColor: pColor }}>
+                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
                                   </div>
+                                </div>
+                              )}
+
+                              {/* Below Cover Avatar Positions */}
+                              {avatarPosition.startsWith('below-') && (
+                                <div className={`pt-0.5 flex ${
+                                  avatarPosition === 'below-right' ? 'justify-start' : 'justify-center'
+                                }`}>
+                                  <div className={`h-12 w-12 overflow-hidden border p-0.5 shadow bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                                  </div>
+                                </div>
+                              )}
+
+                              {headerStyle === 'split' ? (
+                                <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100/20">
+                                  {avatarPosition === 'inside-header' && (
+                                    <div className={`h-10 w-10 overflow-hidden border shrink-0 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                                      <img 
+                                        src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
+                                        alt="profile" 
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                  )}
                                   <div>
                                     <h4 className="text-[10px] font-black">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
                                     <p className="text-[8px] font-bold" style={{ color: pColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                                    {editingCard.company && <p className="text-[7px] opacity-70">{editingCard.company}</p>}
                                   </div>
                                 </div>
                               ) : (
-                                <div className="flex flex-col items-center text-center space-y-1.5">
-                                  <div className="h-12 w-12 overflow-hidden border p-0.5" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '8px' }}>
-                                    <img 
-                                      src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
-                                      alt="profile" 
-                                      className="w-full h-full object-cover"
-                                      style={{ borderRadius: isCircleAvatar ? '9999px' : '6px' }}
-                                    />
-                                  </div>
+                                <div className="flex flex-col items-center text-center space-y-1">
+                                  {avatarPosition === 'inside-header' && (
+                                    <div className={`h-12 w-12 overflow-hidden border p-0.5 mb-1 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                                      <img 
+                                        src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
+                                        alt="profile" 
+                                        className={`w-full h-full object-cover ${avatarRadiusClass}`}
+                                      />
+                                    </div>
+                                  )}
                                   <div>
                                     <h4 className="text-[10px] font-black">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
                                     <p className="text-[8px] font-bold mt-0.5" style={{ color: pColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                                    {editingCard.company && <p className="text-[7px] opacity-70">{editingCard.company}</p>}
                                   </div>
                                 </div>
                               )}
@@ -2920,8 +2971,11 @@ export function CustomerCardsView({
                                       <div 
                                         key="sec_cust_save"
                                         onClick={() => editingCard && saveCardToContacts(editingCard)}
-                                        className="w-full py-1 rounded-lg text-white text-center text-[7.5px] font-bold cursor-pointer hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-1 shrink-0" 
-                                        style={{ backgroundColor: pColor }}
+                                        className={`w-full py-1.5 px-2 text-white text-center text-[7.5px] font-bold cursor-pointer hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-1 shrink-0 ${buttonRadiusClass} ${
+                                          buttonStyle === 'glass' ? 'bg-white/10 border border-white/20 backdrop-blur-md text-white' :
+                                          buttonStyle === 'gradient' ? 'bg-gradient-to-r from-amber-500 to-amber-700 text-white' : ''
+                                        }`} 
+                                        style={{ backgroundColor: buttonStyle !== 'glass' && buttonStyle !== 'gradient' ? pColor : undefined }}
                                       >
                                         <Download className="h-2.5 w-2.5" />
                                         <span>ذخیره در دفترچه مخاطبین</span>

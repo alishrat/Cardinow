@@ -672,23 +672,25 @@ export default function LandingPage() {
                                 </button>
                                 <button className="py-2 px-2 bg-slate-800 text-white rounded-xl text-[9px] font-bold flex items-center justify-center gap-1 shadow-sm">
                                   <Bell className="h-3.5 w-3.5 shrink-0" />
-                                  <span>عضویت در کلاب</span>
+                                  <span>عضویت در خبرنامه</span>
                                 </button>
                               </div>
 
                               {/* Phone Numbers */}
-                              <div className="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1.5 text-[9px]">
-                                <div className="flex items-center justify-between text-slate-700">
-                                  <span className="font-bold">شماره تماس اصلی:</span>
-                                  <span className="font-sans font-bold text-blue-600">{toPersianDigits(activeCard.social_links?.phone || '۰۹۱۲۳۴۵۶۷۸۹')}</span>
-                                </div>
-                                {activeCard.social_links?.extra_phones && activeCard.social_links.extra_phones.length > 0 && (
-                                  <div className="flex items-center justify-between text-slate-500 border-t border-slate-100 pt-1.5">
-                                    <span>تلفن ثابت / دوم:</span>
-                                    <span className="font-sans">{toPersianDigits(activeCard.social_links.extra_phones[0])}</span>
+                              {activeCard.social_links?.phone && (
+                                <div className="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1.5 text-[9px]">
+                                  <div className="flex items-center justify-between text-slate-700">
+                                    <span className="font-bold">شماره تماس اصلی:</span>
+                                    <span className="font-sans font-bold text-blue-600">{toPersianDigits(activeCard.social_links.phone)}</span>
                                   </div>
-                                )}
-                              </div>
+                                  {activeCard.social_links?.extra_phones && activeCard.social_links.extra_phones.length > 0 && (
+                                    <div className="flex items-center justify-between text-slate-500 border-t border-slate-100 pt-1.5">
+                                      <span>تلفن دوم:</span>
+                                      <span className="font-sans">{toPersianDigits(activeCard.social_links.extra_phones[0])}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
 
                               {/* Responsive Contact buttons */}
                               <div className="space-y-1.5">
@@ -742,31 +744,24 @@ export default function LandingPage() {
                               {/* Custom buttons */}
                               {activeCard.custom_buttons && activeCard.custom_buttons.length > 0 && (
                                 <div className="space-y-1.5">
-                                  <span className="text-[9px] font-bold text-slate-500 block">لینک‌های کاربردی</span>
                                   {activeCard.custom_buttons.map((btn) => (
-                                    <div key={btn.id} className="p-2 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-[9px] font-bold text-slate-700 shadow-sm">
-                                      <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                                      <span className="truncate">{btn.label}</span>
-                                      <span className="opacity-30">➔</span>
+                                    <div key={btn.id} className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-[9px] font-bold text-slate-800 shadow-sm">
+                                      <span className="flex items-center gap-1.5 truncate">
+                                        <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                                        <span>{btn.label}</span>
+                                      </span>
+                                      <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
                                     </div>
                                   ))}
                                 </div>
                               )}
 
-                              {/* Address & Navigation */}
-                              {(activeCard.address || activeCard.neshan || activeCard.googlemap) && (
-                                <div className="p-2 bg-white rounded-xl border border-slate-200 space-y-1.5 text-[9px]">
-                                  <div className="flex items-start gap-1 text-slate-700">
-                                    <MapPin className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
-                                    <span className="leading-tight">{activeCard.address || 'تهران، میدان ونک، خیابان ملاصدرا'}</span>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-1 pt-1 border-t border-slate-100">
-                                    {activeCard.neshan && (
-                                      <span className="p-1 bg-slate-50 rounded text-center text-[8px] text-blue-600 font-bold border border-slate-100">مسیریابی نشان</span>
-                                    )}
-                                    {activeCard.googlemap && (
-                                      <span className="p-1 bg-slate-50 rounded text-center text-[8px] text-emerald-600 font-bold border border-slate-100">گوگل مپ</span>
-                                    )}
+                              {/* Address */}
+                              {activeCard.address && (
+                                <div className="p-2.5 bg-white rounded-xl border border-slate-200 text-[9px] text-slate-600 space-y-1">
+                                  <div className="flex items-start gap-1">
+                                    <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
+                                    <span>{activeCard.address}</span>
                                   </div>
                                 </div>
                               )}
@@ -780,21 +775,222 @@ export default function LandingPage() {
                                       <span>اطلاعات حساب بانکی</span>
                                     </div>
                                   </div>
-                                  <div className="font-mono text-[10px] text-center bg-white py-1 rounded border border-blue-100 dir-ltr font-bold text-slate-800">
+                                  <div className="font-mono text-[10px] text-center bg-white py-1 rounded border border-blue-100 font-bold text-slate-800">
                                     {toPersianDigits(activeCard.bank_card)}
                                   </div>
-                                  {activeCard.bank_shaba && (
-                                    <div className="text-[8px] text-slate-500 truncate dir-ltr text-center">
-                                      {activeCard.bank_shaba}
-                                    </div>
-                                  )}
                                 </div>
                               )}
                             </div>
                           </div>
                         )}
 
-                        {/* 2. NEON GLASS TEMPLATE PREVIEW */}
+                        {/* 2. BENTO GRID TEMPLATE PREVIEW */}
+                        {isBento && (
+                          <div className="w-full bg-slate-900 text-slate-100 flex flex-col rounded-2xl overflow-hidden p-3 space-y-2.5 border border-indigo-500/30 shadow-xl">
+                            {/* Top Header Bento Card */}
+                            <div className="bg-slate-800/90 border border-slate-700/80 rounded-2xl overflow-hidden relative p-3 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-16 w-16 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-md bg-slate-950 shrink-0">
+                                  <img src={previewProfileImage} alt="profile" className="w-full h-full object-cover" />
+                                </div>
+                                <div className="text-right">
+                                  <h4 className="text-sm font-black text-white">{previewName}</h4>
+                                  <p className="text-xs font-bold text-indigo-400 mt-0.5">{previewJob}</p>
+                                  <p className="text-[10px] text-slate-400">{previewCompany}</p>
+                                </div>
+                              </div>
+                              <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full font-bold border border-indigo-500/30">
+                                {previewViewsCount}
+                              </span>
+                            </div>
+
+                            {/* Bio Bento Box */}
+                            <div className="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 text-[10px] text-slate-300 leading-relaxed">
+                              {previewBio}
+                            </div>
+
+                            {/* Action Buttons Grid */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <button className="py-2.5 px-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[9px] font-bold flex items-center justify-center gap-1.5 shadow-md transition">
+                                <UserPlus className="h-3.5 w-3.5 shrink-0" />
+                                <span>ذخیره مخاطب</span>
+                              </button>
+                              <button className="py-2.5 px-2 bg-slate-800 border border-indigo-500/40 text-indigo-300 rounded-xl text-[9px] font-bold flex items-center justify-center gap-1.5 shadow-sm">
+                                <Bell className="h-3.5 w-3.5 shrink-0" />
+                                <span>خبرنامه</span>
+                              </button>
+                            </div>
+
+                            {/* Contact Links Bento Tiles */}
+                            <div className="space-y-1.5">
+                              <span className="text-[9px] font-bold text-slate-400 block px-1">شبکه ارتباطی</span>
+                              <div className="grid grid-cols-3 gap-1.5">
+                                {activeCard.social_links?.phone && (
+                                  <a href={`tel:${activeCard.social_links.phone}`} className="p-2 bg-slate-800/80 border border-slate-700/60 rounded-xl flex flex-col items-center justify-center text-indigo-400">
+                                    <Phone className="h-4 w-4" />
+                                    <span className="text-[8px] font-bold mt-1 text-slate-300">تماس</span>
+                                  </a>
+                                )}
+                                {activeCard.social_links?.email && (
+                                  <a href={`mailto:${activeCard.social_links.email}`} className="p-2 bg-slate-800/80 border border-slate-700/60 rounded-xl flex flex-col items-center justify-center text-amber-400">
+                                    <Mail className="h-4 w-4" />
+                                    <span className="text-[8px] font-bold mt-1 text-slate-300">ایمیل</span>
+                                  </a>
+                                )}
+                                {activeCard.social_links?.telegram && (
+                                  <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="p-2 bg-slate-800/80 border border-slate-700/60 rounded-xl flex flex-col items-center justify-center text-sky-400">
+                                    <Send className="h-4 w-4" />
+                                    <span className="text-[8px] font-bold mt-1 text-slate-300">تلگرام</span>
+                                  </a>
+                                )}
+                                {activeCard.social_links?.whatsapp && (
+                                  <a href={`https://wa.me/${activeCard.social_links.whatsapp}`} target="_blank" rel="noreferrer" className="p-2 bg-slate-800/80 border border-slate-700/60 rounded-xl flex flex-col items-center justify-center text-emerald-400">
+                                    <MessageCircle className="h-4 w-4" />
+                                    <span className="text-[8px] font-bold mt-1 text-slate-300">واتساپ</span>
+                                  </a>
+                                )}
+                                {activeCard.social_links?.instagram && (
+                                  <a href={`https://instagram.com/${activeCard.social_links.instagram}`} target="_blank" rel="noreferrer" className="p-2 bg-slate-800/80 border border-slate-700/60 rounded-xl flex flex-col items-center justify-center text-pink-400">
+                                    <Instagram className="h-4 w-4" />
+                                    <span className="text-[8px] font-bold mt-1 text-slate-300">اینستا</span>
+                                  </a>
+                                )}
+                                {activeCard.social_links?.website && (
+                                  <a href={`https://${activeCard.social_links.website}`} target="_blank" rel="noreferrer" className="p-2 bg-slate-800/80 border border-slate-700/60 rounded-xl flex flex-col items-center justify-center text-purple-400">
+                                    <Globe className="h-4 w-4" />
+                                    <span className="text-[8px] font-bold mt-1 text-slate-300">سایت</span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Custom Buttons */}
+                            {activeCard.custom_buttons && activeCard.custom_buttons.length > 0 && (
+                              <div className="space-y-1.5">
+                                {activeCard.custom_buttons.map((btn) => (
+                                  <div key={btn.id} className="p-2.5 bg-slate-800/80 border border-slate-700/60 rounded-xl flex items-center justify-between text-[9px] font-bold text-slate-200">
+                                    <span className="flex items-center gap-1.5 truncate">
+                                      <FileText className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                                      <span>{btn.label}</span>
+                                    </span>
+                                    <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Bank Card Bento Box */}
+                            {activeCard.bank_card && (
+                              <div className="p-2.5 bg-slate-800/90 border border-indigo-500/30 rounded-2xl space-y-1 text-[9px] text-indigo-200">
+                                <div className="flex items-center gap-1 font-bold text-indigo-300">
+                                  <CreditCard className="h-3.5 w-3.5 text-indigo-400" />
+                                  <span>کارت بانکی</span>
+                                </div>
+                                <div className="font-mono text-[10px] text-center bg-slate-950 py-1 rounded-xl border border-indigo-500/20 font-bold text-indigo-100">
+                                  {toPersianDigits(activeCard.bank_card)}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 3. CONTENT CREATOR TEMPLATE PREVIEW */}
+                        {isContentCreator && (
+                          <div className="w-full bg-zinc-950 text-zinc-100 flex flex-col rounded-2xl overflow-hidden p-3.5 space-y-3 border border-pink-500/30 shadow-xl">
+                            {/* Profile Header */}
+                            <div className="flex flex-col items-center text-center space-y-2 pt-1">
+                              <div className="relative">
+                                <div className="absolute -inset-1 rounded-full blur bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-75 animate-pulse"></div>
+                                <div className="h-20 w-20 rounded-full border-2 border-white/80 overflow-hidden relative bg-zinc-900 shadow-xl">
+                                  <img src={previewProfileImage} alt="profile" className="w-full h-full object-cover" />
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-black text-white">{previewName}</h4>
+                                <p className="text-xs font-bold text-pink-400 mt-0.5">{previewJob}</p>
+                                <p className="text-[10px] text-zinc-400">{previewCompany}</p>
+                              </div>
+                              <span className="text-[9px] bg-pink-500/15 text-pink-300 px-3 py-0.5 rounded-full font-bold border border-pink-500/30">
+                                {previewViewsCount}
+                              </span>
+                            </div>
+
+                            {/* Bio Box */}
+                            <div className="p-3 bg-zinc-900/90 rounded-2xl text-[10px] leading-relaxed border border-pink-500/20 text-zinc-300 text-center">
+                              {previewBio}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <button className="py-2.5 px-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center gap-1 shadow-md">
+                                <UserPlus className="h-3.5 w-3.5 shrink-0" />
+                                <span>ذخیره مخاطب</span>
+                              </button>
+                              <button className="py-2.5 px-2 bg-zinc-900 border border-pink-500/30 text-pink-300 rounded-full text-[9px] font-bold flex items-center justify-center gap-1">
+                                <Bell className="h-3.5 w-3.5 shrink-0 text-pink-400" />
+                                <span>عضویت کلاب</span>
+                              </button>
+                            </div>
+
+                            {/* Contact Icons */}
+                            <div className="flex flex-wrap gap-1.5 justify-center">
+                              {activeCard.social_links?.phone && (
+                                <a href={`tel:${activeCard.social_links.phone}`} className="flex-1 min-w-[50px] p-2 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col items-center text-pink-400">
+                                  <Phone className="h-4 w-4" />
+                                  <span className="text-[8px] font-bold mt-1 text-zinc-400">تماس</span>
+                                </a>
+                              )}
+                              {activeCard.social_links?.telegram && (
+                                <a href={`https://t.me/${activeCard.social_links.telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[50px] p-2 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col items-center text-sky-400">
+                                  <Send className="h-4 w-4" />
+                                  <span className="text-[8px] font-bold mt-1 text-zinc-400">تلگرام</span>
+                                </a>
+                              )}
+                              {activeCard.social_links?.instagram && (
+                                <a href={`https://instagram.com/${activeCard.social_links.instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[50px] p-2 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col items-center text-pink-400">
+                                  <Instagram className="h-4 w-4" />
+                                  <span className="text-[8px] font-bold mt-1 text-zinc-400">اینستا</span>
+                                </a>
+                              )}
+                              {activeCard.social_links?.website && (
+                                <a href={`https://${activeCard.social_links.website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[50px] p-2 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col items-center text-purple-400">
+                                  <Globe className="h-4 w-4" />
+                                  <span className="text-[8px] font-bold mt-1 text-zinc-400">سایت</span>
+                                </a>
+                              )}
+                            </div>
+
+                            {/* Bio-Links Custom Buttons */}
+                            {activeCard.custom_buttons && activeCard.custom_buttons.length > 0 && (
+                              <div className="space-y-2 pt-1">
+                                {activeCard.custom_buttons.map((btn) => (
+                                  <div key={btn.id} className="p-3 bg-gradient-to-r from-zinc-900 to-zinc-850 border border-pink-500/30 rounded-full flex items-center justify-between text-[10px] font-bold text-white shadow-md">
+                                    <span className="flex items-center gap-2 truncate">
+                                      <Sparkles className="h-3.5 w-3.5 text-pink-400 shrink-0" />
+                                      <span>{btn.label}</span>
+                                    </span>
+                                    <span className="text-pink-400 text-xs">➔</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Bank details */}
+                            {activeCard.bank_card && (
+                              <div className="p-2.5 bg-zinc-900 border border-pink-500/20 rounded-2xl text-[9px] text-pink-200 space-y-1">
+                                <div className="flex items-center gap-1 font-bold text-pink-300">
+                                  <CreditCard className="h-3.5 w-3.5 text-pink-400" />
+                                  <span>کارت بانکی</span>
+                                </div>
+                                <div className="font-mono text-[10px] text-center bg-black/50 py-1 rounded-xl border border-pink-500/20 font-bold text-pink-100">
+                                  {toPersianDigits(activeCard.bank_card)}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 4. NEON GLASS TEMPLATE PREVIEW */}
                         {isNeonGlass && (
                           <div className="w-full bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 text-slate-100 flex flex-col rounded-2xl overflow-hidden pb-4 border border-purple-500/30 shadow-lg">
                             {/* Cover Image Header */}
@@ -812,7 +1008,6 @@ export default function LandingPage() {
                                 <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-slate-200 backdrop-blur-md border border-white/10">
                                   {previewViewsCount}
                                 </span>
-                                <span className="text-purple-300 font-extrabold tracking-wider">NEON GLASS</span>
                               </div>
 
                               {/* Profile Visual */}
@@ -937,7 +1132,7 @@ export default function LandingPage() {
                           </div>
                         )}
 
-                        {/* 3. MINIMAL TEMPLATE PREVIEW */}
+                        {/* 5. MINIMAL TEMPLATE PREVIEW */}
                         {isMinimal && (
                           <div className="w-full bg-zinc-50 text-zinc-900 flex flex-col rounded-2xl overflow-hidden pb-4 border border-zinc-200 shadow-sm">
                             {/* Cover photo */}
@@ -952,7 +1147,7 @@ export default function LandingPage() {
                             <div className="p-3.5 space-y-3">
                               <div className="flex justify-between items-center text-[9px] opacity-60 font-sans">
                                 <span>{activeCard ? `/${activeCard.slug}` : '/demo'}</span>
-                                <span className="font-bold tracking-widest">MINIMAL</span>
+                                <span className="font-bold">{previewViewsCount}</span>
                               </div>
 
                               {/* Portrait Card */}
@@ -1035,7 +1230,7 @@ export default function LandingPage() {
                           </div>
                         )}
 
-                        {/* 4. LUXURY GOLD TEMPLATE PREVIEW */}
+                        {/* 6. LUXURY GOLD TEMPLATE PREVIEW */}
                         {isLuxuryDark && (
                           <div className="w-full bg-[#0c0a09] text-amber-100 flex flex-col rounded-2xl overflow-hidden pb-4 border border-amber-500/40 shadow-xl">
                             {/* Cover photo */}
@@ -1050,9 +1245,7 @@ export default function LandingPage() {
 
                             <div className="p-3.5 space-y-3 -mt-10 relative z-10 flex-grow">
                               <div className="flex justify-between items-center text-[9px]">
-                                <span className="px-2.5 py-0.5 bg-amber-500/15 rounded-full text-amber-400 font-bold border border-amber-500/30">
-                                  LUXURY VIP
-                                </span>
+                                <span className="text-amber-400 font-bold px-2 py-0.5 bg-amber-500/10 rounded-full border border-amber-500/20">{previewViewsCount}</span>
                                 <span className="text-amber-400 font-bold">★ ★ ★</span>
                               </div>
 
@@ -1079,7 +1272,7 @@ export default function LandingPage() {
                               {/* Luxury Save Contact Button */}
                               <button className="w-full py-2 bg-gradient-to-r from-amber-600 to-amber-500 text-stone-950 font-bold flex items-center justify-center gap-1.5 text-[9px] rounded-xl shadow-md">
                                 <UserPlus className="h-3.5 w-3.5 shrink-0" />
-                                <span>ذخیره در مخاطبان VIP</span>
+                                <span>ذخیره در مخاطبان</span>
                               </button>
 
                               {/* Luxury Gold Responsive Buttons */}
@@ -1156,8 +1349,8 @@ export default function LandingPage() {
                           </div>
                         )}
 
-                        {/* 5. FALLBACK CUSTOM TEMPLATE */}
-                        {!isClassic && !isNeonGlass && !isMinimal && !isLuxuryDark && (() => {
+                        {/* 7. FALLBACK CUSTOM TEMPLATE */}
+                        {!isClassic && !isBento && !isContentCreator && !isNeonGlass && !isMinimal && !isLuxuryDark && (() => {
                           const tSchema = activeTemplate.schema || {};
                           const isDarkTheme = tSchema.theme === 'dark';
                           const tColors = tSchema.colors || {};
@@ -1185,10 +1378,7 @@ export default function LandingPage() {
                             >
                               <div className="space-y-3">
                                 <div className="flex justify-between items-center text-[9px]">
-                                  <span className="px-2.5 py-0.5 rounded-full text-[8px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
-                                    {activeTemplate.name}
-                                  </span>
-                                  <span className="font-bold text-[9px]" style={{ color: pColor }}>قالب اختصاصی</span>
+                                  <span className="font-bold text-[9px]" style={{ color: pColor }}>{previewViewsCount}</span>
                                 </div>
 
                                 {isSplitHeader ? (
@@ -1256,7 +1446,7 @@ export default function LandingPage() {
                               </div>
 
                               <button className="w-full py-2 font-bold text-white text-[9px] rounded-xl transition hover:opacity-90 shadow-sm" style={{ backgroundColor: pColor }}>
-                                انتخاب قالب {activeTemplate.name}
+                                ذخیره در مخاطبان
                               </button>
                             </div>
                           );

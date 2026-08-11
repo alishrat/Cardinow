@@ -113,12 +113,25 @@ export default function PublicCardPage() {
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
     const shareTitle = card ? `کارت ویزیت هوشمند ${card.first_name} ${card.last_name}` : '';
     
+    // Dynamic popup colors matching card theme
+    const popupBg = cardBgColor || '#0f172a';
+    const popupBorder = primaryColor ? `${primaryColor}40` : 'rgba(255, 255, 255, 0.15)';
+    const popupText = textCol || '#ffffff';
+
     return (
       <div 
-        className={`absolute mt-2 ${alignLeft ? 'left-0' : 'right-0'} w-48 bg-slate-950/95 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200 text-right`}
+        className={`absolute mt-2 ${alignLeft ? 'left-0' : 'right-0'} w-48 border rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200 text-right`}
+        style={{
+          backgroundColor: popupBg,
+          borderColor: popupBorder,
+          color: popupText
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-[10px] font-bold text-slate-400 px-2.5 py-1 text-center border-b border-slate-800/80 mb-1">
+        <div 
+          className="text-[10px] font-bold px-2.5 py-1 text-center border-b mb-1 opacity-70"
+          style={{ borderColor: popupBorder, color: popupText }}
+        >
           اشتراک‌گذاری کارت
         </div>
         
@@ -129,16 +142,17 @@ export default function PublicCardPage() {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
           }}
-          className="w-full flex items-center justify-between p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white"
+          className="w-full flex items-center justify-between p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
+          style={{ color: popupText }}
         >
           <span className="flex items-center gap-2">
-            <Copy className="h-3.5 w-3.5 text-blue-400" />
+            <Copy className="h-3.5 w-3.5" style={{ color: primaryColor || '#3b82f6' }} />
             <span>کپی لینک کارت</span>
           </span>
           {copied ? (
             <span className="text-[9px] text-emerald-400 font-bold">کپی شد!</span>
           ) : (
-            <span className="text-[9px] text-slate-500">کپی</span>
+            <span className="text-[9px] opacity-60">کپی</span>
           )}
         </button>
 
@@ -147,7 +161,8 @@ export default function PublicCardPage() {
           href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
           target="_blank"
           rel="noreferrer"
-          className="w-full flex items-center gap-2 p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white text-right"
+          className="w-full flex items-center gap-2 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
+          style={{ color: popupText }}
         >
           <Send className="h-3.5 w-3.5 text-sky-400" />
           <span>ارسال در تلگرام</span>
@@ -158,7 +173,8 @@ export default function PublicCardPage() {
           href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
           target="_blank"
           rel="noreferrer"
-          className="w-full flex items-center gap-2 p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white text-right"
+          className="w-full flex items-center gap-2 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
+          style={{ color: popupText }}
         >
           <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
           <span>ارسال در واتساپ</span>
@@ -167,7 +183,8 @@ export default function PublicCardPage() {
         {/* SMS */}
         <a
           href={`sms:?body=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
-          className="w-full flex items-center gap-2 p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white text-right"
+          className="w-full flex items-center gap-2 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
+          style={{ color: popupText }}
         >
           <Phone className="h-3.5 w-3.5 text-amber-400" />
           <span>ارسال پیامک (SMS)</span>
@@ -178,7 +195,8 @@ export default function PublicCardPage() {
           href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
           target="_blank"
           rel="noreferrer"
-          className="w-full flex items-center gap-2 p-2 hover:bg-slate-800/60 rounded-xl transition text-xs text-white text-right"
+          className="w-full flex items-center gap-2 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
+          style={{ color: popupText }}
         >
           <Globe className="h-3.5 w-3.5 text-indigo-400" />
           <span>اشتراک در Twitter/X</span>
@@ -2014,10 +2032,7 @@ export default function PublicCardPage() {
               }}
             >
               {/* Share button at top */}
-              <div className="flex justify-between items-center z-20 relative">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
-                  {matchedTemp?.name || 'قالب اختصاصی'}
-                </span>
+              <div className="flex justify-end items-center z-20 relative">
                 <div className="relative">
                   <button 
                     onClick={() => setActiveShareId(activeShareId === 'temp-custom-share' ? null : 'temp-custom-share')}
