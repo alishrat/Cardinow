@@ -1971,6 +1971,7 @@ export default function PublicCardPage() {
           const tColors = tSchema.colors || {};
           const tTypography = tSchema.typography || {};
           const tLayout = tSchema.layout || {};
+          const tFx = tSchema.effects || {};
 
           // Color palette: User custom colors override template schema colors
           const pColor = primaryColor;
@@ -1980,22 +1981,67 @@ export default function PublicCardPage() {
           const txtSecColor = tColors.text_secondary || secondaryColor;
           const cardBg = cardBgColor;
 
-          // Layout properties
-          const isCircleAvatar = (tLayout.avatar_shape || 'circle') === 'circle';
-          const isSplitHeader = tLayout.header_style === 'split';
+          // Layout & FX properties
+          const avatarPosition = tLayout.avatar_position || 'overlap-center';
+          const avatarShape = tLayout.avatar_shape || 'circle';
+          const headerStyle = tLayout.header_style || 'split';
+          const buttonStyle = tLayout.button_style || 'pill';
+          const cardBorder = tLayout.card_border || 'none';
+          const fxStyle = tFx.style || 'none';
+
+          const isCircleAvatar = avatarShape === 'circle';
+          const isGlowingAvatar = avatarShape === 'glowing-ring';
+          const isSquareAvatar = avatarShape === 'square';
+
+          const avatarRadiusClass = isCircleAvatar || isGlowingAvatar ? 'rounded-full' : isSquareAvatar ? 'rounded-2xl' : 'rounded-3xl';
+          const buttonRadiusClass = buttonStyle === 'pill' ? 'rounded-full' : buttonStyle === 'sharp' ? 'rounded-none' : 'rounded-2xl';
 
           return (
             <div 
-              className="rounded-3xl shadow-xl overflow-hidden border border-slate-200/50 transition-all p-5 space-y-5"
+              className={`rounded-3xl shadow-xl overflow-hidden transition-all p-5 space-y-5 relative ${
+                fxStyle === 'glassmorphism' ? 'backdrop-blur-xl bg-slate-900/80 border border-white/20 shadow-2xl' :
+                fxStyle === 'neon-glow' ? 'border border-cyan-500/50 shadow-[0_0_25px_rgba(6,182,212,0.35)]' :
+                fxStyle === 'gold-glow' ? 'border border-amber-500/50 shadow-[0_0_25px_rgba(245,158,11,0.35)]' :
+                fxStyle === 'mesh-gradient' ? 'bg-gradient-to-br from-slate-900 via-indigo-950 to-zinc-900 text-white' : ''
+              }`}
               style={{ 
-                backgroundColor: cardBg, 
+                backgroundColor: fxStyle !== 'glassmorphism' && fxStyle !== 'mesh-gradient' ? cardBg : undefined, 
                 color: txtColor,
-                fontFamily: 'var(--font-vazirmatn), sans-serif'
+                fontFamily: 'var(--font-vazirmatn), sans-serif',
+                borderColor: cardBorder === 'solid-accent' ? pColor : cardBorder === 'double' ? pColor : undefined,
+                borderWidth: cardBorder === 'solid-accent' ? '2px' : cardBorder === 'double' ? '4px' : undefined,
+                borderStyle: cardBorder === 'double' ? 'double' : undefined
               }}
             >
+              {/* Share button at top */}
+              <div className="flex justify-between items-center z-20 relative">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
+                  {matchedTemp?.name || 'قالب اختصاصی'}
+                </span>
+                <div className="relative">
+                  <button 
+                    onClick={() => setActiveShareId(activeShareId === 'temp-custom-share' ? null : 'temp-custom-share')}
+                    className="p-2 rounded-full transition active:scale-95 shadow-sm"
+                    style={{ backgroundColor: sColor, color: pColor }}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                  {renderShareDropdown('temp-custom-share', true)}
+                </div>
+              </div>
+
+              {/* Floating Top Avatar Position */}
+              {avatarPosition === 'floating-top' && (
+                <div className="flex justify-center -mb-2 z-10 relative">
+                  <div className={`h-24 w-24 overflow-hidden border-4 p-0.5 shadow-xl bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''}`} style={{ borderColor: pColor }}>
+                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                  </div>
+                </div>
+              )}
+
               {/* Cover photo */}
               {card.cover_image && (
-                <div className="h-36 rounded-2xl overflow-hidden relative border border-slate-200/50 shadow-sm shrink-0">
+                <div className="h-36 rounded-2xl overflow-hidden relative border border-slate-200/20 shadow-sm shrink-0">
                   <img 
                     src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} 
                     alt="cover" 
@@ -2004,67 +2050,53 @@ export default function PublicCardPage() {
                 </div>
               )}
 
-              {/* Header Section */}
-              {isSplitHeader ? (
-                <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-16 w-16 overflow-hidden border-2 shrink-0" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '16px' }}>
-                      <img 
-                        src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
-                        alt="profile" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <h1 className="text-lg font-black" style={{ fontSize: tTypography.title_size || '20px' }}>{card.first_name} {card.last_name}</h1>
-                      <p className="text-xs font-bold" style={{ color: pColor }}>{card.job_title}</p>
-                      <p className="text-[10px]" style={{ color: txtSecColor }}>{card.company}</p>
-                    </div>
+              {/* Overlapping Avatar Positions */}
+              {avatarPosition.startsWith('overlap-') && (
+                <div className={`-mt-16 z-10 relative flex ${
+                  avatarPosition === 'overlap-right' ? 'justify-start pr-4' :
+                  avatarPosition === 'overlap-left' ? 'justify-end pl-4' : 'justify-center'
+                }`}>
+                  <div className={`h-24 w-24 overflow-hidden border-4 p-0.5 shadow-xl bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''}`} style={{ borderColor: pColor }}>
+                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
                   </div>
-                  <div className="relative">
-                    <button 
-                      onClick={() => setActiveShareId(activeShareId === 'temp-custom-split' ? null : 'temp-custom-split')}
-                      className="p-2 rounded-full transition active:scale-95"
-                      style={{ backgroundColor: sColor, color: pColor }}
-                    >
-                      <Share2 className="h-4 w-4" />
-                    </button>
-                    {renderShareDropdown('temp-custom-split', true)}
+                </div>
+              )}
+
+              {/* Below Cover Avatar Positions */}
+              {avatarPosition.startsWith('below-') && (
+                <div className={`pt-1 flex ${
+                  avatarPosition === 'below-right' ? 'justify-start' : 'justify-center'
+                }`}>
+                  <div className={`h-20 w-20 overflow-hidden border-2 p-0.5 shadow-md bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''}`} style={{ borderColor: pColor }}>
+                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                  </div>
+                </div>
+              )}
+
+              {/* Header Info Layout */}
+              {headerStyle === 'split' ? (
+                <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-200/20">
+                  {avatarPosition === 'inside-header' && (
+                    <div className={`h-16 w-16 overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                    </div>
+                  )}
+                  <div className="text-right">
+                    <h1 className="text-xl font-black" style={{ fontSize: tTypography.title_size || '22px' }}>{card.first_name} {card.last_name}</h1>
+                    <p className="text-xs font-bold mt-0.5" style={{ color: pColor }}>{card.job_title}</p>
+                    {card.company && <p className="text-[11px]" style={{ color: txtSecColor }}>{card.company}</p>}
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: sColor, color: pColor }}>
-                      {matchedTemp?.name || 'قالب اختصاصی'}
-                    </span>
-                    <div className="relative">
-                      <button 
-                        onClick={() => setActiveShareId(activeShareId === 'temp-custom-center' ? null : 'temp-custom-center')}
-                        className="p-2 rounded-full transition active:scale-95"
-                        style={{ backgroundColor: sColor, color: pColor }}
-                      >
-                        <Share2 className="h-4 w-4" />
-                      </button>
-                      {renderShareDropdown('temp-custom-center', true)}
+                <div className="text-center space-y-1">
+                  {avatarPosition === 'inside-header' && (
+                    <div className={`h-20 w-20 overflow-hidden border-2 p-0.5 mx-auto mb-2 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
                     </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="h-24 w-24 overflow-hidden border-2 p-1" style={{ borderColor: pColor, borderRadius: isCircleAvatar ? '9999px' : '24px' }}>
-                      <img 
-                        src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
-                        alt="profile" 
-                        className="w-full h-full object-cover"
-                        style={{ borderRadius: isCircleAvatar ? '9999px' : '16px' }}
-                      />
-                    </div>
-                    <div>
-                      <h1 className="text-xl font-black" style={{ fontSize: tTypography.title_size || '20px' }}>{card.first_name} {card.last_name}</h1>
-                      <p className="text-xs font-bold mt-1" style={{ color: pColor }}>{card.job_title}</p>
-                      <p className="text-[11px]" style={{ color: txtSecColor }}>{card.company}</p>
-                    </div>
-                  </div>
+                  )}
+                  <h1 className="text-2xl font-black" style={{ fontSize: tTypography.title_size || '22px' }}>{card.first_name} {card.last_name}</h1>
+                  <p className="text-xs font-bold" style={{ color: pColor }}>{card.job_title}</p>
+                  {card.company && <p className="text-[11px]" style={{ color: txtSecColor }}>{card.company}</p>}
                 </div>
               )}
 
@@ -2076,19 +2108,22 @@ export default function PublicCardPage() {
                       <div key="sec_cust_save" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button 
                           onClick={handleDownloadVCard}
-                          className="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs"
-                          style={{ backgroundColor: pColor, color: '#ffffff' }}
+                          className={`w-full py-3 px-4 font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs shadow-md ${buttonRadiusClass} ${
+                            buttonStyle === 'glass' ? 'bg-white/10 border border-white/20 backdrop-blur-md text-white' :
+                            buttonStyle === 'gradient' ? 'bg-gradient-to-r from-amber-500 to-amber-700 text-white' : ''
+                          }`}
+                          style={{ backgroundColor: buttonStyle !== 'glass' && buttonStyle !== 'gradient' ? pColor : undefined, color: '#ffffff' }}
                         >
                           <Download className="h-4 w-4" />
                           <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره در مخاطبان'}</span>
                         </button>
                         <button 
                           onClick={() => { setShowSubscribeModal(true); setSubscribeStep('mobile'); setSubscribeError(null); setSubscribeMessage(null); }}
-                          className="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs border"
+                          className={`w-full py-3 px-4 font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs border ${buttonRadiusClass}`}
                           style={{ borderColor: pColor, color: pColor, backgroundColor: 'rgba(0,0,0,0.02)' }}
                         >
                           <Bell className="h-4 w-4" />
-                          <span>عضویت در کلاب</span>
+                          <span>عضویت در خبرنامه</span>
                         </button>
                       </div>
                     );

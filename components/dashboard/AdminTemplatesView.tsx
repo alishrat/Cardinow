@@ -333,9 +333,9 @@ export function AdminTemplatesView({
                   </div>
 
                   {/* Layout & Style options */}
-                  <div className="grid grid-cols-2 gap-3 bg-slate-950 p-4 border border-slate-800 rounded-xl">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 bg-slate-950 p-4 border border-slate-800 rounded-xl">
                     <div>
-                      <label className="block text-slate-400 mb-1 text-[10px]">سبک ساختار و چیدمان (Header Style)</label>
+                      <label className="block text-slate-400 mb-1 text-[10px]">سبک چیدمان هدر (Header Style)</label>
                       <select
                         value={editingTemplate.schema?.layout?.header_style || 'split'}
                         onChange={(e) => {
@@ -353,6 +353,30 @@ export function AdminTemplatesView({
                         <option value="bento">کاشی‌بندی هوشمند (Bento Grid)</option>
                         <option value="content_creator">اینفلوئنسر و Bio-Link (Content Creator)</option>
                         <option value="hero_cover">کاور بزرگ با لوگو (Hero Banner)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-400 mb-1 text-[10px]">موقعیت عکس پروفایل (Avatar Position)</label>
+                      <select
+                        value={editingTemplate.schema?.layout?.avatar_position || 'overlap-center'}
+                        onChange={(e) => {
+                          const s = editingTemplate.schema || {};
+                          const l = s.layout || {};
+                          setEditingTemplate({
+                            ...editingTemplate,
+                            schema: { ...s, layout: { ...l, avatar_position: e.target.value } } as any
+                          });
+                        }}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-white focus:outline-none text-amber-400 font-bold"
+                      >
+                        <option value="overlap-center">روی کاور - مرکز (Overlap Center)</option>
+                        <option value="overlap-right">روی کاور - سمت راست (Overlap Right)</option>
+                        <option value="overlap-left">روی کاور - سمت چپ (Overlap Left)</option>
+                        <option value="below-center">زیر کاور - مرکز (Below Center)</option>
+                        <option value="below-right">زیر کاور - سمت راست (Below Right)</option>
+                        <option value="floating-top">شناور بالای کارت (Floating Top)</option>
+                        <option value="inside-header">ادغام شده داخل هدر (Inside Header)</option>
                       </select>
                     </div>
 
@@ -395,6 +419,28 @@ export function AdminTemplatesView({
                         <option value="rounded">گوشه‌گرد استاندارد (Rounded)</option>
                         <option value="glass">شیشه‌ای شفاف (Glassmorphism)</option>
                         <option value="gradient">گرادینت ویژه (Gradient Glow)</option>
+                        <option value="sharp">زاویه‌دار مستطیل (Sharp)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-400 mb-1 text-[10px]">نوع حاشیه کارت (Card Border)</label>
+                      <select
+                        value={editingTemplate.schema?.layout?.card_border || 'none'}
+                        onChange={(e) => {
+                          const s = editingTemplate.schema || {};
+                          const l = s.layout || {};
+                          setEditingTemplate({
+                            ...editingTemplate,
+                            schema: { ...s, layout: { ...l, card_border: e.target.value } } as any
+                          });
+                        }}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-white focus:outline-none"
+                      >
+                        <option value="none">بدون حاشیه (Standard Clean)</option>
+                        <option value="thin-glow">حاشیه ظریف درخشان (Subtle Glow Border)</option>
+                        <option value="solid-accent">حاشیه رنگ اصلی Accent (Solid Color)</option>
+                        <option value="double">حاشیه دو خطی لوکس (Double Line)</option>
                       </select>
                     </div>
 
@@ -416,6 +462,7 @@ export function AdminTemplatesView({
                         <option value="glassmorphism">شیشه‌ای کهکشانی (Glassmorphism)</option>
                         <option value="neon-glow">نئونی درخشان (Neon Cyberpunk)</option>
                         <option value="gold-glow">طلا و طلایی لوکس (Gold Luxury)</option>
+                        <option value="mesh-gradient">گرادینت مش پویا (Mesh Gradient)</option>
                       </select>
                     </div>
                   </div>
@@ -528,13 +575,14 @@ export function AdminTemplatesView({
               const cardBg = tSchema.colors?.card_bg || (isDarkTheme ? '#18181b' : '#ffffff');
 
               const avatarShape = tSchema.layout?.avatar_shape || 'circle';
+              const avatarPos = tSchema.layout?.avatar_position || 'overlap-center';
               const headerStyle = tSchema.layout?.header_style || 'split';
               const buttonStyle = tSchema.layout?.button_style || 'pill';
+              const cardBorder = tSchema.layout?.card_border || 'none';
               const fxStyle = tSchema.effects?.style || 'none';
 
               const isCircleAvatar = avatarShape === 'circle';
               const isGlowingAvatar = avatarShape === 'glowing-ring';
-              const isHexagonAvatar = avatarShape === 'hexagon';
 
               return (
                 <div 
@@ -550,7 +598,10 @@ export function AdminTemplatesView({
                     style={{ 
                       backgroundColor: fxStyle === 'glassmorphism' ? undefined : cardBg, 
                       color: txtColor,
-                      fontFamily: tSchema.typography?.font_family || 'iranyekan'
+                      fontFamily: tSchema.typography?.font_family || 'iranyekan',
+                      borderColor: cardBorder === 'solid-accent' ? pColor : cardBorder === 'double' ? pColor : undefined,
+                      borderWidth: cardBorder === 'solid-accent' ? '2px' : cardBorder === 'double' ? '3px' : undefined,
+                      borderStyle: cardBorder === 'double' ? 'double' : undefined
                     }}
                   >
                     <div className="space-y-3">
@@ -561,20 +612,51 @@ export function AdminTemplatesView({
                         <span className="text-[7px] font-mono text-slate-400">{editingTemplate.slug || 'slug'}</span>
                       </div>
 
+                      {/* Mock Cover */}
+                      <div className="h-12 w-full bg-slate-700/30 rounded-xl relative overflow-hidden flex items-center justify-center text-[7px] text-slate-400">
+                        کاور تصویر
+                      </div>
+
+                      {/* Avatar Position mock */}
+                      {avatarPos.startsWith('overlap-') && (
+                        <div className={`-mt-6 z-10 relative flex ${
+                          avatarPos === 'overlap-right' ? 'justify-start pr-2' :
+                          avatarPos === 'overlap-left' ? 'justify-end pl-2' : 'justify-center'
+                        }`}>
+                          <div className={`h-9 w-9 overflow-hidden border-2 bg-slate-300 flex items-center justify-center font-bold text-xs shadow-md ${isCircleAvatar ? 'rounded-full' : isGlowingAvatar ? 'rounded-full ring-2 ring-amber-400' : 'rounded-lg'}`} style={{ borderColor: pColor }}>
+                            👤
+                          </div>
+                        </div>
+                      )}
+
+                      {avatarPos.startsWith('below-') && (
+                        <div className={`pt-0.5 flex ${
+                          avatarPos === 'below-right' ? 'justify-start' : 'justify-center'
+                        }`}>
+                          <div className={`h-8 w-8 overflow-hidden border bg-slate-300 flex items-center justify-center font-bold text-xs ${isCircleAvatar ? 'rounded-full' : 'rounded-lg'}`} style={{ borderColor: pColor }}>
+                            👤
+                          </div>
+                        </div>
+                      )}
+
                       {/* Header layouts */}
                       {headerStyle === 'bento' ? (
                         <div className="p-2 bg-slate-800/40 border border-slate-700/40 rounded-xl flex items-center gap-2">
-                          <div className={`h-10 w-10 overflow-hidden border shrink-0 bg-slate-300 flex items-center justify-center font-bold text-xs ${isCircleAvatar ? 'rounded-full' : 'rounded-lg'}`}>👤</div>
+                          {avatarPos === 'inside-header' && (
+                            <div className={`h-8 w-8 overflow-hidden border shrink-0 bg-slate-300 flex items-center justify-center font-bold text-xs ${isCircleAvatar ? 'rounded-full' : 'rounded-lg'}`}>👤</div>
+                          )}
                           <div>
                             <h4 className="text-[9.5px] font-black" style={{ color: txtColor }}>نام و نام خانوادگی</h4>
                             <p className="text-[7.5px] font-bold" style={{ color: pColor }}>عنوان شغلی یا سمت تخصصی</p>
                           </div>
                         </div>
                       ) : headerStyle === 'content_creator' ? (
-                        <div className="flex flex-col items-center text-center space-y-1 pt-1">
-                          <div className="h-12 w-12 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-500 shrink-0">
-                            <div className="w-full h-full rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs">👤</div>
-                          </div>
+                        <div className="flex flex-col items-center text-center space-y-1 pt-0.5">
+                          {avatarPos === 'inside-header' && (
+                            <div className="h-9 w-9 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-500 shrink-0">
+                              <div className="w-full h-full rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs">👤</div>
+                            </div>
+                          )}
                           <div>
                             <h4 className="text-[10px] font-black" style={{ color: txtColor }}>نام و نام خانوادگی</h4>
                             <p className="text-[8px] font-bold text-pink-400">تولیدکننده محتوا / اینفلوئنسر</p>
@@ -582,9 +664,11 @@ export function AdminTemplatesView({
                         </div>
                       ) : headerStyle === 'split' ? (
                         <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100/30">
-                          <div className={`h-10 w-10 overflow-hidden border shrink-0 bg-slate-300 flex items-center justify-center font-bold text-xs ${isCircleAvatar ? 'rounded-full' : isGlowingAvatar ? 'rounded-full ring-2 ring-amber-400' : 'rounded-md'}`} style={{ borderColor: pColor }}>
-                            👤
-                          </div>
+                          {avatarPos === 'inside-header' && (
+                            <div className={`h-8 w-8 overflow-hidden border shrink-0 bg-slate-300 flex items-center justify-center font-bold text-xs ${isCircleAvatar ? 'rounded-full' : isGlowingAvatar ? 'rounded-full ring-2 ring-amber-400' : 'rounded-md'}`} style={{ borderColor: pColor }}>
+                              👤
+                            </div>
+                          )}
                           <div>
                             <h4 className="text-[10px] font-black" style={{ color: txtColor }}>نام و نام خانوادگی</h4>
                             <p className="text-[8px] font-bold" style={{ color: pColor }}>عنوان شغلی یا سمت تخصصی</p>
@@ -592,9 +676,11 @@ export function AdminTemplatesView({
                         </div>
                       ) : (
                         <div className="flex flex-col items-center text-center space-y-1">
-                          <div className={`h-11 w-11 overflow-hidden border p-0.5 bg-slate-300 flex items-center justify-center font-bold text-xs ${isCircleAvatar ? 'rounded-full' : 'rounded-lg'}`} style={{ borderColor: pColor }}>
-                            👤
-                          </div>
+                          {avatarPos === 'inside-header' && (
+                            <div className={`h-9 w-9 overflow-hidden border p-0.5 bg-slate-300 flex items-center justify-center font-bold text-xs ${isCircleAvatar ? 'rounded-full' : 'rounded-lg'}`} style={{ borderColor: pColor }}>
+                              👤
+                            </div>
+                          )}
                           <div>
                             <h4 className="text-[10px] font-black" style={{ color: txtColor }}>نام و نام خانوادگی</h4>
                             <p className="text-[8px] font-bold mt-0.5" style={{ color: pColor }}>عنوان شغلی یا سمت تخصصی</p>
