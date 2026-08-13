@@ -1766,11 +1766,16 @@ export const dbService = {
       console.warn('Failed to update local transactions cache:', e);
     }
   },
-  getSiteSettings: async (): Promise<{ bank_card?: string; bank_name?: string } | null> => {
+  getSiteSettings: async (): Promise<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string } | null> => {
     try {
-      const res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
+      let res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
         headers: { ...getAuthHeaders() }
       });
+      if (!res.ok) {
+        res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
+          headers: { ...getAuthHeaders() }
+        });
+      }
       if (!res.ok) throw new Error('Failed to fetch site settings');
       const json = await res.json();
       const data = json?.data;
@@ -1783,19 +1788,19 @@ export const dbService = {
       if (record) {
         return {
           bank_card: record.bank_card || record.card_number || '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸',
-          bank_name: record.bank_name || record.account_name || 'مگاکارت دیجیتال سیستم'
+          bank_name: record.bank_name || record.account_name || 'مگاکارت دیجیتال سیستم',
+          zarinpal_merchant: record.zarinpal_merchant || ''
         };
       }
-      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم' };
+      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '' };
     } catch {
       console.warn('Directus site settings fetch failed, using defaults');
-      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم' };
+      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '' };
     }
   },
-  saveSiteSettings: async (settings: { bank_card?: string; bank_name?: string }): Promise<void> => {
+  saveSiteSettings: async (settings: { bank_card?: string; bank_name?: string; zarinpal_merchant?: string }): Promise<void> => {
     try {
-      // 1. Try PATCH on singleton endpoint directly (standard Directus behavior for singletons)
-      let res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
+      let res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1805,7 +1810,26 @@ export const dbService = {
       });
       if (res.ok) return;
 
-      // 2. Try PATCH on /items/site_settings/1
+      res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) return;
+
+      res = await fetch(`${DIRECTUS_BASE_URL}/items/settings/1`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) return;
+
       res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings/1`, {
         method: 'PATCH',
         headers: {
@@ -1816,7 +1840,16 @@ export const dbService = {
       });
       if (res.ok) return;
 
-      // 3. Try POST to /items/site_settings
+      res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ id: 1, ...settings })
+      });
+      if (res.ok) return;
+
       res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
         method: 'POST',
         headers: {

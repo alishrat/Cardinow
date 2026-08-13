@@ -79,16 +79,34 @@ export function CustomerWalletView({
 
     try {
       if (paymentMethod === 'online') {
-        // Zarinpal / Online Payment Simulation
-        const generatedRef = `ZARIN-${Math.floor(100000 + Math.random() * 900000)}`;
-        await dbService.createWalletTransaction({
-          wallet_id: wallet.id,
-          type: 'credit',
-          amount: finalAmount,
-          reference_id: generatedRef,
-          status: 'completed'
+        // Zarinpal Real Online Gateway Redirect
+        const res = await fetch('/api/payment/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: finalAmount,
+            description: `شارژ آنلاین کیف پول - ${user?.name || user?.email || 'کاربر مگاکارت'}`,
+            user_id: user?.id,
+            tenant_id: user?.tenant_id || null,
+            payment_type: 'wallet',
+            wallet_id: wallet.id,
+            email: user?.email,
+            mobile: user?.phone
+          })
         });
-        setActionSuccess(`کیف پول شما با موفقیت مبلغ ${(finalAmount).toLocaleString('fa-IR')} تومان شارژ گردید. (کد پیگیری: ${generatedRef})`);
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || 'خطا در برقراری ارتباط با درگاه زرین‌پال');
+        }
+
+        if (json.url) {
+          setActionSuccess('در حال انتقال به درگاه پرداخت امن زرین‌پال...');
+          window.location.href = json.url;
+          return;
+        } else {
+          throw new Error('آدرس انتقال به درگاه زرین‌پال دریافت نشد.');
+        }
       } else {
         // Card to card (Offline pending review)
         if (!refIdInput.trim()) {
@@ -104,13 +122,12 @@ export function CustomerWalletView({
           status: 'pending'
         });
         setActionSuccess('درخواست شارژ کارت به کارت با موفقیت ثبت شد و پس از بررسی و تایید مدیریت، کیف پول شما شارژ خواهد شد.');
+        setRefIdInput('');
+        setReceiptImage(null);
+        setCustomAmountInput('');
+        setIsChargeModalOpen(false);
+        onRefreshWallet();
       }
-
-      setRefIdInput('');
-      setReceiptImage(null);
-      setCustomAmountInput('');
-      setIsChargeModalOpen(false);
-      onRefreshWallet();
     } catch (err: any) {
       setActionError(err.message || 'خطا در ثبت شارژ کیف پول.');
     } finally {

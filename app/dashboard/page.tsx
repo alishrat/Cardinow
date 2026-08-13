@@ -330,10 +330,11 @@ function DashboardContent() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [viewingReceiptUrl, setViewingReceiptUrl] = useState<string | null>(null);
 
-  const [siteSettings, setSiteSettings] = useState<{ bank_card?: string; bank_name?: string } | null>(null);
+  const [siteSettings, setSiteSettings] = useState<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string } | null>(null);
   const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
   const [bankCardInput, setBankCardInput] = useState('');
   const [bankNameInput, setBankNameInput] = useState('');
+  const [zarinpalMerchantInput, setZarinpalMerchantInput] = useState('');
 
   // Tenant Panel States
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -391,6 +392,7 @@ function DashboardContent() {
       if (fetchedSiteSettings) {
         setBankCardInput(fetchedSiteSettings.bank_card || '');
         setBankNameInput(fetchedSiteSettings.bank_name || '');
+        setZarinpalMerchantInput(fetchedSiteSettings.zarinpal_merchant || '');
       }
 
       const session = authService.getCurrentUser();
@@ -793,9 +795,10 @@ function DashboardContent() {
     try {
       await dbService.saveSiteSettings({
         bank_card: bankCardInput.trim(),
-        bank_name: bankNameInput.trim()
+        bank_name: bankNameInput.trim(),
+        zarinpal_merchant: zarinpalMerchantInput.trim()
       });
-      showToast('تنظیمات کارت بانکی با موفقیت به‌روزرسانی شد.', 'success');
+      showToast('تنظیمات درگاه پرداخت و کارت بانکی با موفقیت به‌روزرسانی شد.', 'success');
       await refreshData();
     } catch (err: any) {
       showToast('خطا در ذخیره تنظیمات: ' + err.message, 'error');
@@ -804,7 +807,7 @@ function DashboardContent() {
     }
   };
 
-  const handleProcessSimulatedPayment = () => {
+  const handleProcessSimulatedPayment = async () => {
     if (!user || !payingPlan) return;
     setModalError(null);
     
@@ -823,86 +826,84 @@ function DashboardContent() {
         setModalError('لطفاً تصویر رسید پرداخت (فیش واریزی) را بارگذاری نمایید.');
         return;
       }
-    }
 
-    setIsProcessingPayment(true);
-    
-    setTimeout(async () => {
+      setIsProcessingPayment(true);
       try {
-        if (isOffline) {
-          // Create a pending transaction for manual admin verification
-          const newTx: Transaction = {
-            id: generateRandomUUID(),
-            user_id: user.id,
-            tenant_id: user.tenant_id || null,
-            amount: payingPlan.price,
-            gateway: 'کارت به کارت (آفلاین)',
-            authority: 'AUTH-OFF-' + Math.random().toString(36).substring(3, 10).toUpperCase(),
-            ref_id: offlineRefId.trim(),
-            status: 'pending',
-            receipt_Image: receiptFileId,
-            payload: { 
-              offline: true, 
-              deposit_time: offlineDepositTime.trim(), 
-              note: offlineNote.trim(),
-              plan_id: payingPlan.id,
-              plan_title: payingPlan.title,
-              plan_duration: payingPlan.duration_days
-            },
-            created_at: new Date().toISOString()
-          };
-          await dbService.saveTransaction(newTx);
-          
-          setIsProcessingPayment(false);
-          setPayingPlan(null);
-          setOfflineRefId('');
-          setOfflineDepositTime('');
-          setOfflineNote('');
-          setReceiptFileId(null);
-          setReceiptFileName(null);
-          await refreshData();
-          showToast(`درخواست فعال‌سازی اشتراک پلن "${payingPlan.title}" با کد رهگیری ${newTx.ref_id} ثبت گردید. پس از بررسی و تایید توسط مدیریت، اشتراک شما فعال خواهد شد.`, 'success');
-        } else {
-          // 1. Create Transaction
-          const newTx: Transaction = {
-            id: generateRandomUUID(),
-            user_id: user.id,
-            tenant_id: user.tenant_id || null,
-            amount: payingPlan.price,
-            gateway: simulatedGateway,
-            authority: 'AUTH-' + Math.random().toString(36).substring(3, 10).toUpperCase(),
-            ref_id: Math.floor(Math.random() * 89999999 + 10000000).toString(),
-            status: 'success',
-            payload: { simulated: true, cardLimitIncrease: true },
-            created_at: new Date().toISOString()
-          };
-          await dbService.saveTransaction(newTx);
-
-          // 2. Create/Extend Subscription
-          const startDate = new Date();
-          const endDate = new Date();
-          endDate.setDate(startDate.getDate() + payingPlan.duration_days);
-
-          const newSub: Subscription = {
-            id: generateRandomUUID(),
-            user_id: user.id,
+        const newTx: Transaction = {
+          id: generateRandomUUID(),
+          user_id: user.id,
+          tenant_id: user.tenant_id || null,
+          amount: payingPlan.price,
+          gateway: 'کارت به کارت (آفلاین)',
+          authority: 'AUTH-OFF-' + Math.random().toString(36).substring(3, 10).toUpperCase(),
+          ref_id: offlineRefId.trim(),
+          status: 'pending',
+          receipt_Image: receiptFileId,
+          payload: { 
+            offline: true, 
+            deposit_time: offlineDepositTime.trim(), 
+            note: offlineNote.trim(),
             plan_id: payingPlan.id,
-            status: 'active',
-            start_date: startDate.toISOString().split('T')[0],
-            end_date: endDate.toISOString().split('T')[0]
-          };
-          await dbService.saveSubscription(newSub);
+            plan_title: payingPlan.title,
+            plan_duration: payingPlan.duration_days
+          },
+          created_at: new Date().toISOString()
+        };
+        await dbService.saveTransaction(newTx);
+        
+        setIsProcessingPayment(false);
+        setPayingPlan(null);
+        setOfflineRefId('');
+        setOfflineDepositTime('');
+        setOfflineNote('');
+        setReceiptFileId(null);
+        setReceiptFileName(null);
+        await refreshData();
+        showToast(`درخواست فعال‌سازی اشتراک پلن "${payingPlan.title}" با کد رهگیری ${newTx.ref_id} ثبت گردید. پس از بررسی و تایید توسط مدیریت، اشتراک شما فعال خواهد شد.`, 'success');
+      } catch (err: any) {
+        setIsProcessingPayment(false);
+        setModalError('خطا در ثبت تراکنش: ' + err.message);
+      }
+    } else {
+      // Real Zarinpal Online Payment
+      setIsProcessingPayment(true);
+      try {
+        const res = await fetch('/api/payment/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: payingPlan.price,
+            description: `خرید اشتراک پلن ${payingPlan.title} - ${user.name || user.email || 'کاربر مگاکارت'}`,
+            user_id: user.id,
+            tenant_id: user.tenant_id || null,
+            payment_type: 'plan',
+            plan_id: payingPlan.id,
+            plan_title: payingPlan.title,
+            plan_duration: payingPlan.duration_days,
+            email: user.email,
+            mobile: (user as any).phone
+          })
+        });
 
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          setModalError(json.error || 'خطا در برقراری ارتباط با درگاه پرداخت آنلاین زرین‌پال.');
           setIsProcessingPayment(false);
-          setPayingPlan(null);
-          await refreshData();
-          showToast(`پرداخت مبلغ ${payingPlan.price.toLocaleString('fa-IR')} تومان با موفقیت در درگاه شبیه‌سازی شده تراکنش تایید و اشتراک شما فعال گردید!`, 'success');
+          return;
+        }
+
+        if (json.url) {
+          showToast('در حال انتقال به درگاه پرداخت آنلاین زرین‌پال...', 'info');
+          window.location.href = json.url;
+        } else {
+          setModalError('آدرس درگاه پرداخت زرین‌پال دریافت نشد.');
+          setIsProcessingPayment(false);
         }
       } catch (err: any) {
         setIsProcessingPayment(false);
-        setModalError('خطا در ثبت اشتراک و تراکنش در سیستم: ' + err.message);
+        setModalError('خطا در اتصال به درگاه: ' + err.message);
       }
-    }, 1500);
+    }
   };
 
   // --- TENANT ACTIONS ---
@@ -1618,14 +1619,14 @@ function DashboardContent() {
         {/* MAIN PANEL CONTENT SPACE */}
         <main className="flex-grow bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 lg:p-8 min-w-0 flex flex-col gap-6 relative">
           
-          {/* PAYMENT GATEWAY MODAL (OFFLINE CARD-TO-CARD ONLY) */}
+          {/* PAYMENT GATEWAY MODAL (ONLINE ZARINPAL & OFFLINE CARD-TO-CARD) */}
           {payingPlan && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
               <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 text-right space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]" dir="rtl">
                 <div className="flex justify-between items-center pb-3 border-b border-slate-800">
                   <h4 className="text-sm font-black text-white flex items-center gap-2">
                     <CreditCard className="h-4 w-4 text-blue-500" />
-                    پرداخت آفلاین و فعال‌سازی دستی طرح
+                    پرداخت و فعال‌سازی اشتراک
                   </h4>
                   <button 
                     onClick={() => {
@@ -1653,7 +1654,7 @@ function DashboardContent() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">مدت زمان اعتبار:</span>
-                    <span className="font-bold text-slate-200">{payingPlan.duration_days} روز</span>
+                    <span className="font-bold text-slate-200">{payingPlan.duration_days === -1 ? 'نامحدود (دائمی)' : `${payingPlan.duration_days} روز`}</span>
                   </div>
                   <div className="flex justify-between items-center pt-1 border-t border-slate-850">
                     <span className="text-slate-400">مبلغ نهایی قابل پرداخت:</span>
@@ -1661,163 +1662,202 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                {/* Bank Card Info Section */}
-                <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl space-y-3 text-xs text-slate-300">
-                  <p className="font-bold text-blue-400 flex items-center gap-1">
-                    📌 اطلاعات حساب بانکی مگاکارت جهت واریز کارت به کارت:
-                  </p>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-850/60">
-                      <span className="text-slate-400">شماره کارت بانکی:</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-white font-black tracking-wider text-sm select-all">
-                          {siteSettings?.bank_card || '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(siteSettings?.bank_card || '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸');
-                            showToast('شماره کارت با موفقیت کپی شد.', 'success');
-                          }}
-                          className="p-1 hover:bg-slate-900 rounded text-blue-400 hover:text-blue-300 transition cursor-pointer"
-                          title="کپی شماره کارت"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-850/60">
-                      <span className="text-slate-400">به نام:</span>
-                      <span className="text-white font-extrabold text-xs">
-                        {siteSettings?.bank_name || 'مگاکارت دیجیتال سیستم'}
-                      </span>
-                    </div>
+                {/* Gateway Type Selector */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-400 block">انتخاب روش پرداخت:</label>
+                  <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-2xl border border-slate-850 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setSimulatedGateway('درگاه آنلاین زرین‌پال')}
+                      className={`py-2 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 ${
+                        !simulatedGateway.includes('کارت به کارت') ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                      <span>درگاه آنلاین (زرین‌پال)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSimulatedGateway('کارت به کارت (آفلاین)')}
+                      className={`py-2 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 ${
+                        simulatedGateway.includes('کارت به کارت') ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <WalletIcon className="h-3.5 w-3.5" />
+                      <span>کارت به کارت (آفلاین)</span>
+                    </button>
                   </div>
-                  
-                  <p className="text-[10px] text-slate-400 leading-relaxed pt-1">
-                    لطفاً مبلغ مشخص‌شده را به کارت فوق واریز نموده، سپس تصویر فیش واریزی خود را ثبت و اطلاعات آن را در فرم زیر وارد نمایید.
-                  </p>
                 </div>
 
-                {/* OFFLINE PAYMENT SUBMISSION FORM */}
-                <div className="space-y-3.5 text-right">
-                  {/* File Upload Area for Receipt */}
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-400 block">تصویر فیش یا رسید واریز (اجباری):</label>
-                    {!receiptFileId ? (
-                      <div
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          setIsDragOver(true);
-                        }}
-                        onDragLeave={() => setIsDragOver(false)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setIsDragOver(false);
-                          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                            handleReceiptUpload(e.dataTransfer.files[0]);
-                          }
-                        }}
-                        className={`relative border-2 border-dashed rounded-xl p-5 text-center transition flex flex-col items-center justify-center gap-2 ${
-                          isDragOver
-                            ? 'border-blue-500 bg-blue-500/5'
-                            : 'border-slate-850 bg-slate-950 hover:bg-slate-900/20'
-                        }`}
-                      >
-                        {uploadingReceipt ? (
-                          <div className="py-2 flex flex-col items-center gap-1.5">
-                            <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
-                            <span className="text-[10px] text-slate-400 font-bold">در حال بارگذاری تصویر فیش...</span>
-                          </div>
-                        ) : (
-                          <>
-                            <CreditCard className="h-6 w-6 text-slate-500" />
-                            <div className="text-[10px] text-slate-400">
-                              <p className="font-bold text-slate-300">تصویر فیش را به اینجا بکشید یا کلیک کنید</p>
-                              <p className="mt-0.5 text-[9px]">فرمت‌های JPG, PNG, WEBP (تا ۵ مگابایت)</p>
-                            </div>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                  handleReceiptUpload(e.target.files[0]);
-                                }
+                {/* ONLINE ZARINPAL METHOD NOTICE */}
+                {!simulatedGateway.includes('کارت به کارت') && (
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl space-y-2 text-xs text-blue-300">
+                    <div className="flex items-center gap-2 font-bold text-white">
+                      <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                      <span>پرداخت آنلاین آنی زرین‌پال</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      پس از کلیک روی دکمه پرداخت، به صورت امن به درگاه پرداخت شتابی زرین‌پال منتقل خواهید شد. بلافاصله پس از تکمیل تراکنش، اشتراک شما به صورت خودکار فعال می‌گردد.
+                    </p>
+                  </div>
+                )}
+
+                {/* OFFLINE CARD TO CARD FORM */}
+                {simulatedGateway.includes('کارت به کارت') && (
+                  <>
+                    <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl space-y-3 text-xs text-slate-300">
+                      <p className="font-bold text-blue-400 flex items-center gap-1">
+                        📌 اطلاعات حساب بانکی جهت واریز کارت به کارت:
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-850/60">
+                          <span className="text-slate-400">شماره کارت بانکی:</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-white font-black tracking-wider text-sm select-all">
+                              {siteSettings?.bank_card || '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(siteSettings?.bank_card || '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸');
+                                showToast('شماره کارت با موفقیت کپی شد.', 'success');
                               }}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              id="receipt-upload"
-                            />
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-slate-950 border border-slate-850 rounded-xl flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="h-10 w-10 rounded bg-slate-900 border border-slate-800 overflow-hidden relative shrink-0">
-                            <img
-                              src={getImageUrl(receiptFileId)}
-                              alt="Receipt preview"
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-bold text-slate-200 truncate">{receiptFileName || 'تصویر رسید پرداخت'}</p>
-                            <p className="text-[9px] text-emerald-400 font-bold">✓ آماده ارسال فاکتور</p>
+                              className="p-1 hover:bg-slate-900 rounded text-blue-400 hover:text-blue-300 transition cursor-pointer"
+                              title="کپی شماره کارت"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setReceiptFileId(null);
-                            setReceiptFileName(null);
-                          }}
-                          className="px-2 py-1 bg-red-950/40 hover:bg-red-900/30 text-red-400 border border-red-900/40 rounded-lg text-[9px] font-bold transition cursor-pointer"
-                        >
-                          حذف فیش
-                        </button>
+                        
+                        <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-850/60">
+                          <span className="text-slate-400">به نام:</span>
+                          <span className="text-white font-extrabold text-xs">
+                            {siteSettings?.bank_name || 'مگاکارت دیجیتال سیستم'}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-400 block">کد رهگیری / شماره ارجاع تراکنش:</label>
-                      <input
-                        type="text"
-                        required
-                        value={offlineRefId}
-                        onChange={(e) => setOfflineRefId(e.target.value)}
-                        placeholder="مثال: ۹۸۷۶۵۴۳۲۱۰"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white placeholder:text-slate-600 focus:border-blue-500"
-                      />
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-400 block">تاریخ و ساعت دقیق واریز:</label>
-                      <input
-                        type="text"
-                        required
-                        value={offlineDepositTime}
-                        onChange={(e) => setOfflineDepositTime(e.target.value)}
-                        placeholder="مثال: امروز ساعت ۱۴:۳۰"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-blue-500"
-                      />
-                    </div>
+                    <div className="space-y-3.5 text-right">
+                      {/* File Upload Area for Receipt */}
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-400 block">تصویر فیش یا رسید واریز (اجباری):</label>
+                        {!receiptFileId ? (
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setIsDragOver(true);
+                            }}
+                            onDragLeave={() => setIsDragOver(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setIsDragOver(false);
+                              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                handleReceiptUpload(e.dataTransfer.files[0]);
+                              }
+                            }}
+                            className={`relative border-2 border-dashed rounded-xl p-5 text-center transition flex flex-col items-center justify-center gap-2 ${
+                              isDragOver
+                                ? 'border-blue-500 bg-blue-500/5'
+                                : 'border-slate-850 bg-slate-950 hover:bg-slate-900/20'
+                            }`}
+                          >
+                            {uploadingReceipt ? (
+                              <div className="py-2 flex flex-col items-center gap-1.5">
+                                <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
+                                <span className="text-[10px] text-slate-400 font-bold">در حال بارگذاری تصویر فیش...</span>
+                              </div>
+                            ) : (
+                              <>
+                                <CreditCard className="h-6 w-6 text-slate-500" />
+                                <div className="text-[10px] text-slate-400">
+                                  <p className="font-bold text-slate-300">تصویر فیش را به اینجا بکشید یا کلیک کنید</p>
+                                  <p className="mt-0.5 text-[9px]">فرمت‌های JPG, PNG, WEBP (تا ۵ مگابایت)</p>
+                                </div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      handleReceiptUpload(e.target.files[0]);
+                                    }
+                                  }}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                  id="receipt-upload"
+                                />
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="p-3 bg-slate-950 border border-slate-850 rounded-xl flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="h-10 w-10 rounded bg-slate-900 border border-slate-800 overflow-hidden relative shrink-0">
+                                <img
+                                  src={getImageUrl(receiptFileId)}
+                                  alt="Receipt preview"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-slate-200 truncate">{receiptFileName || 'تصویر رسید پرداخت'}</p>
+                                <p className="text-[9px] text-emerald-400 font-bold">✓ آماده ارسال فاکتور</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReceiptFileId(null);
+                                setReceiptFileName(null);
+                              }}
+                              className="px-2 py-1 bg-red-950/40 hover:bg-red-900/30 text-red-400 border border-red-900/40 rounded-lg text-[9px] font-bold transition cursor-pointer"
+                            >
+                              حذف فیش
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-slate-400 block">توضیحات واریز (نام بانک مبدا یا نام واریزکننده):</label>
-                      <textarea
-                        rows={2}
-                        value={offlineNote}
-                        onChange={(e) => setOfflineNote(e.target.value)}
-                        placeholder="مثال: واریز از کارت بانک ملی به نام محمد..."
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 resize-none focus:border-blue-500"
-                      />
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-slate-400 block">کد رهگیری / شماره ارجاع تراکنش:</label>
+                          <input
+                            type="text"
+                            required
+                            value={offlineRefId}
+                            onChange={(e) => setOfflineRefId(e.target.value)}
+                            placeholder="مثال: ۹۸۷۶۵۴۳۲۱۰"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white placeholder:text-slate-600 focus:border-blue-500"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-slate-400 block">تاریخ و ساعت دقیق واریز:</label>
+                          <input
+                            type="text"
+                            required
+                            value={offlineDepositTime}
+                            onChange={(e) => setOfflineDepositTime(e.target.value)}
+                            placeholder="مثال: امروز ساعت ۱۴:۳۰"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-blue-500"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-slate-400 block">توضیحات واریز (نام بانک مبدا یا نام واریزکننده):</label>
+                          <textarea
+                            rows={2}
+                            value={offlineNote}
+                            onChange={(e) => setOfflineNote(e.target.value)}
+                            placeholder="مثال: واریز از کارت بانک ملی به نام محمد..."
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 resize-none focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800">
                   <button 
@@ -1832,11 +1872,11 @@ function DashboardContent() {
                   </button>
                   <button 
                     onClick={handleProcessSimulatedPayment}
-                    disabled={isProcessingPayment || uploadingReceipt}
-                    className="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 text-xs font-bold text-white transition flex items-center justify-center gap-2 cursor-pointer"
+                    disabled={isProcessingPayment || (simulatedGateway.includes('کارت به کارت') && uploadingReceipt)}
+                    className="py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-xs font-bold text-white transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-600/20"
                   >
                     {isProcessingPayment ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
-                    <span>ثبت و تایید پرداخت</span>
+                    <span>{!simulatedGateway.includes('کارت به کارت') ? 'انتقال به درگاه آنلاین زرین‌پال' : 'ثبت و تایید پرداخت'}</span>
                   </button>
                 </div>
               </div>
@@ -2367,7 +2407,7 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1.5 text-right">
                     <label className="text-[11px] font-bold text-slate-400 block">شماره ۱۶ رقمی کارت بانکی:</label>
                     <input
@@ -2389,16 +2429,27 @@ function DashboardContent() {
                       className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-blue-500"
                     />
                   </div>
+                  <div className="space-y-1.5 text-right">
+                    <label className="text-[11px] font-bold text-slate-400 block">کد مرچنت زرین‌پال (Merchant ID):</label>
+                    <input
+                      type="text"
+                      value={zarinpalMerchantInput}
+                      onChange={(e) => setZarinpalMerchantInput(e.target.value)}
+                      placeholder="مثال: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-blue-500 font-mono text-left"
+                      dir="ltr"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-2">
                   <button
                     onClick={handleSaveBankSettings}
                     disabled={isSavingSiteSettings}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-md shadow-blue-600/20"
                   >
                     {isSavingSiteSettings ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                    ذخیره تنظیمات حساب بانکی
+                    ذخیره تنظیمات درگاه و حساب بانکی
                   </button>
                 </div>
               </div>
