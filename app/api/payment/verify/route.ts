@@ -14,6 +14,14 @@ function getAuthHeaders(): Record<string, string> {
   return {};
 }
 
+function cleanMerchant(str: string): string {
+  if (!str) return '';
+  const p2e = str
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧۸۹'.indexOf(d).toString());
+  return p2e.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[^a-zA-Z0-9-]/g, '').trim();
+}
+
 function getZarinpalVerifyErrorMessage(code: number): string {
   switch (code) {
     case -50:
@@ -135,9 +143,20 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Fetch Zarinpal Merchant ID
-    let zarinpalMerchant = '';
+    let rawMerchant = '';
+    let isSandbox = false;
+
+    // Check transaction payload for sandbox flag or authority pattern
+    let parsedPayload = transaction.payload;
+    if (typeof parsedPayload === 'string') {
+      try { parsedPayload = JSON.parse(parsedPayload); } catch {}
+    }
+    if (parsedPayload?.is_sandbox || authority?.startsWith('S0000') || String(transaction.gateway).includes('آزمایشی')) {
+      isSandbox = true;
+    }
+
     try {
-      const settingsRes = await fetch(`${DIRECTUS_URL}/items/settings?limit=1`, {
+      let settingsRes = await fetch(`${DIRECTUS_URL}/items/settings?limit=1`, {
         headers: { ...getAuthHeaders() },
         cache: 'no-store'
       });
@@ -145,35 +164,69 @@ export async function POST(req: NextRequest) {
         const settingsJson = await settingsRes.json();
         const settingsData = Array.isArray(settingsJson?.data) ? settingsJson.data[0] : settingsJson?.data;
         if (settingsData?.zarinpal_merchant) {
-          zarinpalMerchant = settingsData.zarinpal_merchant.trim();
+          rawMerchant = settingsData.zarinpal_merchant;
+        }
+        if (settingsData?.zarinpal_sandbox === true || settingsData?.zarinpal_sandbox === 'true' || settingsData?.zarinpal_sandbox === 1) {
+          isSandbox = true;
+        }
+      }
+
+      if (!rawMerchant) {
+        const siteRes = await fetch(`${DIRECTUS_URL}/items/site_settings?limit=1`, {
+          headers: { ...getAuthHeaders() },
+          cache: 'no-store'
+        });
+        if (siteRes.ok) {
+          const siteJson = await siteRes.json();
+          const siteData = Array.isArray(siteJson?.data) ? siteJson.data[0] : siteJson?.data;
+          if (siteData?.zarinpal_merchant) {
+            rawMerchant = siteData.zarinpal_merchant;
+          }
+          if (siteData?.zarinpal_sandbox === true || siteData?.zarinpal_sandbox === 'true') {
+            isSandbox = true;
+          }
         }
       }
     } catch (sErr) {
       console.warn('Could not fetch Zarinpal merchant for verify:', sErr);
     }
 
+    if (!rawMerchant) {
+      rawMerchant = process.env.ZARINPAL_MERCHANT_ID || process.env.NEXT_PUBLIC_ZARINPAL_MERCHANT_ID || '';
+    }
+
+    let zarinpalMerchant = cleanMerchant(rawMerchant);
+
+    if (zarinpalMerchant.toLowerCase().includes('sandbox') || zarinpalMerchant === '00000000-0000-0000-0000-000000000000') {
+      isSandbox = true;
+      zarinpalMerchant = '00000000-0000-0000-0000-000000000000';
+    }
+
     if (!zarinpalMerchant) {
-      return NextResponse.json(
-        { success: false, error: 'مرچنت کد زرین‌پال در تنظیمات سیستم یافت نشد.' },
-        { status: 500 }
-      );
+      zarinpalMerchant = isSandbox ? '00000000-0000-0000-0000-000000000000' : '';
     }
 
     // 3. Send Verification request to Zarinpal REST API v4
     const verifyPayload = {
       merchant_id: zarinpalMerchant,
-      amount: Number(transaction.amount) * 10, // Rials
+      amount: Number(transaction.amount), // Tomans (IRT)
       authority: authority
     };
 
+    const verifyEndpoint = isSandbox
+      ? 'https://sandbox.zarinpal.com/pg/v4/payment/verify.json'
+      : 'https://api.zarinpal.com/pg/v4/payment/verify.json';
+
     console.log('[Zarinpal Verify] Sending verify to Zarinpal:', {
+      endpoint: verifyEndpoint,
       authority,
-      amount_tomans: transaction.amount
+      amount_tomans: transaction.amount,
+      isSandbox
     });
 
     let verifyRes;
     try {
-      verifyRes = await fetch('https://api.zarinpal.com/pg/v4/payment/verify.json', {
+      verifyRes = await fetch(verifyEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -189,7 +242,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const verifyJson = await verifyRes.json().catch(() => null);
+    let verifyJson = await verifyRes.json().catch(() => null);
+
+    // If verification failed and we were not in sandbox, try sandbox as fallback if authority looks like sandbox
+    if ((!verifyRes.ok || verifyJson?.data?.code !== 100 && verifyJson?.data?.code !== 101) && !isSandbox && authority.startsWith('S000')) {
+      try {
+        const sbRes = await fetch('https://sandbox.zarinpal.com/pg/v4/payment/verify.json', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(verifyPayload)
+        });
+        if (sbRes.ok) {
+          verifyJson = await sbRes.json().catch(() => null);
+        }
+      } catch {}
+    }
 
     const code = verifyJson?.data?.code;
     const refId = verifyJson?.data?.ref_id ? String(verifyJson.data.ref_id) : `ZARIN-${Math.floor(100000 + Math.random() * 900000)}`;

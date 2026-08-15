@@ -330,11 +330,12 @@ function DashboardContent() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [viewingReceiptUrl, setViewingReceiptUrl] = useState<string | null>(null);
 
-  const [siteSettings, setSiteSettings] = useState<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string } | null>(null);
+  const [siteSettings, setSiteSettings] = useState<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string; zarinpal_sandbox?: boolean } | null>(null);
   const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
   const [bankCardInput, setBankCardInput] = useState('');
   const [bankNameInput, setBankNameInput] = useState('');
   const [zarinpalMerchantInput, setZarinpalMerchantInput] = useState('');
+  const [zarinpalSandboxInput, setZarinpalSandboxInput] = useState(false);
 
   // Tenant Panel States
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -393,6 +394,7 @@ function DashboardContent() {
         setBankCardInput(fetchedSiteSettings.bank_card || '');
         setBankNameInput(fetchedSiteSettings.bank_name || '');
         setZarinpalMerchantInput(fetchedSiteSettings.zarinpal_merchant || '');
+        setZarinpalSandboxInput(Boolean(fetchedSiteSettings.zarinpal_sandbox));
       }
 
       const session = authService.getCurrentUser();
@@ -796,9 +798,10 @@ function DashboardContent() {
       await dbService.saveSiteSettings({
         bank_card: bankCardInput.trim(),
         bank_name: bankNameInput.trim(),
-        zarinpal_merchant: zarinpalMerchantInput.trim()
+        zarinpal_merchant: zarinpalMerchantInput.trim(),
+        zarinpal_sandbox: zarinpalSandboxInput
       });
-      showToast('تنظیمات درگاه پرداخت و کارت بانکی با موفقیت به‌روزرسانی شد.', 'success');
+      showToast('تنظیمات درگاه پرداخت و حساب بانکی با موفقیت به‌روزرسانی شد.', 'success');
       await refreshData();
     } catch (err: any) {
       showToast('خطا در ذخیره تنظیمات: ' + err.message, 'error');
@@ -2440,6 +2443,30 @@ function DashboardContent() {
                       dir="ltr"
                     />
                   </div>
+                </div>
+
+                {/* Sandbox Toggle */}
+                <div className="flex items-center justify-between p-3 bg-slate-900/60 border border-slate-800 rounded-xl">
+                  <div className="text-right space-y-0.5">
+                    <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                      <span>حالت آزمایشی زرین‌پال (Sandbox Mode)</span>
+                      {zarinpalSandboxInput && (
+                        <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] rounded font-mono">تستی فعال است</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      جهت تست درگاه بدون کسر وجه واقعی و بدون محدودیت دامنه، این گزینه را فعال نمایید. در محیط واقعی آنلاین، آن را غیرفعال بگذارید.
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={zarinpalSandboxInput}
+                      onChange={(e) => setZarinpalSandboxInput(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                  </label>
                 </div>
 
                 <div className="flex justify-end pt-2">

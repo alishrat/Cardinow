@@ -14,34 +14,53 @@ function getAuthHeaders(): Record<string, string> {
   return {};
 }
 
-// Translate Zarinpal error codes
-function getZarinpalErrorMessage(code: number): string {
-  switch (code) {
-    case -9:
-      return 'خطای خطای صادرشده از درگاه: خطای خطای کد مرچنت زرین‌پال (Merchant ID معتبر نیست یا کوتاه است).';
-    case -10:
-      return 'آی‌پی یا دامنه مبدا با اطلاعات ثبت‌شده در زرین‌پال مطابقت ندارد.';
-    case -11:
-      return 'مرچنت کد فعال نیست. لطفاً با پشتیبانی زرین‌پال تماس بگیرید.';
-    case -12:
-      return 'تعداد تلاش‌های ناموفق بیش از حد مجاز است.';
-    case -15:
-      return 'درگاه پرداخت به دلیل تخلف یا عدم تکمیل مدارک تعلیق شده است.';
-    case -21:
-      return 'هیچ نوع مالیاتی برای این پذیرنده یافت نشد.';
-    case -22:
-      return 'تراکنش ناموفق (پذیرنده غیرفعال است).';
-    case -33:
-      return 'مبلغ تراکنش با قوانین درگاه مطابقت ندارد.';
-    case -34:
-      return 'مبلغ تراکنش کمتر از حداقل حد مجاز (۱,۰۰۰ تومان) است.';
-    case -35:
-      return 'مبلغ تراکنش بیش از حداکثر حد مجاز است.';
-    case -40:
-      return 'پارامترهای ارسالی نامعتبر است.';
-    default:
-      return `خطای کد ${code} در اتصال به درگاه زرین‌پال.`;
+function cleanMerchant(str: string): string {
+  if (!str) return '';
+  const p2e = str
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
+  return p2e.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[^a-zA-Z0-9-]/g, '').trim();
+}
+
+// Translate Zarinpal error codes with details
+function getZarinpalErrorMessage(code: number, originalMsg?: string, details?: any): string {
+  if (code === -9) {
+    return 'کد مرچنت زرین‌پال (Merchant ID) معتبر نیست. کد مرچنت باید یک شناسه ۳۶ کاراکتری معتبر ثبت‌شده در زرین‌پال باشد (مثال: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).';
   }
+  if (code === -10) {
+    return 'آی‌پی یا دامنه مبدا با اطلاعات ثبت‌شده در پنل زرین‌پال مطابقت ندارد.';
+  }
+  if (code === -11) {
+    return 'مرچنت کد در زرین‌پال فعال نیست یا مدارک درگاه هنوز تایید نشده است. لطفاً با پشتیبانی زرین‌پال تماس بگیرید.';
+  }
+  if (code === -12) {
+    return 'تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً دقایقی دیگر مجدداً تلاش نمایید.';
+  }
+  if (code === -14) {
+    return 'دامنه آدرس بازگشت (Callback Domain) با دامنه ثبت‌شده برای این درگاه در پنل زرین‌پال مطابقت ندارد. لطفاً درگاه را روی دامنه اصلی خود فراخوانی کنید یا جهت تست، حالت Sandbox را در تنظیمات فعال نمایید.';
+  }
+  if (code === -15) {
+    return 'درگاه پرداخت توسط زرین‌پال به دلیل عدم احراز یا نقض قوانین تعلیق گردیده است.';
+  }
+  if (code === -21) {
+    return 'هیچ نوع اطلاعات مالیاتی برای این پذیرنده در سامانه مالیاتی زرین‌پال یافت نشد.';
+  }
+  if (code === -22) {
+    return 'تراکنش ناموفق است؛ پذیرنده درگاه غیرفعال شده است.';
+  }
+  if (code === -33) {
+    return 'مبلغ تراکنش با قوانین و سقف تراکنش درگاه زرین‌پال همخوانی ندارد.';
+  }
+  if (code === -34) {
+    return 'مبلغ تراکنش کمتر از حداقل حد مجاز زرین‌پال (۱,۰۰۰ تومان) است.';
+  }
+  if (code === -35) {
+    return 'مبلغ تراکنش بیش از حداکثر سقف مجاز پرداخت است.';
+  }
+  if (code === -40) {
+    return 'پارامترهای ارسالی به درگاه پرداخت نامعتبر است.';
+  }
+  return originalMsg || `خطای درگاه زرین‌پال (کد خطا: ${code})`;
 }
 
 export async function POST(req: NextRequest) {
@@ -77,10 +96,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Fetch Zarinpal Merchant ID from Directus settings collection
-    let zarinpalMerchant = '';
+    // 1. Fetch Zarinpal Merchant ID from Directus settings / site_settings collection
+    let rawMerchant = '';
+    let isSandbox = false;
     try {
-      const settingsRes = await fetch(`${DIRECTUS_URL}/items/settings?limit=1`, {
+      let settingsRes = await fetch(`${DIRECTUS_URL}/items/settings?limit=1`, {
         headers: { ...getAuthHeaders() },
         cache: 'no-store'
       });
@@ -88,18 +108,63 @@ export async function POST(req: NextRequest) {
         const settingsJson = await settingsRes.json();
         const settingsData = Array.isArray(settingsJson?.data) ? settingsJson.data[0] : settingsJson?.data;
         if (settingsData?.zarinpal_merchant) {
-          zarinpalMerchant = settingsData.zarinpal_merchant.trim();
+          rawMerchant = settingsData.zarinpal_merchant;
+        }
+        if (settingsData?.zarinpal_sandbox === true || settingsData?.zarinpal_sandbox === 'true' || settingsData?.zarinpal_sandbox === 1) {
+          isSandbox = true;
+        }
+      }
+
+      if (!rawMerchant) {
+        const siteRes = await fetch(`${DIRECTUS_URL}/items/site_settings?limit=1`, {
+          headers: { ...getAuthHeaders() },
+          cache: 'no-store'
+        });
+        if (siteRes.ok) {
+          const siteJson = await siteRes.json();
+          const siteData = Array.isArray(siteJson?.data) ? siteJson.data[0] : siteJson?.data;
+          if (siteData?.zarinpal_merchant) {
+            rawMerchant = siteData.zarinpal_merchant;
+          }
+          if (siteData?.zarinpal_sandbox === true || siteData?.zarinpal_sandbox === 'true') {
+            isSandbox = true;
+          }
         }
       }
     } catch (sErr) {
       console.warn('Could not fetch settings for Zarinpal merchant:', sErr);
     }
 
+    if (!rawMerchant) {
+      rawMerchant = process.env.ZARINPAL_MERCHANT_ID || process.env.NEXT_PUBLIC_ZARINPAL_MERCHANT_ID || '';
+    }
+
+    let zarinpalMerchant = cleanMerchant(rawMerchant);
+
+    if (zarinpalMerchant.toLowerCase().includes('sandbox') || zarinpalMerchant === '00000000-0000-0000-0000-000000000000') {
+      isSandbox = true;
+    }
+
     if (!zarinpalMerchant) {
+      if (isSandbox) {
+        zarinpalMerchant = '00000000-0000-0000-0000-000000000000';
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'کد مرچنت زرین‌پال در تنظیمات سیستم ثبت نشده است. لطفاً در بخش تنظیمات پنل مدیریت، کد مرچنت ۳۶ رقمی زرین‌پال خود را وارد نمایید.'
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate merchant ID length
+    if (!isSandbox && zarinpalMerchant.length < 32) {
       return NextResponse.json(
         {
           success: false,
-          error: 'کد مرچنت زرین‌پال (zarinpal_merchant) در تنظیمات سیستم تعریف نشده است. لطفاً ابتدا در بخش تنظیمات یا مدیریت کیف‌پول‌ها کد مرچنت زرین‌پال را ذخیره نمایید.'
+          error: `کد مرچنت زرین‌پال وارد شده (${zarinpalMerchant}) نامعتبر یا کوتاه است. کد مرچنت اختصاصی زرین‌پال باید ۳۶ کاراکتر به فرمت xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx باشد.`
         },
         { status: 400 }
       );
@@ -116,8 +181,8 @@ export async function POST(req: NextRequest) {
     // 3. Call Zarinpal REST API v4 Payment Request Endpoint
     const zarinpalPayload = {
       merchant_id: zarinpalMerchant,
-      amount: amountNum * 10, // Convert Tomans to Rials for Zarinpal IRR API
-      currency: "IRR",
+      amount: amountNum, // Zarinpal v4 supports Tomans (IRT)
+      currency: "IRT",
       description: description || `پرداخت آنلاین مگاکارت - ${payment_type === 'plan' ? 'خرید اشتراک' : 'شارژ کیف پول'}`,
       callback_url: callbackUrl,
       metadata: {
@@ -126,7 +191,13 @@ export async function POST(req: NextRequest) {
       }
     };
 
+    const zarinpalApiEndpoint = isSandbox
+      ? 'https://sandbox.zarinpal.com/pg/v4/payment/request.json'
+      : 'https://api.zarinpal.com/pg/v4/payment/request.json';
+
     console.log('[Zarinpal Request] Sending request to Zarinpal:', {
+      endpoint: zarinpalApiEndpoint,
+      isSandbox,
       merchant_id: zarinpalMerchant.slice(0, 8) + '***',
       amount_tomans: amountNum,
       callback_url: callbackUrl
@@ -134,7 +205,7 @@ export async function POST(req: NextRequest) {
 
     let zarinpalRes;
     try {
-      zarinpalRes = await fetch('https://api.zarinpal.com/pg/v4/payment/request.json', {
+      zarinpalRes = await fetch(zarinpalApiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +225,8 @@ export async function POST(req: NextRequest) {
 
     if (!zarinpalRes.ok || !zarinpalJson?.data || zarinpalJson?.data?.code !== 100) {
       const errCode = zarinpalJson?.data?.code || zarinpalJson?.errors?.code || -1;
-      const errMsg = getZarinpalErrorMessage(errCode);
+      const rawErrMsg = zarinpalJson?.errors?.message || zarinpalJson?.data?.message;
+      const errMsg = getZarinpalErrorMessage(errCode, rawErrMsg, zarinpalJson?.errors);
       console.error('[Zarinpal Request] Failed:', zarinpalJson);
       return NextResponse.json(
         {
@@ -181,7 +253,7 @@ export async function POST(req: NextRequest) {
       user_id: user_id,
       tenant_id: tenant_id || null,
       amount: amountNum,
-      gateway: 'زرین‌پال',
+      gateway: isSandbox ? 'زرین‌پال (آزمایشی)' : 'زرین‌پال',
       authority: authority,
       ref_id: 'در انتظار پرداخت',
       status: 'pending',
@@ -193,6 +265,7 @@ export async function POST(req: NextRequest) {
         wallet_id: wallet_id || null,
         user_id: user_id,
         tenant_id: tenant_id || null,
+        is_sandbox: isSandbox,
         created_at: new Date().toISOString()
       })
     };
@@ -210,14 +283,17 @@ export async function POST(req: NextRequest) {
       console.warn('Could not save pending transaction to Directus:', txDbErr);
     }
 
-    const redirectUrl = `https://www.zarinpal.com/pg/StartPay/${authority}`;
+    const redirectUrl = isSandbox
+      ? `https://sandbox.zarinpal.com/pg/StartPay/${authority}`
+      : `https://www.zarinpal.com/pg/StartPay/${authority}`;
 
     return NextResponse.json({
       success: true,
       url: redirectUrl,
       authority: authority,
       transaction_id: txId,
-      amount: amountNum
+      amount: amountNum,
+      is_sandbox: isSandbox
     });
 
   } catch (err: any) {

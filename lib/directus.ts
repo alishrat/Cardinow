@@ -1766,7 +1766,7 @@ export const dbService = {
       console.warn('Failed to update local transactions cache:', e);
     }
   },
-  getSiteSettings: async (): Promise<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string } | null> => {
+  getSiteSettings: async (): Promise<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string; zarinpal_sandbox?: boolean } | null> => {
     try {
       let res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
         headers: { ...getAuthHeaders() }
@@ -1789,16 +1789,17 @@ export const dbService = {
         return {
           bank_card: record.bank_card || record.card_number || '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸',
           bank_name: record.bank_name || record.account_name || 'مگاکارت دیجیتال سیستم',
-          zarinpal_merchant: record.zarinpal_merchant || ''
+          zarinpal_merchant: record.zarinpal_merchant || '',
+          zarinpal_sandbox: record.zarinpal_sandbox === true || record.zarinpal_sandbox === 'true' || record.zarinpal_sandbox === 1
         };
       }
-      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '' };
+      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '', zarinpal_sandbox: false };
     } catch {
       console.warn('Directus site settings fetch failed, using defaults');
-      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '' };
+      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '', zarinpal_sandbox: false };
     }
   },
-  saveSiteSettings: async (settings: { bank_card?: string; bank_name?: string; zarinpal_merchant?: string }): Promise<void> => {
+  saveSiteSettings: async (settings: { bank_card?: string; bank_name?: string; zarinpal_merchant?: string; zarinpal_sandbox?: boolean }): Promise<void> => {
     try {
       let res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
         method: 'PATCH',
