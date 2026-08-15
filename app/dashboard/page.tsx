@@ -871,6 +871,14 @@ function DashboardContent() {
       // Real Zarinpal Online Payment
       setIsProcessingPayment(true);
       try {
+        const isSandboxEnabled = typeof window !== 'undefined' && (
+          localStorage.getItem('megacard_zarinpal_sandbox') === 'true' ||
+          window.location.hostname.includes('ais-dev') ||
+          window.location.hostname.includes('run.app') ||
+          window.location.hostname.includes('localhost') ||
+          zarinpalSandboxInput === true
+        );
+
         const res = await fetch('/api/payment/request', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -884,7 +892,8 @@ function DashboardContent() {
             plan_title: payingPlan.title,
             plan_duration: payingPlan.duration_days,
             email: user.email,
-            mobile: (user as any).phone
+            mobile: (user as any).phone,
+            is_sandbox: isSandboxEnabled
           })
         });
 

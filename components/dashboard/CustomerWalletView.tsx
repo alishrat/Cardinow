@@ -79,6 +79,13 @@ export function CustomerWalletView({
 
     try {
       if (paymentMethod === 'online') {
+        const isSandboxEnabled = typeof window !== 'undefined' && (
+          localStorage.getItem('megacard_zarinpal_sandbox') === 'true' ||
+          window.location.hostname.includes('ais-dev') ||
+          window.location.hostname.includes('run.app') ||
+          window.location.hostname.includes('localhost')
+        );
+
         // Zarinpal Real Online Gateway Redirect
         const res = await fetch('/api/payment/request', {
           method: 'POST',
@@ -91,7 +98,8 @@ export function CustomerWalletView({
             payment_type: 'wallet',
             wallet_id: wallet.id,
             email: user?.email,
-            mobile: user?.phone
+            mobile: user?.phone,
+            is_sandbox: isSandboxEnabled
           })
         });
 

@@ -1768,32 +1768,70 @@ export const dbService = {
   },
   getSiteSettings: async (): Promise<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string; zarinpal_sandbox?: boolean } | null> => {
     try {
-      let res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
-        headers: { ...getAuthHeaders() }
-      });
-      if (!res.ok) {
-        res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
-          headers: { ...getAuthHeaders() }
+      let bank_card = '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸';
+      let bank_name = 'مگاکارت دیجیتال سیستم';
+      let zarinpal_merchant = '';
+      let zarinpal_sandbox = false;
+
+      // 1. Fetch zarinpal merchant from settings
+      try {
+        const resSettings = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
+          headers: { ...getAuthHeaders() },
+          cache: 'no-store'
         });
+        if (resSettings.ok) {
+          const json = await resSettings.json();
+          const record = Array.isArray(json?.data) ? json.data[0] : json?.data;
+          if (record?.zarinpal_merchant) {
+            zarinpal_merchant = record.zarinpal_merchant;
+          }
+          if (record?.zarinpal_sandbox === true || record?.zarinpal_sandbox === 'true' || record?.zarinpal_sandbox === 1) {
+            zarinpal_sandbox = true;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read Directus settings collection:', e);
       }
-      if (!res.ok) throw new Error('Failed to fetch site settings');
-      const json = await res.json();
-      const data = json?.data;
-      let record: any = null;
-      if (Array.isArray(data)) {
-        record = data[0];
-      } else if (data && typeof data === 'object') {
-        record = data;
+
+      // 2. Fetch bank card and name from site_settings
+      try {
+        const resSite = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
+          headers: { ...getAuthHeaders() },
+          cache: 'no-store'
+        });
+        if (resSite.ok) {
+          const json = await resSite.json();
+          const record = Array.isArray(json?.data) ? json.data[0] : json?.data;
+          if (record?.bank_card || record?.card_number) {
+            bank_card = record.bank_card || record.card_number;
+          }
+          if (record?.bank_name || record?.account_name) {
+            bank_name = record.bank_name || record.account_name;
+          }
+          if (record?.zarinpal_merchant && !zarinpal_merchant) {
+            zarinpal_merchant = record.zarinpal_merchant;
+          }
+          if (record?.zarinpal_sandbox === true || record?.zarinpal_sandbox === 'true') {
+            zarinpal_sandbox = true;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read Directus site_settings collection:', e);
       }
-      if (record) {
-        return {
-          bank_card: record.bank_card || record.card_number || '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸',
-          bank_name: record.bank_name || record.account_name || 'مگاکارت دیجیتال سیستم',
-          zarinpal_merchant: record.zarinpal_merchant || '',
-          zarinpal_sandbox: record.zarinpal_sandbox === true || record.zarinpal_sandbox === 'true' || record.zarinpal_sandbox === 1
-        };
+
+      if (typeof window !== 'undefined') {
+        const localSandbox = localStorage.getItem('megacard_zarinpal_sandbox');
+        if (localSandbox !== null) {
+          zarinpal_sandbox = localSandbox === 'true';
+        }
       }
-      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '', zarinpal_sandbox: false };
+
+      return {
+        bank_card,
+        bank_name,
+        zarinpal_merchant,
+        zarinpal_sandbox
+      };
     } catch {
       console.warn('Directus site settings fetch failed, using defaults');
       return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '', zarinpal_sandbox: false };
@@ -1801,68 +1839,43 @@ export const dbService = {
   },
   saveSiteSettings: async (settings: { bank_card?: string; bank_name?: string; zarinpal_merchant?: string; zarinpal_sandbox?: boolean }): Promise<void> => {
     try {
-      let res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify(settings)
-      });
-      if (res.ok) return;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('megacard_zarinpal_sandbox', String(Boolean(settings.zarinpal_sandbox)));
+      }
 
-      res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify(settings)
-      });
-      if (res.ok) return;
+      // 1. Save merchant to settings collection
+      if (settings.zarinpal_merchant !== undefined) {
+        try {
+          await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders()
+            },
+            body: JSON.stringify({ zarinpal_merchant: settings.zarinpal_merchant })
+          });
+        } catch (e) {
+          console.warn('Failed to patch settings collection:', e);
+        }
+      }
 
-      res = await fetch(`${DIRECTUS_BASE_URL}/items/settings/1`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify(settings)
-      });
-      if (res.ok) return;
-
-      res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings/1`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify(settings)
-      });
-      if (res.ok) return;
-
-      res = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify({ id: 1, ...settings })
-      });
-      if (res.ok) return;
-
-      res = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify({ id: 1, ...settings })
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error('Failed to save site settings in Directus:', errText);
-        throw new Error('خطا در پاسخ‌دهی پایگاه داده هنگام ذخیره تنظیمات');
+      // 2. Save bank details to site_settings collection
+      if (settings.bank_card !== undefined || settings.bank_name !== undefined) {
+        try {
+          const payload: any = {};
+          if (settings.bank_card !== undefined) payload.bank_card = settings.bank_card;
+          if (settings.bank_name !== undefined) payload.bank_name = settings.bank_name;
+          await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders()
+            },
+            body: JSON.stringify(payload)
+          });
+        } catch (e) {
+          console.warn('Failed to patch site_settings collection:', e);
+        }
       }
     } catch (err: any) {
       throw new Error('خطا در ذخیره تنظیمات حساب بانکی: ' + err.message);
