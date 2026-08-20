@@ -11,7 +11,7 @@ import {
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
   Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, UserCheck, List, X,
-  Wallet as WalletIcon, ShoppingBag
+  Wallet as WalletIcon, ShoppingBag, Filter
 } from 'lucide-react';
 
 // Modular Subcomponents Imports
@@ -346,9 +346,11 @@ function DashboardContent() {
   const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
   const [adminCardsSearch, setAdminCardsSearch] = useState<string>('');
   const [adminCardsViewMode, setAdminCardsViewMode] = useState<'grid' | 'table'>('grid');
+  const [adminCardsUserFilter, setAdminCardsUserFilter] = useState<string>('all');
 
   // User Management States
   const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [viewingUserCardsModal, setViewingUserCardsModal] = useState<any | null>(null);
   const [isSavingUser, setIsSavingUser] = useState(false);
   const [adminUserSearch, setAdminUserSearch] = useState<string>('');
 
@@ -2638,26 +2640,45 @@ function DashboardContent() {
              ============================================== */}
           {user.role === 'admin' && activeTab === 'admin-cards' && (() => {
             const filteredAdminCards = cards.filter(card => {
+              // Filter by User
+              if (adminCardsUserFilter && adminCardsUserFilter !== 'all') {
+                if (toUUID(card.user_id) !== toUUID(adminCardsUserFilter)) {
+                  return false;
+                }
+              }
+
+              // Filter by Search Term
               const term = adminCardsSearch.toLowerCase().trim();
               if (!term) return true;
+
+              const cardOwner = allUsers.find(u => toUUID(u.id) === toUUID(card.user_id));
+              const ownerName = cardOwner ? `${cardOwner.first_name || ''} ${cardOwner.last_name || ''} ${cardOwner.name || ''}`.toLowerCase() : '';
+              const ownerEmail = (cardOwner?.email || '').toLowerCase();
+              const ownerMobile = (cardOwner?.mobile || '').toLowerCase();
+
               return (
                 card.first_name?.toLowerCase().includes(term) ||
                 card.last_name?.toLowerCase().includes(term) ||
                 card.job_title?.toLowerCase().includes(term) ||
                 card.company?.toLowerCase().includes(term) ||
-                card.slug?.toLowerCase().includes(term)
+                card.slug?.toLowerCase().includes(term) ||
+                ownerName.includes(term) ||
+                ownerEmail.includes(term) ||
+                ownerMobile.includes(term)
               );
             });
+
+            const selectedUserObj = adminCardsUserFilter !== 'all' ? allUsers.find(u => toUUID(u.id) === toUUID(adminCardsUserFilter)) : null;
 
             return (
               <div className="space-y-6">
                 <div className="border-b border-slate-800 pb-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <h2 className="text-xl font-bold text-white">نظارت و مدیریت کارت‌های ویزیت دیجیتال کاربران</h2>
-                    <p className="text-xs text-slate-400 mt-1">مشاهده، فیلتر و حذف تمامی کارت‌های ساخته‌شده در کل سامانه مگاکارت.</p>
+                    <p className="text-xs text-slate-400 mt-1">مشاهده، فیلتر بر اساس کاربر و حذف تمامی کارت‌های ساخته‌شده در کل سامانه مگاکارت.</p>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     {/* View Mode Switcher */}
                     <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 gap-1">
                       <button
@@ -2683,29 +2704,107 @@ function DashboardContent() {
                     </div>
 
                     <div className="text-xs bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 font-bold text-slate-300">
-                      تعداد کل کارت‌ها: <span className="text-amber-400">{cards.length}</span>
+                      {adminCardsUserFilter !== 'all' ? (
+                        <span>کارت‌های این کاربر: <span className="text-amber-400">{filteredAdminCards.length}</span> از {cards.length}</span>
+                      ) : (
+                        <span>تعداد کل کارت‌ها: <span className="text-amber-400">{cards.length}</span></span>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative">
-                  <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-500">
-                    <Search className="h-4 w-4" />
-                  </span>
-                  <input
-                    type="text"
-                    value={adminCardsSearch}
-                    onChange={(e) => setAdminCardsSearch(e.target.value)}
-                    placeholder="جستجو در نام، نام خانوادگی، شغل، شرکت یا آدرس Slug کارت..."
-                    className="w-full pr-10 pl-4 py-3 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
-                  />
+                {/* Filters Bar: Search & User Selector */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                  {/* Search Bar */}
+                  <div className="md:col-span-7 relative">
+                    <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-500">
+                      <Search className="h-4 w-4" />
+                    </span>
+                    <input
+                      type="text"
+                      value={adminCardsSearch}
+                      onChange={(e) => setAdminCardsSearch(e.target.value)}
+                      placeholder="جستجو در نام، نام خانوادگی، شغل، شرکت، آدرس Slug یا ایمیل و موبایل کاربر..."
+                      className="w-full pr-10 pl-4 py-3 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
+                    />
+                  </div>
+
+                  {/* Filter by User Dropdown */}
+                  <div className="md:col-span-5 relative flex items-center gap-2">
+                    <span className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-amber-400">
+                      <Filter className="h-4 w-4" />
+                    </span>
+                    <select
+                      value={adminCardsUserFilter}
+                      onChange={(e) => setAdminCardsUserFilter(e.target.value)}
+                      className="w-full pr-10 pl-3 py-3 bg-slate-950 border border-slate-850 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition appearance-none cursor-pointer"
+                    >
+                      <option value="all">همه کاربران (همه {cards.length} کارت)</option>
+                      {allUsers.map((u) => {
+                        const count = cards.filter(c => toUUID(c.user_id) === toUUID(u.id)).length;
+                        const userName = (u.first_name || u.last_name) ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : (u.name || u.email || 'کاربر بدون نام');
+                        const contact = u.email || u.mobile || '';
+                        return (
+                          <option key={u.id} value={u.id}>
+                            {userName} {contact ? `(${contact})` : ''} - [{count} کارت]
+                          </option>
+                        );
+                      })}
+                    </select>
+                    {adminCardsUserFilter !== 'all' && (
+                      <button
+                        onClick={() => setAdminCardsUserFilter('all')}
+                        className="shrink-0 p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-xs transition"
+                        title="نمایش همه کاربران"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Active Filter Notification Banner */}
+                {selectedUserObj && (
+                  <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs shrink-0">
+                        {(selectedUserObj.first_name?.[0] || selectedUserObj.name?.[0] || 'U').toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400">در حال نمایش کارت‌های کاربر:</span>
+                          <span className="font-bold text-white">
+                            {selectedUserObj.first_name || selectedUserObj.last_name ? `${selectedUserObj.first_name || ''} ${selectedUserObj.last_name || ''}`.trim() : selectedUserObj.name || 'کاربر بدون نام'}
+                          </span>
+                          <span className="text-[10px] text-amber-400 font-mono">({selectedUserObj.email || selectedUserObj.mobile})</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          تعداد کارت‌های پیدا شده: <span className="font-bold text-amber-400">{filteredAdminCards.length}</span> کارت
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setAdminCardsUserFilter('all')}
+                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-amber-400 hover:text-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      <span>حذف فیلتر و مشاهده همه کارت‌ها</span>
+                    </button>
+                  </div>
+                )}
 
                 {filteredAdminCards.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-slate-800 rounded-3xl space-y-3">
                     <LayoutGrid className="h-10 w-10 text-slate-600 mx-auto" />
-                    <p className="text-slate-500 text-xs font-bold">هیچ کارت ویزیتی با این مشخصات یافت نشد!</p>
+                    <p className="text-slate-500 text-xs font-bold">هیچ کارت ویزیتی با این مشخصات یا کاربر یافت نشد!</p>
+                    {adminCardsUserFilter !== 'all' && (
+                      <button
+                        onClick={() => setAdminCardsUserFilter('all')}
+                        className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition"
+                      >
+                        نمایش کارت‌های تمامی کاربران
+                      </button>
+                    )}
                   </div>
                 ) : adminCardsViewMode === 'table' ? (
                   /* LIST / TABLE VIEW */
@@ -2713,7 +2812,7 @@ function DashboardContent() {
                     <table className="w-full text-right">
                       <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 text-[10px] font-bold">
                         <tr>
-                          <th className="p-3">صاحب کارت</th>
+                          <th className="p-3">صاحب کارت / کاربر</th>
                           <th className="p-3">عنوان شغلی و شرکت</th>
                           <th className="p-3">آدرس اختصاصی (Slug)</th>
                           <th className="p-3">قالب</th>
@@ -2727,18 +2826,35 @@ function DashboardContent() {
                         {filteredAdminCards.map((card) => {
                           const template = templates.find(t => toUUID(t.id) === toUUID(card.template_id));
                           const cardTenant = tenants.find(t => toUUID(t.id) === toUUID(card.tenant_id));
+                          const cardOwner = allUsers.find(u => toUUID(u.id) === toUUID(card.user_id));
+                          const ownerDisplayName = cardOwner ? (cardOwner.first_name || cardOwner.last_name ? `${cardOwner.first_name || ''} ${cardOwner.last_name || ''}`.trim() : cardOwner.name || cardOwner.email || cardOwner.mobile) : 'نامشخص';
+
                           return (
                             <tr key={card.id} className="hover:bg-slate-900/40 align-middle">
                               <td className="p-3">
-                                <div className="flex items-center gap-2.5">
-                                  <div className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800 overflow-hidden shrink-0">
-                                    <img 
-                                      src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
-                                      alt="avatar" 
-                                      className="h-full w-full object-cover"
-                                    />
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800 overflow-hidden shrink-0">
+                                      <img 
+                                        src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
+                                        alt="avatar" 
+                                        className="h-full w-full object-cover"
+                                      />
+                                    </div>
+                                    <span className="font-bold text-white text-xs">{card.first_name} {card.last_name}</span>
                                   </div>
-                                  <span className="font-bold text-white text-xs">{card.first_name} {card.last_name}</span>
+                                  {cardOwner && (
+                                    <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                                      <span>کاربر:</span>
+                                      <button
+                                        onClick={() => setAdminCardsUserFilter(cardOwner.id)}
+                                        className="text-amber-400 hover:text-amber-300 hover:underline font-semibold"
+                                        title={`فیلتر فقط کارت‌های ${ownerDisplayName}`}
+                                      >
+                                        {ownerDisplayName}
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </td>
                               <td className="p-3">
@@ -2809,6 +2925,9 @@ function DashboardContent() {
                     {filteredAdminCards.map((card) => {
                       const template = templates.find(t => toUUID(t.id) === toUUID(card.template_id));
                       const cardTenant = tenants.find(t => toUUID(t.id) === toUUID(card.tenant_id));
+                      const cardOwner = allUsers.find(u => toUUID(u.id) === toUUID(card.user_id));
+                      const ownerDisplayName = cardOwner ? (cardOwner.first_name || cardOwner.last_name ? `${cardOwner.first_name || ''} ${cardOwner.last_name || ''}`.trim() : cardOwner.name || cardOwner.email || cardOwner.mobile) : 'نامشخص';
+
                       return (
                         <div 
                           key={card.id} 
@@ -2838,6 +2957,18 @@ function DashboardContent() {
                           </div>
 
                           <div className="py-2.5 border-t border-b border-slate-900 flex flex-col gap-1.5 text-[10px] text-slate-400">
+                            {cardOwner && (
+                              <div className="flex justify-between items-center bg-slate-900/50 p-1.5 rounded-lg">
+                                <span>کاربر مالک:</span>
+                                <button
+                                  onClick={() => setAdminCardsUserFilter(cardOwner.id)}
+                                  className="text-amber-400 hover:text-amber-300 font-bold hover:underline"
+                                  title={`فیلتر فقط کارت‌های این کاربر`}
+                                >
+                                  {ownerDisplayName}
+                                </button>
+                              </div>
+                            )}
                             <div className="flex justify-between">
                               <span>آدرس اختصاصی:</span>
                               <span className="font-mono text-blue-400 font-bold">{card.slug}/</span>
@@ -3009,9 +3140,19 @@ function DashboardContent() {
                                   )}
                                 </td>
                                 <td className="py-3 px-4">
-                                  <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                                    {userCardsCount} کارت
-                                  </span>
+                                  <button
+                                    onClick={() => setViewingUserCardsModal(u)}
+                                    className={`px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition ${
+                                      userCardsCount > 0 
+                                        ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 cursor-pointer' 
+                                        : 'bg-slate-900 text-slate-500 border border-slate-800 cursor-pointer hover:text-slate-300'
+                                    }`}
+                                    title={`مشاهده کارت‌های ${u.first_name || u.name || 'کاربر'}`}
+                                  >
+                                    <CreditCard className="h-3 w-3" />
+                                    <span>{userCardsCount} کارت</span>
+                                    <Eye className="h-2.5 w-2.5 opacity-80" />
+                                  </button>
                                 </td>
                                 <td className="py-3 px-4">
                                   {subEndDate ? (
@@ -3025,13 +3166,24 @@ function DashboardContent() {
                                   )}
                                 </td>
                                 <td className="py-3 px-4">
-                                  <button
-                                    onClick={() => setEditingUser(u)}
-                                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 text-amber-400 border border-slate-800 rounded-xl text-[10px] font-bold transition flex items-center gap-1.5"
-                                  >
-                                    <Edit2 className="h-3.5 w-3.5" />
-                                    <span> ویرایش</span>
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => setViewingUserCardsModal(u)}
+                                      className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 text-blue-400 hover:text-blue-300 border border-slate-800 rounded-xl text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                      title="مشاهده کارت‌های دیجیتال کاربر"
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                      <span>مشاهده کارت‌ها</span>
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingUser(u)}
+                                      className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 text-amber-400 hover:text-amber-300 border border-slate-800 rounded-xl text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                      title="ویرایش کاربر"
+                                    >
+                                      <Edit2 className="h-3.5 w-3.5" />
+                                      <span>ویرایش</span>
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             );
@@ -3245,6 +3397,221 @@ function DashboardContent() {
                     </div>
                   </div>
                 )}
+
+                {/* View User Cards Modal Popup */}
+                {viewingUserCardsModal && (() => {
+                  const targetUser = viewingUserCardsModal;
+                  const userCards = cards.filter(c => toUUID(c.user_id) === toUUID(targetUser.id));
+                  const userDisplayName = (targetUser.first_name || targetUser.last_name) ? `${targetUser.first_name || ''} ${targetUser.last_name || ''}`.trim() : (targetUser.name || targetUser.email || 'کاربر بدون نام');
+                  const totalUserViews = userCards.reduce((acc, c) => acc + (c.views_count || 0), 0);
+                  const userSub = subscriptions.find(s => toUUID(s.user_id) === toUUID(targetUser.id));
+                  const subEndDate = targetUser.subscription_end_date || userSub?.end_date;
+                  const isSubActive = subEndDate ? new Date(subEndDate) > new Date() : false;
+
+                  return (
+                    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 rtl overflow-y-auto" dir="rtl">
+                      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-4xl space-y-6 text-xs text-slate-300 relative shadow-2xl my-8 max-h-[90vh] flex flex-col">
+                        {/* Modal Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold text-lg shrink-0">
+                              {(targetUser.first_name?.[0] || targetUser.name?.[0] || 'U').toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-base font-bold text-white">کارت‌های دیجیتال کاربر: {userDisplayName}</h3>
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                                  targetUser.role === 'admin' 
+                                    ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                                    : targetUser.role === 'tenant' 
+                                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                                      : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                }`}>
+                                  {targetUser.role === 'admin' ? 'مدیر ارشد' : targetUser.role === 'tenant' ? 'نماینده' : 'مشتری'}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 mt-1 font-mono">
+                                {targetUser.email && <span>ایمیل: <span className="text-blue-400">{targetUser.email}</span></span>}
+                                {targetUser.mobile && <span>همراه: <span className="text-slate-300">{targetUser.mobile}</span></span>}
+                                <span>شناسه: <span className="text-slate-500">{targetUser.id}</span></span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-end sm:self-center">
+                            <button
+                              onClick={() => {
+                                setAdminCardsUserFilter(targetUser.id);
+                                setActiveTab('admin-cards');
+                                setViewingUserCardsModal(null);
+                              }}
+                              className="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md"
+                            >
+                              <Filter className="h-3.5 w-3.5" />
+                              <span>مدیریت جامع در صفحه کارت‌ها</span>
+                            </button>
+                            <button
+                              onClick={() => setViewingUserCardsModal(null)}
+                              className="p-2 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white rounded-xl transition cursor-pointer"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* User Summary Stats Bar */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="bg-slate-950 border border-slate-850 p-3 rounded-xl space-y-1">
+                            <span className="text-[10px] text-slate-400 block">تعداد کل کارت‌ها</span>
+                            <span className="text-lg font-bold text-amber-400 font-mono">{userCards.length} کارت</span>
+                          </div>
+                          <div className="bg-slate-950 border border-slate-850 p-3 rounded-xl space-y-1">
+                            <span className="text-[10px] text-slate-400 block">کارت‌های منتشرشده</span>
+                            <span className="text-lg font-bold text-emerald-400 font-mono">{userCards.filter(c => c.status === 'published').length} کارت</span>
+                          </div>
+                          <div className="bg-slate-950 border border-slate-850 p-3 rounded-xl space-y-1">
+                            <span className="text-[10px] text-slate-400 block">مجموع کل بازدیدها</span>
+                            <span className="text-lg font-bold text-blue-400 font-mono">{totalUserViews.toLocaleString('fa-IR')} بازدید</span>
+                          </div>
+                          <div className="bg-slate-950 border border-slate-850 p-3 rounded-xl space-y-1">
+                            <span className="text-[10px] text-slate-400 block">وضعیت اشتراک کاربر</span>
+                            <span className={`text-[11px] font-bold block ${isSubActive ? 'text-emerald-400' : 'text-slate-400'}`}>
+                              {subEndDate ? (isSubActive ? `فعال تا ${toJalaliDate(subEndDate)}` : 'منقضی شده') : 'بدون انقضا'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Cards List / Grid Container */}
+                        <div className="overflow-y-auto flex-1 pr-1 space-y-4 max-h-[50vh]">
+                          {userCards.length === 0 ? (
+                            <div className="text-center py-12 border border-dashed border-slate-800 rounded-2xl space-y-3">
+                              <CreditCard className="h-12 w-12 text-slate-600 mx-auto" />
+                              <p className="text-slate-400 text-xs font-bold">این کاربر هنوز هیچ کارت ویزیتی ایجاد نکرده است.</p>
+                              <p className="text-slate-500 text-[10px]">به محض ایجاد اولین کارت توسط کاربر، در این بخش نمایش داده می‌شود.</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {userCards.map((card) => {
+                                const template = templates.find(t => toUUID(t.id) === toUUID(card.template_id));
+                                const cardTenant = tenants.find(t => toUUID(t.id) === toUUID(card.tenant_id));
+
+                                return (
+                                  <div
+                                    key={card.id}
+                                    className="bg-slate-950 border border-slate-850 hover:border-amber-500/40 rounded-2xl p-4 flex flex-col justify-between gap-3.5 transition"
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className="h-12 w-12 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden shrink-0">
+                                        <img 
+                                          src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
+                                          alt="avatar" 
+                                          className="h-full w-full object-cover"
+                                        />
+                                      </div>
+
+                                      <div className="space-y-1 min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <h4 className="font-bold text-white text-xs truncate">{card.first_name} {card.last_name}</h4>
+                                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black shrink-0 ${
+                                            card.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                                          }`}>
+                                            {card.status === 'published' ? 'انتشار' : 'پیش‌نویس'}
+                                          </span>
+                                        </div>
+                                        <p className="text-[10px] text-blue-400 font-semibold truncate">{card.job_title || 'بدون عنوان شغلی'}</p>
+                                        <p className="text-[9px] text-slate-500 truncate">{card.company || 'بدون سازمان'}</p>
+                                      </div>
+                                    </div>
+
+                                    <div className="py-2 border-t border-b border-slate-900 flex flex-col gap-1 text-[10px] text-slate-400">
+                                      <div className="flex justify-between">
+                                        <span>آدرس کارت:</span>
+                                        <a 
+                                          href={`/${card.slug}`} 
+                                          target="_blank" 
+                                          rel="noreferrer" 
+                                          className="font-mono text-blue-400 hover:underline font-bold flex items-center gap-1"
+                                        >
+                                          <span>/{card.slug}</span>
+                                          <ExternalLink className="h-2.5 w-2.5" />
+                                        </a>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>قالب:</span>
+                                        <span className="text-slate-200 font-bold">{template?.name || 'کلاسیک'}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>پرتال:</span>
+                                        <span className="text-amber-500 font-bold">{cardTenant?.name || 'سایت اصلی'}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>بازدیدها:</span>
+                                        <span className="text-emerald-400 font-bold">{card.views_count?.toLocaleString('fa-IR') || 0} بازدید</span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 pt-1">
+                                      <button
+                                        onClick={() => {
+                                          setEditingCard(card);
+                                          setActiveTab('cards');
+                                          setViewingUserCardsModal(null);
+                                        }}
+                                        className="flex-1 py-1.5 bg-slate-900 hover:bg-slate-850 rounded-lg text-[10px] font-bold border border-slate-800 hover:border-slate-750 transition flex items-center justify-center gap-1 cursor-pointer"
+                                      >
+                                        <Edit2 className="h-3 w-3 text-blue-400" />
+                                        ویرایش کارت
+                                      </button>
+
+                                      <button
+                                        onClick={() => handleCopyCardLink(card.slug)}
+                                        className="p-1.5 bg-slate-900 hover:bg-slate-850 rounded-lg border border-slate-800 transition text-slate-300 cursor-pointer"
+                                        title="کپی لینک کارت"
+                                      >
+                                        {isCopiedSlug === card.slug ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                                      </button>
+
+                                      <a
+                                        href={`/${card.slug}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="p-1.5 bg-slate-900 hover:bg-slate-850 rounded-lg border border-slate-800 transition text-blue-400"
+                                        title="مشاهده آنلاین"
+                                      >
+                                        <ExternalLink className="h-3 w-3" />
+                                      </a>
+
+                                      <button
+                                        onClick={() => handleDeleteCard(card.id)}
+                                        className="p-1.5 bg-slate-900 hover:bg-red-950/20 rounded-lg border border-slate-800 transition text-red-400 cursor-pointer"
+                                        title="حذف دائمی کارت"
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="flex justify-between items-center border-t border-slate-800 pt-4">
+                          <span className="text-[11px] text-slate-500">
+                            برای جستجو یا فیلترهای پیشرفته‌تر می‌توانید از صفحه نظارت کارت‌ها استفاده کنید.
+                          </span>
+                          <button
+                            onClick={() => setViewingUserCardsModal(null)}
+                            className="px-5 py-2 bg-slate-950 hover:bg-slate-850 border border-slate-800 rounded-xl text-xs font-bold text-slate-300 transition cursor-pointer"
+                          >
+                            بستن
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })()}
