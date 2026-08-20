@@ -72,22 +72,6 @@ export function CustomerBillingView({
         </div>
       )}
 
-      {/* Offline & Online payment user guide */}
-      <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-850/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
-        <div className="space-y-1 text-right">
-          <p className="font-bold text-slate-200 flex items-center gap-1.5 justify-start">
-            <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-            پرداخت آفلاین (کارت به کارت) و فعال‌سازی دستی اشتراک
-          </p>
-          <p className="text-slate-400 text-[11px] leading-relaxed">
-            شما می‌توانید مبلغ پلن دلخواه خود را مستقیماً به شماره کارت مدیریت واریز کرده و با کلیک روی دکمه <span className="text-slate-200 font-semibold">«ثبت فیش واریزی (کارت به کارت)»</span>، مشخصات فیش و تصویر رسید خود را ثبت نمایید تا پس از تایید مدیریت فعال گردد.
-          </p>
-        </div>
-        <div className="px-3 py-1.5 bg-blue-500/10 text-blue-400 font-bold rounded-lg shrink-0 text-[10px] self-start md:self-auto">
-          پرداخت کارت به کارت (آفلاین)
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
         {plansToShow.map((plan) => (
           <div key={plan.id} className="bg-slate-950 border border-slate-850 rounded-2xl p-5 flex flex-col justify-between gap-5 hover:border-blue-600/40 transition">
@@ -171,9 +155,9 @@ export function CustomerBillingView({
                     setSimulatedGateway('کارت به کارت (پرداخت آفلاین)');
                     handleInitiatePayment(plan);
                   }}
-                  className="w-full py-2 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-750 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white border border-blue-500/30 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 cursor-pointer shadow-md shadow-blue-600/20"
                 >
-                  ثبت فیش واریزی (کارت به کارت)
+                  پرداخت
                 </button>
               </div>
             )}

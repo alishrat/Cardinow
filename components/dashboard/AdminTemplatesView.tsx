@@ -83,7 +83,7 @@ export function AdminTemplatesView({
             className="flex items-center gap-1.5 py-2 px-3.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold transition shadow-sm"
           >
             <BookOpen className="h-4 w-4 text-indigo-400" />
-            <span>کتابخانه قالب‌های آماده ({PRESET_TEMPLATE_SCHEMAS.length} مدل)</span>
+            <span>قالب‌های آماده</span>
           </button>
 
           {!editingTemplate && (
@@ -135,7 +135,7 @@ export function AdminTemplatesView({
               className="flex items-center gap-1.5 py-2 px-4 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition shadow-lg"
             >
               <Plus className="h-4 w-4" />
-              ایجاد قالب جدید
+              <span>قالب جدید</span>
             </button>
           )}
         </div>
@@ -304,7 +304,7 @@ export function AdminTemplatesView({
             {/* General Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-400 mb-1 font-bold">نام قالب فارسی</label>
+                <label className="block text-slate-400 mb-1 font-bold">نام قالب</label>
                 <input
                   type="text"
                   value={editingTemplate.name}
@@ -314,7 +314,7 @@ export function AdminTemplatesView({
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1 font-bold">شناسه انگلیسی (slug)</label>
+                <label className="block text-slate-400 mb-1 font-bold">شناسه لاتین (slug)</label>
                 <input
                   type="text"
                   value={editingTemplate.slug}
@@ -333,7 +333,7 @@ export function AdminTemplatesView({
                   onChange={(e) => setEditingTemplate({ ...editingTemplate, is_premium: e.target.checked })}
                   className="rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-amber-500"
                 />
-                <span>قالب VIP / طلایی مخصوص کاربران ویژه</span>
+                <span>قالب ویژه (VIP)</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer text-slate-300">
                 <input
@@ -342,7 +342,7 @@ export function AdminTemplatesView({
                   onChange={(e) => setEditingTemplate({ ...editingTemplate, is_active: e.target.checked })}
                   className="rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-amber-500"
                 />
-                <span>فعال و قابل انتخاب توسط کاربران</span>
+                <span>فعال</span>
               </label>
             </div>
 
@@ -351,7 +351,7 @@ export function AdminTemplatesView({
               <div className="flex justify-between items-center">
                 <h4 className="font-bold text-amber-500 flex items-center gap-1.5 text-xs">
                   <Palette className="h-4 w-4" />
-                  زبان بصری، متغیرها و استایل‌های قالب (Schema JSON)
+                  تنظیمات ظاهری قالب
                 </h4>
                 <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1 text-[11px]">
                   <button
@@ -360,7 +360,7 @@ export function AdminTemplatesView({
                     className={`px-3 py-1 rounded-lg transition font-bold flex items-center gap-1 ${tabMode === 'form' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'}`}
                   >
                     <Sliders className="h-3 w-3" />
-                    فرم تنظیمات
+                    فرم
                   </button>
                   <button
                     type="button"
@@ -371,7 +371,7 @@ export function AdminTemplatesView({
                     className={`px-3 py-1 rounded-lg transition font-bold font-mono flex items-center gap-1 ${tabMode === 'json' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'}`}
                   >
                     <Code2 className="h-3 w-3" />
-                    کد JSON مستقیم
+                    کد JSON
                   </button>
                 </div>
               </div>
@@ -379,7 +379,7 @@ export function AdminTemplatesView({
               {tabMode === 'json' ? (
                 <div className="space-y-3 bg-slate-950 p-4 border border-slate-800 rounded-xl">
                   <div className="flex justify-between items-center text-[10px] text-slate-400">
-                    <span>کد ساختار فنی قالب (Directus Schema):</span>
+                    <span>کد ساختار فنی قالب:</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -418,7 +418,7 @@ export function AdminTemplatesView({
                           ...editingTemplate,
                           schema: parsed
                         });
-                        alert('ساختار JSON با موفقیت اعتبارسنجی و بر روی پیش‌نمایش اعمال شد!');
+                        alert('ساختار JSON با موفقیت اعمال شد!');
                       } catch (err: any) {
                         alert('خطا در فرمت JSON: ' + err.message);
                       }
@@ -426,26 +426,26 @@ export function AdminTemplatesView({
                     className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition text-xs flex items-center justify-center gap-1.5"
                   >
                     <Check className="h-4 w-4" />
-                    <span>بررسی و اعمال کد JSON در پیش‌نمایش</span>
+                    <span>اعمال کد JSON به پیش‌نمایش</span>
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {/* Theme Presets Choice */}
                   <div className="bg-slate-950 p-4 border border-slate-800 rounded-xl space-y-2">
-                    <label className="block text-slate-400 text-[10px] font-bold">تم و هویت بصری کلی (Theme Family)</label>
+                    <label className="block text-slate-400 text-[10px] font-bold">تم رنگی کلی</label>
                     <div className="flex flex-wrap gap-1.5">
                       {[
-                        { id: 'light', label: 'روشن (Light)' },
-                        { id: 'dark', label: 'تیره (Dark)' },
-                        { id: 'glass', label: 'شیشه‌ای (Glass)' },
-                        { id: 'neon', label: 'نئونی (Neon Cyber)' },
-                        { id: 'sunset', label: 'پاستلی غروب (Sunset)' },
-                        { id: 'emerald', label: 'زمردی (Emerald)' },
-                        { id: 'gold', label: 'طلای اشرافی (Gold)' },
-                        { id: 'cyber', label: 'سینث‌ویو (Synthwave)' },
-                        { id: 'artisan', label: 'سنتی و خاکی (Artisan)' },
-                        { id: 'minimal', label: 'مینیمال (Minimal)' }
+                        { id: 'light', label: 'روشن' },
+                        { id: 'dark', label: 'تیره' },
+                        { id: 'glass', label: 'شیشه‌ای' },
+                        { id: 'neon', label: 'نئونی' },
+                        { id: 'sunset', label: 'پاستلی' },
+                        { id: 'emerald', label: 'زمردی' },
+                        { id: 'gold', label: 'طلایی' },
+                        { id: 'cyber', label: 'سایبر' },
+                        { id: 'artisan', label: 'خاکی' },
+                        { id: 'minimal', label: 'مینیمال' }
                       ].map((t) => (
                         <button
                           key={t.id}
@@ -471,13 +471,13 @@ export function AdminTemplatesView({
 
                   {/* Colors Palette Controls */}
                   <div className="bg-slate-950 p-4 border border-slate-800 rounded-xl space-y-3">
-                    <span className="text-[10px] uppercase tracking-wider text-amber-500 font-bold block flex items-center gap-1">
+                    <span className="text-[10px] text-amber-500 font-bold block flex items-center gap-1">
                       <Palette className="h-3.5 w-3.5" />
-                      پالت رنگ‌های اصلی و مکمل (Color Palette)
+                      پالت رنگ
                     </span>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ اصلی (Primary Accent)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ اصلی</label>
                         <div className="flex gap-1.5 items-center bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                           <input
                             type="color"
@@ -497,7 +497,7 @@ export function AdminTemplatesView({
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ ثانویه (Secondary Accent)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ دوم</label>
                         <div className="flex gap-1.5 items-center bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                           <input
                             type="color"
@@ -517,7 +517,7 @@ export function AdminTemplatesView({
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ کل صفحه (Page Background)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">پس‌زمینه صفحه</label>
                         <div className="flex gap-1.5 items-center bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                           <input
                             type="color"
@@ -537,7 +537,7 @@ export function AdminTemplatesView({
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ بدنه کارت (Card Body)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">بدنه کارت</label>
                         <div className="flex gap-1.5 items-center bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                           <input
                             type="color"
@@ -557,7 +557,7 @@ export function AdminTemplatesView({
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ متن اصلی (Heading/Title)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">متن اصلی</label>
                         <div className="flex gap-1.5 items-center bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                           <input
                             type="color"
@@ -577,7 +577,7 @@ export function AdminTemplatesView({
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ متن فرعی (Subtitle/Bio)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">متن فرعی</label>
                         <div className="flex gap-1.5 items-center bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                           <input
                             type="color"
@@ -597,7 +597,7 @@ export function AdminTemplatesView({
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ درخشش نئون / Glow</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">درخشش نئون</label>
                         <div className="flex gap-1.5 items-center bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                           <input
                             type="color"
@@ -617,7 +617,7 @@ export function AdminTemplatesView({
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">رنگ خطوط حاشیه (Border)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">خط حاشیه</label>
                         <div className="flex gap-1.5 items-center bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                           <input
                             type="color"
@@ -640,13 +640,13 @@ export function AdminTemplatesView({
 
                   {/* Layout & Architecture */}
                   <div className="bg-slate-950 p-4 border border-slate-800 rounded-xl space-y-3">
-                    <span className="text-[10px] uppercase tracking-wider text-amber-500 font-bold block flex items-center gap-1">
+                    <span className="text-[10px] text-amber-500 font-bold block flex items-center gap-1">
                       <Layout className="h-3.5 w-3.5" />
-                      هندسه، چیدمان و هدر کارت (Layout Architecture)
+                      چیدمان و ساختار
                     </span>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">سبک چیدمان هدر (Header Style)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">مدل هدر</label>
                         <select
                           value={editingTemplate.schema?.layout?.header_style || 'split'}
                           onChange={(e) => {
@@ -659,17 +659,17 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="split">دو ستونه افقی کلاسیک (Classic Split)</option>
-                          <option value="centered">کامل عمودی متمرکز (Centered)</option>
-                          <option value="bento">کاشی‌بندی هوشمند بنتو (Bento Grid)</option>
-                          <option value="content_creator">اینفلوئنسر و Bio-Link (Content Creator)</option>
-                          <option value="hero_cover">کاور بزرگ با لوگو (Hero Banner)</option>
-                          <option value="minimal_inline">خطی مینیمال مدرن (Minimal Inline)</option>
+                          <option value="split">دو ستونه افقی</option>
+                          <option value="centered">عمودی متمرکز</option>
+                          <option value="bento">کاشی بنتو</option>
+                          <option value="content_creator">اینفلوئنسر</option>
+                          <option value="hero_cover">کاور بزرگ</option>
+                          <option value="minimal_inline">خطی مینیمال</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">موقعیت عکس پروفایل (Avatar Position)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">موقعیت آواتار</label>
                         <select
                           value={editingTemplate.schema?.layout?.avatar_position || 'overlap-center'}
                           onChange={(e) => {
@@ -682,18 +682,18 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none text-amber-400 font-bold"
                         >
-                          <option value="overlap-center">روی کاور - مرکز (Overlap Center)</option>
-                          <option value="overlap-right">روی کاور - سمت راست (Overlap Right)</option>
-                          <option value="overlap-left">روی کاور - سمت چپ (Overlap Left)</option>
-                          <option value="below-center">زیر کاور - مرکز (Below Center)</option>
-                          <option value="below-right">زیر کاور - سمت راست (Below Right)</option>
-                          <option value="floating-top">شناور بالای کارت (Floating Top)</option>
-                          <option value="inside-header">ادغام شده داخل هدر (Inside Header)</option>
+                          <option value="overlap-center">روی کاور وسط</option>
+                          <option value="overlap-right">روی کاور راست</option>
+                          <option value="overlap-left">روی کاور چپ</option>
+                          <option value="below-center">زیر کاور وسط</option>
+                          <option value="below-right">زیر کاور راست</option>
+                          <option value="floating-top">شناور بالا</option>
+                          <option value="inside-header">داخل هدر</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">شکل فریم آواتار (Avatar Shape)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">شکل آواتار</label>
                         <select
                           value={editingTemplate.schema?.layout?.avatar_shape || 'circle'}
                           onChange={(e) => {
@@ -706,18 +706,18 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="circle">دایره‌ای (Circle)</option>
-                          <option value="square">مربعی دقیق (Square)</option>
-                          <option value="rounded-square">گوشه‌گرد مربعی (Rounded Square)</option>
-                          <option value="squircle">اسکویرکل اپل (Apple Squircle)</option>
-                          <option value="glowing-ring">حلقه درخشان نئونی (Glowing Ring)</option>
-                          <option value="hexagon">شش‌ضلعی هندسی (Hexagon)</option>
-                          <option value="diamond">لوزی الماس (Diamond)</option>
+                          <option value="circle">دایره</option>
+                          <option value="square">مربع</option>
+                          <option value="rounded-square">مربع گوشه‌گرد</option>
+                          <option value="squircle">اسکویرکل</option>
+                          <option value="glowing-ring">حلقه نورانی</option>
+                          <option value="hexagon">شش‌ضلعی</option>
+                          <option value="diamond">لوزی</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">اندازه آواتار (Avatar Size)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">اندازه آواتار</label>
                         <select
                           value={editingTemplate.schema?.layout?.avatar_size || 'lg'}
                           onChange={(e) => {
@@ -730,16 +730,16 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="sm">کوچک (Small - 64px)</option>
-                          <option value="md">متوسط (Medium - 80px)</option>
-                          <option value="lg">استاندارد بزرگ (Large - 96px)</option>
-                          <option value="xl">خیلی بزرگ (Extra Large - 112px)</option>
-                          <option value="giant">غول‌آسا (Giant - 128px)</option>
+                          <option value="sm">کوچک</option>
+                          <option value="md">متوسط</option>
+                          <option value="lg">بزرگ</option>
+                          <option value="xl">خیلی بزرگ</option>
+                          <option value="giant">غول‌آسا</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">گوشه‌های کارت (Card Radius)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">گوشه کارت</label>
                         <select
                           value={editingTemplate.schema?.layout?.card_radius || 'lg'}
                           onChange={(e) => {
@@ -752,17 +752,17 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="none">زاویه‌دار بدون انحنا (Sharp 0px)</option>
-                          <option value="sm">انحنای ملایم (Small 12px)</option>
-                          <option value="md">گوشه‌گرد متوسط (Medium 18px)</option>
-                          <option value="lg">گوشه‌گرد عمیق (Large 24px)</option>
-                          <option value="xl">فوق‌العاده گرد (XL 32px)</option>
-                          <option value="pill">کپسولی کامل (Full Pill 44px)</option>
+                          <option value="none">صاف</option>
+                          <option value="sm">کم</option>
+                          <option value="md">متوسط</option>
+                          <option value="lg">زیاد</option>
+                          <option value="xl">خیلی زیاد</option>
+                          <option value="pill">کپسولی</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">نوع حاشیه کارت (Card Border)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">حاشیه کارت</label>
                         <select
                           value={editingTemplate.schema?.layout?.card_border || 'none'}
                           onChange={(e) => {
@@ -775,16 +775,16 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="none">بدون خط حاشیه (Standard Clean)</option>
-                          <option value="thin">حاشیه ظریف محو (Subtle 1px)</option>
-                          <option value="solid-accent">حاشیه با رنگ اصلی (Accent 2px)</option>
-                          <option value="double">حاشیه دو خطی سلطنتی (Double Line 3px)</option>
-                          <option value="glow">حاشیه درخشان نئونی (Glow Neon Border)</option>
+                          <option value="none">بدون حاشیه</option>
+                          <option value="thin">خط ظریف</option>
+                          <option value="solid-accent">خط رنگی</option>
+                          <option value="double">دو خطی</option>
+                          <option value="glow">درخشان</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">استایل دکمه‌ها (Button Style)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">استایل دکمه‌ها</label>
                         <select
                           value={editingTemplate.schema?.layout?.button_style || 'pill'}
                           onChange={(e) => {
@@ -797,18 +797,18 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="pill">کپسولی کامل (Pill)</option>
-                          <option value="rounded">گوشه‌گرد استاندارد (Rounded)</option>
-                          <option value="glass">شیشه‌ای شفاف (Glassmorphism)</option>
-                          <option value="gradient">گرادینت ویژه و نرم (Gradient Glow)</option>
-                          <option value="sharp">زاویه‌دار مستطیل (Sharp)</option>
-                          <option value="3d-press">دکمه برجسته سه‌بعدی (3D Press)</option>
-                          <option value="neon">نئونی درخشان (Cyberpunk Neon)</option>
+                          <option value="pill">کپسولی</option>
+                          <option value="rounded">گوشه‌گرد</option>
+                          <option value="glass">شیشه‌ای</option>
+                          <option value="gradient">گرادینت</option>
+                          <option value="sharp">صاف</option>
+                          <option value="3d-press">سه‌بعدی</option>
+                          <option value="neon">نئونی</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">نمایش شبکه‌های اجتماعی (Social Mode)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">شبکه‌های اجتماعی</label>
                         <select
                           value={editingTemplate.schema?.layout?.social_display_mode || 'grid-squares'}
                           onChange={(e) => {
@@ -821,16 +821,16 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="grid-squares">شبکه ۴ تایی کاشی (Grid Squares)</option>
-                          <option value="compact-chips">چیپ‌های فشرده افقی (Compact Chips)</option>
-                          <option value="horizontal-bubbles">حباب‌های گرد معلق (Horizontal Bubbles)</option>
-                          <option value="vertical-rows">سطرهای عمودی عریض (Vertical Rows)</option>
-                          <option value="bento-tiles">کاشی‌های مدرن بنتو (Bento Tiles)</option>
+                          <option value="grid-squares">کاشی ۴تایی</option>
+                          <option value="compact-chips">چیپ افقی</option>
+                          <option value="horizontal-bubbles">حباب گرد</option>
+                          <option value="vertical-rows">سطرهای عریض</option>
+                          <option value="bento-tiles">کاشی بنتو</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">ارتفاع تصویر کاور (Cover Height)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">ارتفاع کاور</label>
                         <select
                           value={editingTemplate.schema?.layout?.cover_height || 'standard'}
                           onChange={(e) => {
@@ -843,16 +843,16 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="none">بدون کاور (Hidden)</option>
-                          <option value="compact">کوچک فشرده (Compact 110px)</option>
-                          <option value="standard">استاندارد (Standard 144px)</option>
-                          <option value="large">بزرگ (Large 192px)</option>
-                          <option value="hero">پانوراما بنر (Hero 240px)</option>
+                          <option value="none">بدون کاور</option>
+                          <option value="compact">کوچک</option>
+                          <option value="standard">استاندارد</option>
+                          <option value="large">بزرگ</option>
+                          <option value="hero">پانوراما</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">جعبه توضیحات درباره ما (Bio Style)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">کادر بیوگرافی</label>
                         <select
                           value={editingTemplate.schema?.layout?.bio_style || 'card-boxed'}
                           onChange={(e) => {
@@ -865,16 +865,16 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="card-boxed">کارت محصور با حاشیه (Card Boxed)</option>
-                          <option value="bubble">حباب نقل قول نرم (Soft Bubble)</option>
-                          <option value="minimal">ساده بدون کادر (Minimal)</option>
-                          <option value="quote">استایل نقل‌قول فشن (Quote Style)</option>
-                          <option value="gradient-border">کادر گرادینت درخشان (Gradient Border)</option>
+                          <option value="card-boxed">کادر بسته</option>
+                          <option value="bubble">حباب نقل‌قول</option>
+                          <option value="minimal">ساده</option>
+                          <option value="quote">استایل نقل‌قول</option>
+                          <option value="gradient-border">کادر درخشان</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">جلوه بصری ویژه (Special FX Effect)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">جلوه ویژه</label>
                         <select
                           value={editingTemplate.schema?.effects?.style || 'none'}
                           onChange={(e) => {
@@ -887,16 +887,16 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none text-amber-400 font-bold"
                         >
-                          <option value="none">ساده استاندارد (Simple Standard)</option>
-                          <option value="glassmorphism">شیشه‌ای و بلورین (Glassmorphism)</option>
-                          <option value="neon-glow">نئونی درخشان (Neon Cyberpunk)</option>
-                          <option value="gold-glow">طلا و اشرافی (Gold Luxury)</option>
-                          <option value="mesh-gradient">گرادینت مش پویا (Mesh Gradient)</option>
+                          <option value="none">ساده</option>
+                          <option value="glassmorphism">شیشه‌ای</option>
+                          <option value="neon-glow">نئونی</option>
+                          <option value="gold-glow">طلایی</option>
+                          <option value="mesh-gradient">گرادینت مش</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-slate-400 mb-1 text-[10px]">سایه و عمق کارت (Card Shadow)</label>
+                        <label className="block text-slate-400 mb-1 text-[10px]">سایه کارت</label>
                         <select
                           value={editingTemplate.schema?.layout?.card_shadow || 'xl'}
                           onChange={(e) => {
@@ -909,12 +909,12 @@ export function AdminTemplatesView({
                           }}
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none"
                         >
-                          <option value="none">بدون سایه (Flat)</option>
-                          <option value="sm">سایه ملایم (Soft sm)</option>
-                          <option value="md">سایه استاندارد (Medium md)</option>
-                          <option value="xl">سایه عمیق (Deep xl)</option>
-                          <option value="2xl">سایه فوق عمیق (Elevated 2xl)</option>
-                          <option value="colored-glow">سایه نوری رنگی (Colored Glow)</option>
+                          <option value="none">بدون سایه</option>
+                          <option value="sm">ملایم</option>
+                          <option value="md">متوسط</option>
+                          <option value="xl">عمیق</option>
+                          <option value="2xl">فوق عمیق</option>
+                          <option value="colored-glow">نور رنگی</option>
                         </select>
                       </div>
                     </div>
@@ -925,7 +925,7 @@ export function AdminTemplatesView({
                     <div>
                       <label className="block text-slate-400 mb-1 text-[10px] flex items-center gap-1 font-bold">
                         <Type className="h-3.5 w-3.5 text-amber-500" />
-                        فونت اختصاصی قالب
+                        فونت
                       </label>
                       <select
                         value={editingTemplate.schema?.typography?.font_family || 'Vazir'}
@@ -939,17 +939,17 @@ export function AdminTemplatesView({
                         }}
                         className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white focus:outline-none font-bold"
                       >
-                        <option value="Vazir">وزیر متن (Vazir)</option>
-                        <option value="Shabnam">شبنم (Shabnam)</option>
-                        <option value="IranYekan">ایران یکان (IranYekan)</option>
-                        <option value="Sahel">ساحل (Sahel)</option>
-                        <option value="Samim">صمیم (Samim)</option>
-                        <option value="Tahoma">تاهما (Tahoma)</option>
+                        <option value="Vazir">وزیر</option>
+                        <option value="Shabnam">شبنم</option>
+                        <option value="IranYekan">ایران یکان</option>
+                        <option value="Sahel">ساحل</option>
+                        <option value="Samim">صمیم</option>
+                        <option value="Tahoma">تاهما</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-slate-400 mb-1 text-[10px]">اندازه فونت عنوان</label>
+                      <label className="block text-slate-400 mb-1 text-[10px]">اندازه عنوان</label>
                       <input
                         type="text"
                         value={editingTemplate.schema?.typography?.title_size || '22px'}
@@ -966,7 +966,7 @@ export function AdminTemplatesView({
                     </div>
 
                     <div>
-                      <label className="block text-slate-400 mb-1 text-[10px]">اندازه فونت بدنه</label>
+                      <label className="block text-slate-400 mb-1 text-[10px]">اندازه متن</label>
                       <input
                         type="text"
                         value={editingTemplate.schema?.typography?.body_size || '14px'}
@@ -1232,13 +1232,6 @@ export function AdminTemplatesView({
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/60">
             <h3 className="font-bold text-xs text-slate-300">لیست تمامی قالب‌های فعال و اختصاصی سیستم ({templates.length} قالب)</h3>
-            <button
-              onClick={() => setShowPresetsModal(true)}
-              className="px-3 py-1 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 rounded-xl text-[11px] font-bold hover:bg-indigo-600/30 transition flex items-center gap-1.5"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              <span>مشاهده و کپی کدهای JSON قالب‌های متنوع</span>
-            </button>
           </div>
 
           <table className="w-full text-right text-xs">

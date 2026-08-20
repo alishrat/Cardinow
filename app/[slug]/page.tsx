@@ -115,24 +115,31 @@ export default function PublicCardPage() {
     
     // Dynamic popup colors matching card theme
     const popupBg = cardBgColor || '#0f172a';
-    const popupBorder = primaryColor ? `${primaryColor}40` : 'rgba(255, 255, 255, 0.15)';
+    const popupBorder = primaryColor ? `${primaryColor}60` : 'rgba(255, 255, 255, 0.2)';
     const popupText = textCol || '#ffffff';
 
     return (
       <div 
-        className={`absolute mt-2 ${alignLeft ? 'left-0' : 'right-0'} w-48 border rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200 text-right`}
+        className={`absolute mt-2 ${alignLeft ? 'left-0' : 'right-0'} w-52 border rounded-2xl shadow-2xl p-2 z-[99] animate-in fade-in zoom-in-95 duration-150 text-right`}
         style={{
           backgroundColor: popupBg,
           borderColor: popupBorder,
-          color: popupText
+          color: popupText,
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)'
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div 
-          className="text-[10px] font-bold px-2.5 py-1 text-center border-b mb-1 opacity-70"
+          className="text-[11px] font-bold px-2.5 py-1.5 text-center border-b mb-1 opacity-80 flex items-center justify-between"
           style={{ borderColor: popupBorder, color: popupText }}
         >
-          اشتراک‌گذاری کارت
+          <span>اشتراک‌گذاری کارت</span>
+          <button 
+            onClick={() => setActiveShareId(null)}
+            className="p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 opacity-70 hover:opacity-100"
+          >
+            <X className="h-3 w-3" />
+          </button>
         </div>
         
         {/* Copy Link */}
@@ -150,9 +157,9 @@ export default function PublicCardPage() {
             <span>کپی لینک کارت</span>
           </span>
           {copied ? (
-            <span className="text-[9px] text-emerald-400 font-bold">کپی شد!</span>
+            <span className="text-[10px] text-emerald-400 font-bold">کپی شد!</span>
           ) : (
-            <span className="text-[9px] opacity-60">کپی</span>
+            <span className="text-[10px] opacity-60">کپی</span>
           )}
         </button>
 
@@ -1430,30 +1437,28 @@ export default function PublicCardPage() {
         {/* TEMPLATE 3: MINIMAL (CLEAN MODERN ART) */}
         {isMinimal && (
           <div 
-            className="rounded-none sm:rounded-3xl shadow-lg overflow-hidden border border-slate-100 transition-all text-slate-900 p-8 space-y-8"
+            className="rounded-none sm:rounded-3xl shadow-lg overflow-hidden border border-slate-100 transition-all text-slate-900 p-6 sm:p-8 space-y-6"
             style={{ backgroundColor: cardBgColor, color: textCol }}
           >
-            {/* Minimalist Top Nav */}
-            <div className="flex justify-between items-center">
-              <span className="text-xs opacity-50 font-medium">/{card.slug}</span>
-              <div className="relative">
-                <button 
-                  onClick={() => setActiveShareId(activeShareId === 'temp-3' ? null : 'temp-3')}
-                  className="p-1.5 hover:bg-slate-100 rounded-full transition active:scale-95"
-                >
-                  <Share2 className="h-4 w-4" />
-                </button>
-                {renderShareDropdown('temp-3', true)}
-              </div>
-            </div>
-
-            {/* Cover photo */}
-            <div className="h-28 rounded-2xl overflow-hidden relative bg-slate-100 border border-slate-100 shrink-0">
+            {/* Cover photo with integrated share button */}
+            <div className="h-32 rounded-2xl overflow-hidden relative bg-slate-100 border border-slate-100 shrink-0">
               <img 
                 src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} 
                 alt="cover" 
                 className="w-full h-full object-cover"
               />
+              <div className="absolute top-3 left-3 z-30">
+                <button 
+                  onClick={() => setActiveShareId(activeShareId === 'temp-3' ? null : 'temp-3')}
+                  className="p-2 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition active:scale-95 shadow-sm"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+                {renderShareDropdown('temp-3', true)}
+              </div>
+              <div className="absolute bottom-2 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-[10px] text-white/80 font-mono">
+                /{card.slug}
+              </div>
             </div>
 
             {/* Portrait Card */}
@@ -1688,7 +1693,7 @@ export default function PublicCardPage() {
         {/* TEMPLATE 4: LUXURY DARK */}
         {isLuxuryDark && (
           <div 
-            className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden border transition-all p-8 space-y-8"
+            className="rounded-none sm:rounded-3xl shadow-2xl overflow-hidden border transition-all p-6 sm:p-8 space-y-6"
             style={{ 
               backgroundColor: cardBgColor || '#0c0a09',
               borderColor: primaryColor || '#e2b53e',
@@ -1696,31 +1701,31 @@ export default function PublicCardPage() {
               boxShadow: `0 10px 50px -15px ${primaryColor}40`
             }}
           >
-            {/* Top Share & Stats */}
-            <div className="flex justify-between items-center">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 rounded-full text-[10px] font-bold text-[#e2b53e] uppercase tracking-wider">
-                VIP LUXURY
-              </span>
-
-              <div className="relative">
-                <button 
-                  onClick={() => setActiveShareId(activeShareId === 'temp-4' ? null : 'temp-4')}
-                  className="p-2 bg-amber-500/10 hover:bg-amber-500/20 rounded-full text-[#e2b53e] transition active:scale-95"
-                >
-                  <Share2 className="h-4 w-4" />
-                </button>
-                {renderShareDropdown('temp-4', true)}
-              </div>
-            </div>
-
-            {/* Cover photo */}
-            <div className="h-32 rounded-2xl overflow-hidden relative border border-amber-500/30 shrink-0 shadow-lg grayscale hover:grayscale-0 transition-all duration-500">
+            {/* Cover photo with luxury gold VIP badge & Share Button */}
+            <div className="h-36 rounded-2xl overflow-hidden relative border border-amber-500/30 shrink-0 shadow-lg grayscale hover:grayscale-0 transition-all duration-500">
               <img 
                 src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} 
                 alt="cover" 
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 to-transparent opacity-60"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent"></div>
+
+              {/* VIP luxury chip & Share on cover */}
+              <div className="absolute top-3 right-3 z-20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-bold text-[#e2b53e] uppercase tracking-wider border border-amber-500/30">
+                  VIP LUXURY
+                </span>
+              </div>
+
+              <div className="absolute top-3 left-3 z-30">
+                <button 
+                  onClick={() => setActiveShareId(activeShareId === 'temp-4' ? null : 'temp-4')}
+                  className="p-2 bg-black/60 hover:bg-black/80 rounded-full text-[#e2b53e] backdrop-blur-md transition active:scale-95 border border-amber-500/30 shadow-md"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+                {renderShareDropdown('temp-4', true)}
+              </div>
             </div>
 
             {/* Portrait Layout */}
@@ -2031,37 +2036,36 @@ export default function PublicCardPage() {
                 borderStyle: cardBorder === 'double' ? 'double' : undefined
               }}
             >
-              {/* Share button at top */}
-              <div className="flex justify-end items-center z-20 relative">
-                <div className="relative">
-                  <button 
-                    onClick={() => setActiveShareId(activeShareId === 'temp-custom-share' ? null : 'temp-custom-share')}
-                    className="p-2 rounded-full transition active:scale-95 shadow-sm"
-                    style={{ backgroundColor: sColor, color: pColor }}
-                  >
-                    <Share2 className="h-4 w-4" />
-                  </button>
-                  {renderShareDropdown('temp-custom-share', true)}
-                </div>
-              </div>
-
-              {/* Floating Top Avatar Position */}
-              {avatarPosition === 'floating-top' && (
-                <div className="flex justify-center -mb-2 z-10 relative">
-                  <div className={`h-24 w-24 overflow-hidden border-4 p-0.5 shadow-xl bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''}`} style={{ borderColor: pColor }}>
-                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
-                  </div>
-                </div>
-              )}
-
-              {/* Cover photo */}
-              {card.cover_image && (
+              {/* Cover photo with integrated share button */}
+              {card.cover_image ? (
                 <div className="h-36 rounded-2xl overflow-hidden relative border border-slate-200/20 shadow-sm shrink-0">
                   <img 
                     src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} 
                     alt="cover" 
                     className="w-full h-full object-cover"
                   />
+                  <div className="absolute top-3 left-3 z-30">
+                    <button 
+                      onClick={() => setActiveShareId(activeShareId === 'temp-custom-share' ? null : 'temp-custom-share')}
+                      className="p-2 rounded-full transition active:scale-95 shadow-md bg-black/50 hover:bg-black/70 text-white backdrop-blur-md"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                    {renderShareDropdown('temp-custom-share', true)}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-end items-center z-20 relative">
+                  <div className="relative">
+                    <button 
+                      onClick={() => setActiveShareId(activeShareId === 'temp-custom-share' ? null : 'temp-custom-share')}
+                      className="p-2 rounded-full transition active:scale-95 shadow-sm"
+                      style={{ backgroundColor: sColor, color: pColor }}
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                    {renderShareDropdown('temp-custom-share', true)}
+                  </div>
                 </div>
               )}
 
