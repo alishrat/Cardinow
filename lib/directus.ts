@@ -310,110 +310,704 @@ const SEED_TENANTS: Tenant[] = [
   }
 ];
 
-const SEED_TEMPLATES: Template[] = [
+export interface TemplateSchema {
+  theme?: 'light' | 'dark' | 'glass' | 'neon' | 'sunset' | 'emerald' | 'gold' | 'cyber' | 'artisan' | 'minimal';
+  colors?: {
+    primary?: string;
+    secondary?: string;
+    background?: string;
+    card_bg?: string;
+    card_bg_gradient?: string;
+    text?: string;
+    text_secondary?: string;
+    border_color?: string;
+    glow_color?: string;
+  };
+  typography?: {
+    font_family?: string;
+    title_size?: string;
+    title_weight?: string;
+    body_size?: string;
+    text_align?: string;
+  };
+  layout?: {
+    card_radius?: string;
+    card_border?: string;
+    card_shadow?: string;
+    header_style?: string;
+    avatar_position?: string;
+    avatar_shape?: string;
+    avatar_size?: string;
+    button_style?: string;
+    social_display_mode?: string;
+    cover_height?: string;
+    cover_style?: string;
+    bio_style?: string;
+  };
+  effects?: {
+    style?: string;
+    backdrop_blur?: string;
+    background_pattern?: string;
+  };
+}
+
+export const PRESET_TEMPLATE_SCHEMAS: { id: string; name: string; slug: string; description: string; category: string; schema: TemplateSchema; thumbnail: string }[] = [
   {
-    id: 'temp-1',
-    name: 'کلاسیک اداری (Classic)',
-    slug: 'classic',
+    id: 'preset-classic',
+    name: 'کلاسیک اداری فاخر (Classic Executive)',
+    slug: 'classic-executive',
+    category: 'شرکتی و رسمی',
+    description: 'چیدمان رسمی و حرفه‌ای با هدر دو ستونه، کاور استاندارد و دکمه‌های کپسولی آبی نیلی.',
     thumbnail: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&q=80',
-    is_premium: false,
-    is_active: true,
     schema: {
-      default_colors: {
-        primary: '#3b82f6',
-        secondary: '#1d4ed8',
-        background: '#f1f5f9',
+      theme: 'light',
+      colors: {
+        primary: '#2563eb',
+        secondary: '#dbeafe',
+        background: '#f8fafc',
         card_bg: '#ffffff',
-        text: '#1e293b'
+        text: '#0f172a',
+        text_secondary: '#64748b',
+        border_color: '#e2e8f0',
+        glow_color: '#3b82f6'
+      },
+      typography: {
+        font_family: 'Vazir',
+        title_size: '22px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'lg',
+        card_border: 'none',
+        card_shadow: 'xl',
+        header_style: 'split',
+        avatar_position: 'overlap-right',
+        avatar_shape: 'circle',
+        avatar_size: 'lg',
+        button_style: 'pill',
+        social_display_mode: 'grid-squares',
+        cover_height: 'standard',
+        bio_style: 'card-boxed'
+      },
+      effects: {
+        style: 'none',
+        backdrop_blur: 'none'
       }
     }
   },
   {
-    id: 'temp-2',
-    name: 'شبکه بنتو (Bento Grid)',
-    slug: 'bento',
-    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
-    is_premium: true,
-    is_active: true,
+    id: 'preset-cyberpunk',
+    name: 'سایبرپانک و نئون ۲۰۷۷ (Cyberpunk Neon)',
+    slug: 'cyberpunk-neon',
+    category: 'تکنولوژی و گیمینگ',
+    description: 'تم نئونی تاریک با درخشش فیروزه‌ای و بنفش، حاشیه‌های درخشان و فریم آواتار حلقه‌ای نورانی.',
+    thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&q=80',
     schema: {
-      default_colors: {
+      theme: 'neon',
+      colors: {
+        primary: '#06b6d4',
+        secondary: '#a855f7',
+        background: '#090d16',
+        card_bg: '#0f172a',
+        text: '#f8fafc',
+        text_secondary: '#94a3b8',
+        border_color: 'rgba(6, 182, 212, 0.5)',
+        glow_color: '#06b6d4'
+      },
+      typography: {
+        font_family: 'IranYekan',
+        title_size: '24px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'xl',
+        card_border: 'glow',
+        card_shadow: 'colored-glow',
+        header_style: 'centered',
+        avatar_position: 'overlap-center',
+        avatar_shape: 'glowing-ring',
+        avatar_size: 'xl',
+        button_style: 'neon',
+        social_display_mode: 'bento-tiles',
+        cover_height: 'standard',
+        bio_style: 'gradient-border'
+      },
+      effects: {
+        style: 'neon-glow',
+        backdrop_blur: 'lg'
+      }
+    }
+  },
+  {
+    id: 'preset-luxury-gold',
+    name: 'تاریک و طلای سلطنتی (Royal Dark Gold)',
+    slug: 'royal-dark-gold',
+    category: 'لاکچری و وی‌آی‌پی',
+    description: 'ترکیب مشکی ابریشمی و طلای ۲۴ عیار با حاشیه‌های دو خطی، مناسب برندهای لوکس و مدیران عامل.',
+    thumbnail: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'gold',
+      colors: {
+        primary: '#f59e0b',
+        secondary: '#78350f',
+        background: '#070708',
+        card_bg: '#14120e',
+        text: '#fef3c7',
+        text_secondary: '#d97706',
+        border_color: '#d97706',
+        glow_color: '#f59e0b'
+      },
+      typography: {
+        font_family: 'IranYekan',
+        title_size: '22px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'lg',
+        card_border: 'double',
+        card_shadow: 'colored-glow',
+        header_style: 'centered',
+        avatar_position: 'overlap-center',
+        avatar_shape: 'circle',
+        avatar_size: 'xl',
+        button_style: 'gradient',
+        social_display_mode: 'grid-squares',
+        cover_height: 'standard',
+        bio_style: 'quote'
+      },
+      effects: {
+        style: 'gold-glow',
+        backdrop_blur: 'md'
+      }
+    }
+  },
+  {
+    id: 'preset-bento-dark',
+    name: 'شبکه مدرن بنتو (Bento Grid Dark)',
+    slug: 'bento-grid-dark',
+    category: 'مدرن و استارتاپی',
+    description: 'کاشی‌بندی هوشمند با ماژول‌های شیشه‌ای و کارت‌های تفکیک‌شده ایندیگو و بنفش.',
+    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'dark',
+      colors: {
         primary: '#6366f1',
         secondary: '#8b5cf6',
         background: '#0f172a',
         card_bg: '#1e293b',
-        text: '#f8fafc'
+        text: '#f8fafc',
+        text_secondary: '#94a3b8',
+        border_color: 'rgba(255, 255, 255, 0.1)',
+        glow_color: '#6366f1'
+      },
+      typography: {
+        font_family: 'Vazir',
+        title_size: '20px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'xl',
+        card_border: 'thin',
+        card_shadow: '2xl',
+        header_style: 'bento',
+        avatar_position: 'inside-header',
+        avatar_shape: 'rounded-square',
+        avatar_size: 'md',
+        button_style: 'glass',
+        social_display_mode: 'bento-tiles',
+        cover_height: 'compact',
+        bio_style: 'card-boxed'
+      },
+      effects: {
+        style: 'glassmorphism',
+        backdrop_blur: 'xl'
       }
     }
   },
   {
-    id: 'temp-3',
-    name: 'محتوامحور و اینفلوئنسر (Content Creator)',
-    slug: 'content-creator',
+    id: 'preset-creator-sunset',
+    name: 'اینفلوئنسر و بایو لینک (Sunset Creator)',
+    slug: 'sunset-creator',
+    category: 'تولید محتوا و رسانه',
+    description: 'استایل پاستلی جذاب با گرادینت صورتی و بنفش غروب خورشید و تمرکز بالا بر شبکه‌های اجتماعی.',
     thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    is_premium: true,
-    is_active: true,
     schema: {
-      default_colors: {
+      theme: 'sunset',
+      colors: {
         primary: '#ec4899',
-        secondary: '#8b5cf6',
+        secondary: '#f43f5e',
         background: '#09090b',
         card_bg: '#18181b',
-        text: '#fafafa'
+        text: '#fafafa',
+        text_secondary: '#f472b6',
+        border_color: 'rgba(236, 72, 153, 0.3)',
+        glow_color: '#ec4899'
+      },
+      typography: {
+        font_family: 'Shabnam',
+        title_size: '24px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'pill',
+        card_border: 'none',
+        card_shadow: '2xl',
+        header_style: 'content_creator',
+        avatar_position: 'floating-top',
+        avatar_shape: 'circle',
+        avatar_size: 'xl',
+        button_style: 'pill',
+        social_display_mode: 'vertical-rows',
+        cover_height: 'compact',
+        bio_style: 'bubble'
+      },
+      effects: {
+        style: 'mesh-gradient',
+        backdrop_blur: 'md'
       }
     }
   },
   {
-    id: 'temp-4',
-    name: 'گرادینت کهکشانی (Neon Glass)',
-    slug: 'neon-glass',
-    thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&q=80',
-    is_premium: true,
-    is_active: true,
-    schema: {
-      default_colors: {
-        primary: '#06b6d4',
-        secondary: '#3b82f6',
-        background: '#0f172a',
-        card_bg: 'rgba(15, 23, 42, 0.85)',
-        text: '#ffffff'
-      }
-    }
-  },
-  {
-    id: 'temp-5',
-    name: 'مینیمال مدرن (Minimal)',
-    slug: 'minimal',
+    id: 'preset-nordic-minimal',
+    name: 'مینیمال ناب اسکاندیناوی (Nordic Pure Minimal)',
+    slug: 'nordic-minimal',
+    category: 'مینیمال و هنری',
+    description: 'خالص، تمیز، بدون افکت اضافه با تایپوگرافی سنگین مشکی روی بوم خاکستری سرد.',
     thumbnail: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
-    is_premium: false,
-    is_active: true,
     schema: {
-      default_colors: {
-        primary: '#0f172a',
-        secondary: '#475569',
-        background: '#f8fafc',
+      theme: 'minimal',
+      colors: {
+        primary: '#09090b',
+        secondary: '#71717a',
+        background: '#f4f4f5',
         card_bg: '#ffffff',
-        text: '#0f172a'
+        text: '#09090b',
+        text_secondary: '#71717a',
+        border_color: '#e4e4e7',
+        glow_color: '#000000'
+      },
+      typography: {
+        font_family: 'Shabnam',
+        title_size: '22px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'md',
+        card_border: 'thin',
+        card_shadow: 'sm',
+        header_style: 'centered',
+        avatar_position: 'below-center',
+        avatar_shape: 'square',
+        avatar_size: 'lg',
+        button_style: 'sharp',
+        social_display_mode: 'compact-chips',
+        cover_height: 'none',
+        bio_style: 'minimal'
+      },
+      effects: {
+        style: 'none',
+        backdrop_blur: 'none'
       }
     }
   },
   {
-    id: 'temp-6',
-    name: 'تاریک و طلایی لاکچری (Luxury Dark)',
-    slug: 'luxury-dark',
-    thumbnail: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
-    is_premium: true,
-    is_active: true,
+    id: 'preset-emerald-imperial',
+    name: 'زمردی سلطنتی (Emerald Imperial)',
+    slug: 'emerald-imperial',
+    category: 'مدیریتی و سرمایه‌گذاری',
+    description: 'تم فاخر سبز زمردین تیره با خطوط طلایی ملایم، مناسب پزشکان، وکلا و مشاوران ارشد.',
+    thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&q=80',
     schema: {
-      default_colors: {
-        primary: '#f59e0b',
-        secondary: '#d97706',
-        background: '#0c0a09',
-        card_bg: '#1c1917',
-        text: '#fef3c7'
+      theme: 'emerald',
+      colors: {
+        primary: '#10b981',
+        secondary: '#064e3b',
+        background: '#022c22',
+        card_bg: '#064e3b',
+        text: '#ecfdf5',
+        text_secondary: '#6ee7b7',
+        border_color: 'rgba(16, 185, 129, 0.4)',
+        glow_color: '#10b981'
+      },
+      typography: {
+        font_family: 'IranYekan',
+        title_size: '22px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'xl',
+        card_border: 'solid-accent',
+        card_shadow: 'colored-glow',
+        header_style: 'split',
+        avatar_position: 'overlap-right',
+        avatar_shape: 'squircle',
+        avatar_size: 'lg',
+        button_style: 'gradient',
+        social_display_mode: 'grid-squares',
+        cover_height: 'standard',
+        bio_style: 'card-boxed'
+      },
+      effects: {
+        style: 'glassmorphism',
+        backdrop_blur: 'xl'
+      }
+    }
+  },
+  {
+    id: 'preset-aurora-glass',
+    name: 'شیشه‌ای شفق قطبی (Midnight Aurora Glass)',
+    slug: 'aurora-glass',
+    category: 'طراحی و دیزاین',
+    description: 'شیشه‌ای فوق‌مدرن با پس‌زمینه شفق قطبی چندرنگ، درخشش بنفش و فیروزه‌ای و افکت بلورین.',
+    thumbnail: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'glass',
+      colors: {
+        primary: '#38bdf8',
+        secondary: '#c084fc',
+        background: '#030712',
+        card_bg: 'rgba(17, 24, 39, 0.75)',
+        text: '#ffffff',
+        text_secondary: '#bae6fd',
+        border_color: 'rgba(255, 255, 255, 0.2)',
+        glow_color: '#38bdf8'
+      },
+      typography: {
+        font_family: 'Vazir',
+        title_size: '22px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'xl',
+        card_border: 'thin',
+        card_shadow: '2xl',
+        header_style: 'centered',
+        avatar_position: 'overlap-center',
+        avatar_shape: 'circle',
+        avatar_size: 'xl',
+        button_style: 'glass',
+        social_display_mode: 'horizontal-bubbles',
+        cover_height: 'standard',
+        bio_style: 'bubble'
+      },
+      effects: {
+        style: 'glassmorphism',
+        backdrop_blur: 'xl'
+      }
+    }
+  },
+  {
+    id: 'preset-terracotta-artisan',
+    name: 'سنتی و خاکی گرم (Terracotta Artisan)',
+    slug: 'terracotta-artisan',
+    category: 'معماری و صنایع دستی',
+    description: 'پالت طبیعی سفالی، کرم و قهوه‌ای خاکی با حس اصالت و دست‌ساز، مناسب هنرمندان و معماران.',
+    thumbnail: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'artisan',
+      colors: {
+        primary: '#b45309',
+        secondary: '#fed7aa',
+        background: '#fffbeb',
+        card_bg: '#fff7ed',
+        text: '#451a03',
+        text_secondary: '#9a3412',
+        border_color: '#fed7aa',
+        glow_color: '#b45309'
+      },
+      typography: {
+        font_family: 'Shabnam',
+        title_size: '21px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'lg',
+        card_border: 'thin',
+        card_shadow: 'md',
+        header_style: 'split',
+        avatar_position: 'below-right',
+        avatar_shape: 'rounded-square',
+        avatar_size: 'lg',
+        button_style: 'rounded',
+        social_display_mode: 'grid-squares',
+        cover_height: 'compact',
+        bio_style: 'card-boxed'
+      },
+      effects: {
+        style: 'none',
+        backdrop_blur: 'none'
+      }
+    }
+  },
+  {
+    id: 'preset-monochrome-fashion',
+    name: 'مونوکروم بلک اند وایت مد (Monochrome Fashion)',
+    slug: 'monochrome-fashion',
+    category: 'مد و عکاسی',
+    description: 'کنتراست بی‌نهایت سیاه و سفید الهام‌گرفته از مجلات فشن پاریس با کادربندی‌های دقیق و آواتار لبه‌تیز.',
+    thumbnail: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'dark',
+      colors: {
+        primary: '#ffffff',
+        secondary: '#27272a',
+        background: '#000000',
+        card_bg: '#09090b',
+        text: '#ffffff',
+        text_secondary: '#a1a1aa',
+        border_color: '#27272a',
+        glow_color: '#ffffff'
+      },
+      typography: {
+        font_family: 'IranYekan',
+        title_size: '26px',
+        body_size: '13px'
+      },
+      layout: {
+        card_radius: 'none',
+        card_border: 'thin',
+        card_shadow: '2xl',
+        header_style: 'centered',
+        avatar_position: 'overlap-center',
+        avatar_shape: 'square',
+        avatar_size: 'giant',
+        button_style: 'sharp',
+        social_display_mode: 'vertical-rows',
+        cover_height: 'large',
+        bio_style: 'quote'
+      },
+      effects: {
+        style: 'none',
+        backdrop_blur: 'none'
+      }
+    }
+  },
+  {
+    id: 'preset-medical-clean',
+    name: 'کلینیک و سلامت فیروزه‌ای (Healthcare Pure)',
+    slug: 'medical-clean',
+    category: 'پزشکی و سلامت',
+    description: 'تم آرامش‌بخش آبی و فیروزه‌ای روشن با چیدمان بسیار منظم و اعتمادآفرین برای پزشکان و متخصصان.',
+    thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'light',
+      colors: {
+        primary: '#0284c7',
+        secondary: '#e0f2fe',
+        background: '#f0f9ff',
+        card_bg: '#ffffff',
+        text: '#0c4a6e',
+        text_secondary: '#0369a1',
+        border_color: '#bae6fd',
+        glow_color: '#0284c7'
+      },
+      typography: {
+        font_family: 'Vazir',
+        title_size: '22px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'lg',
+        card_border: 'thin',
+        card_shadow: 'md',
+        header_style: 'split',
+        avatar_position: 'overlap-right',
+        avatar_shape: 'circle',
+        avatar_size: 'lg',
+        button_style: 'pill',
+        social_display_mode: 'grid-squares',
+        cover_height: 'standard',
+        bio_style: 'card-boxed'
+      },
+      effects: {
+        style: 'none',
+        backdrop_blur: 'none'
+      }
+    }
+  },
+  {
+    id: 'preset-retro-synthwave',
+    name: 'رترو سینث‌ویو دهه ۸۰ (Retro Synthwave 80s)',
+    slug: 'retro-synthwave',
+    category: 'هنری و موسیقی',
+    description: 'نوستالژی سایبرپانک ارغوانی و آبی الکتریک با دکمه‌های سه‌بعدی و کارت با سایه رنگی درخشان.',
+    thumbnail: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'cyber',
+      colors: {
+        primary: '#d946ef',
+        secondary: '#06b6d4',
+        background: '#180a2a',
+        card_bg: '#251040',
+        text: '#fae8ff',
+        text_secondary: '#e879f9',
+        border_color: 'rgba(217, 70, 239, 0.4)',
+        glow_color: '#d946ef'
+      },
+      typography: {
+        font_family: 'Shabnam',
+        title_size: '24px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'xl',
+        card_border: 'glow',
+        card_shadow: 'colored-glow',
+        header_style: 'centered',
+        avatar_position: 'overlap-center',
+        avatar_shape: 'glowing-ring',
+        avatar_size: 'xl',
+        button_style: '3d-press',
+        social_display_mode: 'bento-tiles',
+        cover_height: 'standard',
+        bio_style: 'gradient-border'
+      },
+      effects: {
+        style: 'neon-glow',
+        backdrop_blur: 'lg'
+      }
+    }
+  },
+  {
+    id: 'preset-eco-organic',
+    name: 'طبیعت و سلامت ارگانیک (Eco Nature Organic)',
+    slug: 'eco-organic',
+    category: 'طبیعت و سبک زندگی',
+    description: 'سبز زیتونی و کرم ارگانیک با خطوط نرم و دکمه‌های کپسولی مناسب محصولات گیاهی و سلامت.',
+    thumbnail: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'light',
+      colors: {
+        primary: '#15803d',
+        secondary: '#dcfce7',
+        background: '#f0fdf4',
+        card_bg: '#ffffff',
+        text: '#14532d',
+        text_secondary: '#16a34a',
+        border_color: '#bbf7d0',
+        glow_color: '#15803d'
+      },
+      typography: {
+        font_family: 'Vazir',
+        title_size: '22px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'pill',
+        card_border: 'none',
+        card_shadow: 'md',
+        header_style: 'split',
+        avatar_position: 'overlap-right',
+        avatar_shape: 'squircle',
+        avatar_size: 'lg',
+        button_style: 'pill',
+        social_display_mode: 'horizontal-bubbles',
+        cover_height: 'standard',
+        bio_style: 'bubble'
+      },
+      effects: {
+        style: 'none',
+        backdrop_blur: 'none'
+      }
+    }
+  },
+  {
+    id: 'preset-fintech-graphite',
+    name: 'فین‌تک و دارایی دیجیتال (Fintech Graphite)',
+    slug: 'fintech-graphite',
+    category: 'مالی و سرمایه‌گذاری',
+    description: 'گرافیت تیره و آبی متالیک با تایپوگرافی فنی و کاشی‌های اطلاعاتی مخصوص کریپتو و بازارهای مالی.',
+    thumbnail: 'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'dark',
+      colors: {
+        primary: '#3b82f6',
+        secondary: '#1e3a8a',
+        background: '#0b0f19',
+        card_bg: '#111827',
+        text: '#f3f4f6',
+        text_secondary: '#9ca3af',
+        border_color: '#1f2937',
+        glow_color: '#3b82f6'
+      },
+      typography: {
+        font_family: 'IranYekan',
+        title_size: '22px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'lg',
+        card_border: 'solid-accent',
+        card_shadow: '2xl',
+        header_style: 'bento',
+        avatar_position: 'inside-header',
+        avatar_shape: 'hexagon',
+        avatar_size: 'md',
+        button_style: 'gradient',
+        social_display_mode: 'bento-tiles',
+        cover_height: 'compact',
+        bio_style: 'card-boxed'
+      },
+      effects: {
+        style: 'glassmorphism',
+        backdrop_blur: 'lg'
+      }
+    }
+  },
+  {
+    id: 'preset-diamond-3d',
+    name: 'الماس سه‌بعدی متحرک (Diamond 3D Glow)',
+    slug: 'diamond-3d-glow',
+    category: 'خلاقانه و سه‌بعدی',
+    description: 'آواتار لوزی با افکت درخشش چندبعدی، سایه‌های عمیق و دکمه‌های شیشه‌ای براق.',
+    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
+    schema: {
+      theme: 'glass',
+      colors: {
+        primary: '#8b5cf6',
+        secondary: '#ec4899',
+        background: '#0c071e',
+        card_bg: 'rgba(23, 15, 50, 0.85)',
+        text: '#ffffff',
+        text_secondary: '#c4b5fd',
+        border_color: 'rgba(139, 92, 246, 0.3)',
+        glow_color: '#8b5cf6'
+      },
+      typography: {
+        font_family: 'Vazir',
+        title_size: '24px',
+        body_size: '14px'
+      },
+      layout: {
+        card_radius: 'xl',
+        card_border: 'glow',
+        card_shadow: 'colored-glow',
+        header_style: 'centered',
+        avatar_position: 'overlap-center',
+        avatar_shape: 'diamond',
+        avatar_size: 'xl',
+        button_style: '3d-press',
+        social_display_mode: 'grid-squares',
+        cover_height: 'standard',
+        bio_style: 'gradient-border'
+      },
+      effects: {
+        style: 'mesh-gradient',
+        backdrop_blur: 'xl'
       }
     }
   }
 ];
+
+const SEED_TEMPLATES: Template[] = PRESET_TEMPLATE_SCHEMAS.map(p => ({
+  id: p.id,
+  name: p.name,
+  slug: p.slug,
+  thumbnail: p.thumbnail,
+  is_premium: ['preset-luxury-gold', 'preset-cyberpunk', 'preset-aurora-glass', 'preset-emerald-imperial', 'preset-diamond-3d', 'preset-retro-synthwave'].includes(p.id),
+  is_active: true,
+  schema: p.schema
+}));
 
 const SEED_PLANS: Plan[] = [
   {

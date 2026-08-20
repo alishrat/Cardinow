@@ -10,7 +10,7 @@ import {
   Settings, User, LogOut, LayoutGrid, CreditCard, BarChart2, ShieldCheck, 
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
-  Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, UserCheck, List, X,
+  Phone, Mail, Send, MessageCircle, ChevronLeft, ChevronDown, MapPin, Instagram, UserCheck, List, X,
   Wallet as WalletIcon, ShoppingBag, Filter
 } from 'lucide-react';
 
@@ -347,6 +347,8 @@ function DashboardContent() {
   const [adminCardsSearch, setAdminCardsSearch] = useState<string>('');
   const [adminCardsViewMode, setAdminCardsViewMode] = useState<'grid' | 'table'>('grid');
   const [adminCardsUserFilter, setAdminCardsUserFilter] = useState<string>('all');
+  const [isUserFilterDropdownOpen, setIsUserFilterDropdownOpen] = useState(false);
+  const [userFilterSearchText, setUserFilterSearchText] = useState('');
 
   // User Management States
   const [editingUser, setEditingUser] = useState<any | null>(null);
@@ -2713,7 +2715,7 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                {/* Filters Bar: Search & User Selector */}
+                {/* Filters Bar: Search & Searchable User Combobox */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                   {/* Search Bar */}
                   <div className="md:col-span-7 relative">
@@ -2729,36 +2731,161 @@ function DashboardContent() {
                     />
                   </div>
 
-                  {/* Filter by User Dropdown */}
-                  <div className="md:col-span-5 relative flex items-center gap-2">
-                    <span className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-amber-400">
-                      <Filter className="h-4 w-4" />
-                    </span>
-                    <select
-                      value={adminCardsUserFilter}
-                      onChange={(e) => setAdminCardsUserFilter(e.target.value)}
-                      className="w-full pr-10 pl-3 py-3 bg-slate-950 border border-slate-850 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-amber-500 transition appearance-none cursor-pointer"
-                    >
-                      <option value="all">همه کاربران (همه {cards.length} کارت)</option>
-                      {allUsers.map((u) => {
-                        const count = cards.filter(c => toUUID(c.user_id) === toUUID(u.id)).length;
-                        const userName = (u.first_name || u.last_name) ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : (u.name || u.email || 'کاربر بدون نام');
-                        const contact = u.email || u.mobile || '';
-                        return (
-                          <option key={u.id} value={u.id}>
-                            {userName} {contact ? `(${contact})` : ''} - [{count} کارت]
-                          </option>
-                        );
-                      })}
-                    </select>
-                    {adminCardsUserFilter !== 'all' && (
-                      <button
-                        onClick={() => setAdminCardsUserFilter('all')}
-                        className="shrink-0 p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-xs transition"
-                        title="نمایش همه کاربران"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                  {/* Searchable Filter by User Combobox */}
+                  <div className="md:col-span-5 relative">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsUserFilterDropdownOpen(!isUserFilterDropdownOpen);
+                            setUserFilterSearchText('');
+                          }}
+                          className={`w-full pr-10 pl-9 py-3 bg-slate-950 border rounded-xl text-xs text-right transition flex items-center justify-between cursor-pointer ${
+                            isUserFilterDropdownOpen ? 'border-amber-500 ring-1 ring-amber-500/20 text-white' : 'border-slate-850 hover:border-slate-750 text-slate-200'
+                          }`}
+                        >
+                          <span className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-amber-400">
+                            <Filter className="h-4 w-4" />
+                          </span>
+
+                          <span className="truncate block pr-2">
+                            {adminCardsUserFilter === 'all' ? (
+                              <span className="text-slate-400">فیلتر کاربر: <span className="text-white font-bold">همه کاربران</span></span>
+                            ) : (
+                              <span>
+                                فیلتر: <span className="text-amber-400 font-bold">{selectedUserObj?.first_name || selectedUserObj?.last_name ? `${selectedUserObj.first_name || ''} ${selectedUserObj.last_name || ''}`.trim() : selectedUserObj?.name || selectedUserObj?.email || 'کاربر انتخاب‌شده'}</span>
+                              </span>
+                            )}
+                          </span>
+
+                          <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                            <ChevronDown className={`h-4 w-4 transition-transform ${isUserFilterDropdownOpen ? 'rotate-180 text-amber-400' : ''}`} />
+                          </span>
+                        </button>
+                      </div>
+
+                      {adminCardsUserFilter !== 'all' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAdminCardsUserFilter('all');
+                            setIsUserFilterDropdownOpen(false);
+                          }}
+                          className="shrink-0 p-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-xs transition cursor-pointer"
+                          title="حذف فیلتر و نمایش همه"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Dropdown Menu Popover */}
+                    {isUserFilterDropdownOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setIsUserFilterDropdownOpen(false)} 
+                        />
+                        <div className="absolute top-full right-0 left-0 mt-1.5 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl z-50 p-2 space-y-2 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                          {/* Search box inside dropdown */}
+                          <div className="relative">
+                            <Search className="h-3.5 w-3.5 absolute right-3 top-2.5 text-slate-500" />
+                            <input
+                              type="text"
+                              autoFocus
+                              value={userFilterSearchText}
+                              onChange={(e) => setUserFilterSearchText(e.target.value)}
+                              placeholder="جستجو در نام، ایمیل یا موبایل کاربر..."
+                              className="w-full pr-8 pl-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
+                            />
+                            {userFilterSearchText && (
+                              <button
+                                onClick={() => setUserFilterSearchText('')}
+                                className="absolute left-2.5 top-2 text-slate-500 hover:text-white text-xs cursor-pointer"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Users List */}
+                          <div className="max-h-60 overflow-y-auto space-y-1 pr-0.5 custom-scrollbar">
+                            {/* Option: All Users */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAdminCardsUserFilter('all');
+                                setIsUserFilterDropdownOpen(false);
+                              }}
+                              className={`w-full p-2 rounded-xl text-right flex items-center justify-between text-xs transition cursor-pointer ${
+                                adminCardsUserFilter === 'all'
+                                  ? 'bg-amber-600/15 text-amber-400 font-bold border border-amber-500/30'
+                                  : 'hover:bg-slate-850 text-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="h-6 w-6 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 text-[10px] font-bold shrink-0">
+                                  <Users className="h-3.5 w-3.5 text-amber-400" />
+                                </div>
+                                <span>همه کاربران (نمایش تمام کارت‌ها)</span>
+                              </div>
+                              <span className="text-[10px] bg-slate-950 border border-slate-800 px-2 py-0.5 rounded-md text-slate-400 font-mono">
+                                {cards.length} کارت
+                              </span>
+                            </button>
+
+                            {/* Filtered User Items */}
+                            {allUsers
+                              .filter((u) => {
+                                const term = userFilterSearchText.toLowerCase().trim();
+                                if (!term) return true;
+                                const name = `${u.first_name || ''} ${u.last_name || ''} ${u.name || ''}`.toLowerCase();
+                                const email = (u.email || '').toLowerCase();
+                                const mobile = (u.mobile || '').toLowerCase();
+                                return name.includes(term) || email.includes(term) || mobile.includes(term);
+                              })
+                              .map((u) => {
+                                const isSelected = toUUID(adminCardsUserFilter) === toUUID(u.id);
+                                const userCardCount = cards.filter(c => toUUID(c.user_id) === toUUID(u.id)).length;
+                                const displayName = (u.first_name || u.last_name) ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : (u.name || 'کاربر بدون نام');
+
+                                return (
+                                  <button
+                                    key={u.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setAdminCardsUserFilter(u.id);
+                                      setIsUserFilterDropdownOpen(false);
+                                    }}
+                                    className={`w-full p-2 rounded-xl text-right flex items-center justify-between text-xs transition cursor-pointer ${
+                                      isSelected
+                                        ? 'bg-amber-600/15 text-amber-400 font-bold border border-amber-500/30'
+                                        : 'hover:bg-slate-850 text-slate-300'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0 flex-1 pr-1">
+                                      <div className="h-7 w-7 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center text-amber-400 text-[10px] font-bold shrink-0">
+                                        {(u.first_name?.[0] || u.name?.[0] || 'U').toUpperCase()}
+                                      </div>
+                                      <div className="truncate text-right min-w-0">
+                                        <p className="truncate font-semibold text-white text-[11px]">{displayName}</p>
+                                        <p className="truncate text-[10px] text-slate-500 font-mono">{u.email || u.mobile || u.id}</p>
+                                      </div>
+                                    </div>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono shrink-0 mr-2 ${
+                                      userCardCount > 0 
+                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                                        : 'bg-slate-950 text-slate-500 border border-slate-800'
+                                    }`}>
+                                      {userCardCount} کارت
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -3073,30 +3200,28 @@ function DashboardContent() {
                 </div>
 
                 {/* Users table */}
-                <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden">
-                  <div className="overflow-x-auto">
+                <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden shadow-md">
+                  <div className="w-full">
                     <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-900 text-slate-400 font-bold border-b border-slate-850 text-[11px]">
+                      <thead className="bg-slate-900/90 text-slate-400 font-bold border-b border-slate-850 text-[11px]">
                         <tr>
-                          <th className="py-3 px-4">کاربر</th>
-                          <th className="py-3 px-4">شماره همراه / ایمیل</th>
-                          <th className="py-3 px-4">نقش دسترسی</th>
-                          <th className="py-3 px-4">پرتال متصل</th>
-                          <th className="py-3 px-4">تعداد کارت‌ها</th>
-                          <th className="py-3 px-4">وضعیت اشتراک</th>
-                          <th className="py-3 px-4">عملیات</th>
+                          <th className="py-3.5 px-4 text-right">کاربر</th>
+                          <th className="py-3.5 px-4 text-right">ایمیل / شماره همراه</th>
+                          <th className="py-3.5 px-4 text-right">نقش</th>
+                          <th className="py-3.5 px-4 text-center">تعداد کارت</th>
+                          <th className="py-3.5 px-4 text-center">وضعیت اشتراک</th>
+                          <th className="py-3.5 px-4 text-center">عملیات</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-850/40 text-slate-300">
                         {filteredUsers.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="py-8 text-center text-slate-500 font-bold">
+                            <td colSpan={6} className="py-10 text-center text-slate-500 font-bold">
                               هیچ کاربری با این مشخصات یافت نشد!
                             </td>
                           </tr>
                         ) : (
                           filteredUsers.map((u) => {
-                            const associatedTenant = tenants.find(t => toUUID(t.id) === toUUID(u.tenant_id));
                             const userCardsCount = cards.filter(c => toUUID(c.user_id) === toUUID(u.id)).length;
                             const userSub = subscriptions.find(s => toUUID(s.user_id) === toUUID(u.id));
                             const subEndDate = u.subscription_end_date || userSub?.end_date;
@@ -3104,25 +3229,25 @@ function DashboardContent() {
 
                             return (
                               <tr key={u.id} className="hover:bg-slate-900/40 transition align-middle">
-                                <td className="py-3 px-4">
+                                <td className="py-3.5 px-4">
                                   <div className="flex items-center gap-2.5">
-                                    <div className="h-8 w-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-amber-400 shrink-0 text-xs">
+                                    <div className="h-8 w-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-amber-400 shrink-0 text-xs shadow-inner">
                                       {(u.first_name?.[0] || u.name?.[0] || 'U').toUpperCase()}
                                     </div>
-                                    <div>
-                                      <p className="font-bold text-white">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : u.name || 'کاربر بدون نام'}</p>
-                                      <p className="font-mono text-[10px] text-slate-500">{u.id}</p>
+                                    <div className="min-w-0">
+                                      <p className="font-bold text-white text-xs truncate">{u.first_name || u.last_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : u.name || 'کاربر بدون نام'}</p>
+                                      <p className="font-mono text-[10px] text-slate-500 truncate">{u.id}</p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3.5 px-4">
                                   <div className="space-y-0.5">
-                                    <p className="font-mono text-blue-400 text-[11px]">{u.email}</p>
-                                    {u.mobile && <p className="font-mono text-slate-400 text-[10px]">{u.mobile}</p>}
+                                    <p className="font-mono text-blue-400 text-[11px] truncate">{u.email || '—'}</p>
+                                    {u.mobile && <p className="font-mono text-slate-400 text-[10px] truncate">{u.mobile}</p>}
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
-                                  <span className={`px-2.5 py-1 rounded-full text-[9px] font-black ${
+                                <td className="py-3.5 px-4">
+                                  <span className={`px-2.5 py-1 rounded-full text-[9px] font-black inline-block ${
                                     u.role === 'admin' 
                                       ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
                                       : u.role === 'tenant' 
@@ -3132,56 +3257,39 @@ function DashboardContent() {
                                     {u.role === 'admin' ? 'مدیر ارشد' : u.role === 'tenant' ? 'نماینده' : 'مشتری'}
                                   </span>
                                 </td>
-                                <td className="py-3 px-4">
-                                  {u.tenant_id ? (
-                                    <span className="text-amber-500 font-bold">{associatedTenant?.name || u.tenant_id}</span>
-                                  ) : (
-                                    <span className="text-slate-500">پرتال اصلی</span>
-                                  )}
-                                </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3.5 px-4 text-center">
                                   <button
+                                    type="button"
                                     onClick={() => setViewingUserCardsModal(u)}
-                                    className={`px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition ${
-                                      userCardsCount > 0 
-                                        ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 cursor-pointer' 
-                                        : 'bg-slate-900 text-slate-500 border border-slate-800 cursor-pointer hover:text-slate-300'
-                                    }`}
                                     title={`مشاهده کارت‌های ${u.first_name || u.name || 'کاربر'}`}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition cursor-pointer ${
+                                      userCardsCount > 0 
+                                        ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 hover:border-amber-500/40 shadow-sm' 
+                                        : 'bg-slate-900 hover:bg-slate-850 text-slate-500 hover:text-slate-300 border border-slate-800'
+                                    }`}
                                   >
-                                    <CreditCard className="h-3 w-3" />
                                     <span>{userCardsCount} کارت</span>
-                                    <Eye className="h-2.5 w-2.5 opacity-80" />
                                   </button>
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3.5 px-4 text-center">
                                   {subEndDate ? (
-                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                                      isSubActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                      isSubActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
                                     }`}>
-                                      {isSubActive ? `فعال تا ${toJalaliDate(subEndDate)}` : `منقضی شده (${toJalaliDate(subEndDate)})`}
+                                      {isSubActive ? `تا ${toJalaliDate(subEndDate)}` : `منقضی`}
                                     </span>
                                   ) : (
                                     <span className="text-slate-500 text-[10px]">تعیین نشده</span>
                                   )}
                                 </td>
-                                <td className="py-3 px-4">
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => setViewingUserCardsModal(u)}
-                                      className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 text-blue-400 hover:text-blue-300 border border-slate-800 rounded-xl text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-                                      title="مشاهده کارت‌های دیجیتال کاربر"
-                                    >
-                                      <Eye className="h-3.5 w-3.5" />
-                                      <span>مشاهده کارت‌ها</span>
-                                    </button>
+                                <td className="py-3.5 px-4 text-center">
+                                  <div className="flex items-center justify-center">
                                     <button
                                       onClick={() => setEditingUser(u)}
-                                      className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 text-amber-400 hover:text-amber-300 border border-slate-800 rounded-xl text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-                                      title="ویرایش کاربر"
+                                      className="p-2 bg-slate-900 hover:bg-slate-850 text-amber-400 hover:text-amber-300 border border-slate-800 rounded-xl transition flex items-center justify-center cursor-pointer shadow-sm hover:border-amber-500/30"
+                                      title="ویرایش مشخصات کاربر"
                                     >
                                       <Edit2 className="h-3.5 w-3.5" />
-                                      <span>ویرایش</span>
                                     </button>
                                   </div>
                                 </td>
