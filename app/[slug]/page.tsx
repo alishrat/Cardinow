@@ -108,106 +108,143 @@ export default function PublicCardPage() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const renderShareDropdown = (id: string, alignLeft: boolean = true) => {
-    if (activeShareId !== id) return null;
+  const renderShareModal = () => {
+    if (!activeShareId || !card) return null;
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-    const shareTitle = card ? `کارت ویزیت هوشمند ${card.first_name} ${card.last_name}` : '';
-    
-    // Dynamic popup colors matching card theme
-    const popupBg = cardBgColor || '#0f172a';
-    const popupBorder = primaryColor ? `${primaryColor}60` : 'rgba(255, 255, 255, 0.2)';
-    const popupText = textCol || '#ffffff';
+    const shareTitle = `کارت ویزیت هوشمند ${card.first_name} ${card.last_name}`;
 
     return (
       <div 
-        className={`absolute mt-2 ${alignLeft ? 'left-0' : 'right-0'} w-52 border rounded-2xl shadow-2xl p-2 z-[99] animate-in fade-in zoom-in-95 duration-150 text-right`}
-        style={{
-          backgroundColor: popupBg,
-          borderColor: popupBorder,
-          color: popupText,
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)'
-        }}
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+        onClick={() => setActiveShareId(null)}
       >
         <div 
-          className="text-[11px] font-bold px-2.5 py-1.5 text-center border-b mb-1 opacity-80 flex items-center justify-between"
-          style={{ borderColor: popupBorder, color: popupText }}
+          className="bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 text-right animate-in zoom-in-95 duration-200 relative text-white"
+          onClick={(e) => e.stopPropagation()}
         >
-          <span>اشتراک‌گذاری کارت</span>
-          <button 
-            onClick={() => setActiveShareId(null)}
-            className="p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 opacity-70 hover:opacity-100"
-          >
-            <X className="h-3 w-3" />
-          </button>
+          {/* Modal Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Share2 className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs sm:text-sm text-white">اشتراک‌گذاری کارت</h3>
+                <p className="text-[10px] text-slate-400">ارسال و اشتراک با دیگران</p>
+              </div>
+            </div>
+            <button 
+              type="button"
+              onClick={() => setActiveShareId(null)}
+              className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Mini Profile Card Preview */}
+          <div className="p-3 bg-slate-950/70 rounded-2xl border border-slate-800 flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-white/10">
+              <img 
+                src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
+                alt="profile" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-bold text-xs text-white truncate">{card.first_name} {card.last_name}</h4>
+              <p className="text-[10px] text-slate-400 truncate">{card.job_title || card.company || 'کارت ویزیت دیجیتال'}</p>
+              <span className="text-[9px] text-blue-400 font-mono block mt-0.5" dir="ltr">/{card.slug}</span>
+            </div>
+          </div>
+
+          {/* Copy Link Button */}
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(shareUrl);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="w-full py-2.5 px-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs transition flex items-center justify-between shadow-lg shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
+            >
+              <span className="flex items-center gap-2">
+                <Copy className="h-4 w-4" />
+                <span>کپی لینک کارت ویزیت</span>
+              </span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-lg font-mono transition ${copied ? 'bg-emerald-500 text-white font-bold' : 'bg-white/20 text-white'}`}>
+                {copied ? 'کپی شد ✓' : 'کپی'}
+              </span>
+            </button>
+          </div>
+
+          {/* Direct Messengers Share Grid */}
+          <div className="space-y-2 pt-1">
+            <span className="text-[10px] font-bold text-slate-400 block px-0.5">ارسال مستقیم در پیام‌رسان‌ها:</span>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Telegram */}
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="p-2.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 text-sky-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
+              >
+                <Send className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+                <span>تلگرام</span>
+              </a>
+
+              {/* WhatsApp */}
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + '\n' + shareUrl)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="p-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
+              >
+                <MessageCircle className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <span>واتساپ</span>
+              </a>
+
+              {/* SMS */}
+              <a
+                href={`sms:?body=${encodeURIComponent(shareTitle + '\n' + shareUrl)}`}
+                className="p-2.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
+              >
+                <Phone className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                <span>پیامک (SMS)</span>
+              </a>
+
+              {/* Twitter / X */}
+              <a
+                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
+              >
+                <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <span>توییتر / X</span>
+              </a>
+            </div>
+
+            {/* Native Mobile OS Share (if supported) */}
+            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.share({
+                    title: shareTitle,
+                    text: `${card.first_name} ${card.last_name} - ${card.job_title || ''}`,
+                    url: shareUrl
+                  }).catch(() => {});
+                }}
+                className="w-full mt-1.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white flex items-center justify-center gap-2 transition cursor-pointer"
+              >
+                <Share2 className="h-3.5 w-3.5 text-blue-400" />
+                <span>اشتراک با سایر برنامه‌های گوشی</span>
+              </button>
+            )}
+          </div>
         </div>
-        
-        {/* Copy Link */}
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(shareUrl);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-          }}
-          className="w-full flex items-center justify-between p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
-          style={{ color: popupText }}
-        >
-          <span className="flex items-center gap-2">
-            <Copy className="h-3.5 w-3.5" style={{ color: primaryColor || '#3b82f6' }} />
-            <span>کپی لینک کارت</span>
-          </span>
-          {copied ? (
-            <span className="text-[10px] text-emerald-400 font-bold">کپی شد!</span>
-          ) : (
-            <span className="text-[10px] opacity-60">کپی</span>
-          )}
-        </button>
-
-        {/* Telegram */}
-        <a
-          href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="w-full flex items-center gap-2 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
-          style={{ color: popupText }}
-        >
-          <Send className="h-3.5 w-3.5 text-sky-400" />
-          <span>ارسال در تلگرام</span>
-        </a>
-
-        {/* WhatsApp */}
-        <a
-          href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="w-full flex items-center gap-2 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
-          style={{ color: popupText }}
-        >
-          <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
-          <span>ارسال در واتساپ</span>
-        </a>
-
-        {/* SMS */}
-        <a
-          href={`sms:?body=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
-          className="w-full flex items-center gap-2 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
-          style={{ color: popupText }}
-        >
-          <Phone className="h-3.5 w-3.5 text-amber-400" />
-          <span>ارسال پیامک (SMS)</span>
-        </a>
-
-        {/* Twitter */}
-        <a
-          href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="w-full flex items-center gap-2 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition text-xs text-right"
-          style={{ color: popupText }}
-        >
-          <Globe className="h-3.5 w-3.5 text-indigo-400" />
-          <span>اشتراک در Twitter/X</span>
-        </a>
       </div>
     );
   };
@@ -457,9 +494,8 @@ export default function PublicCardPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
-      {activeShareId && (
-        <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[1px]" onClick={() => setActiveShareId(null)} />
-      )}
+      {/* Root Fullscreen Share Modal */}
+      {renderShareModal()}
 
       {/* Dynamic Injecting Custom CSS */}
       {card.custom_css && (
@@ -496,12 +532,13 @@ export default function PublicCardPage() {
               {/* Share button wrapper */}
               <div className="absolute top-4 left-4 z-40">
                 <button 
-                  onClick={() => setActiveShareId(activeShareId === 'temp-1' ? null : 'temp-1')}
-                  className="p-2.5 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition active:scale-95"
+                  type="button"
+                  onClick={() => setActiveShareId('open')}
+                  className="p-2.5 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition active:scale-95 cursor-pointer"
+                  title="اشتراک‌گذاری کارت"
                 >
                   <Share2 className="h-5 w-5" />
                 </button>
-                {renderShareDropdown('temp-1', true)}
               </div>
             </div>
 
@@ -795,14 +832,15 @@ export default function PublicCardPage() {
                   <Eye className="h-3 w-3 text-indigo-400" />
                   {card.views_count?.toLocaleString('fa-IR')} بازدید
                 </span>
-                <div className="relative">
+                <div>
                   <button 
-                    onClick={() => setActiveShareId(activeShareId === 'temp-bento' ? null : 'temp-bento')}
-                    className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition active:scale-95"
+                    type="button"
+                    onClick={() => setActiveShareId('open')}
+                    className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition active:scale-95 cursor-pointer"
+                    title="اشتراک‌گذاری کارت"
                   >
                     <Share2 className="h-4 w-4" />
                   </button>
-                  {renderShareDropdown('temp-bento', true)}
                 </div>
               </div>
 
@@ -992,12 +1030,13 @@ export default function PublicCardPage() {
               {/* Share Floating Button */}
               <div className="absolute top-3 left-3 z-20">
                 <button 
-                  onClick={() => setActiveShareId(activeShareId === 'temp-creator' ? null : 'temp-creator')}
-                  className="p-2.5 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-md transition active:scale-95 border border-white/20"
+                  type="button"
+                  onClick={() => setActiveShareId('open')}
+                  className="p-2.5 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-md transition active:scale-95 border border-white/20 cursor-pointer"
+                  title="اشتراک‌گذاری کارت"
                 >
                   <Share2 className="h-4 w-4" />
                 </button>
-                {renderShareDropdown('temp-creator', true)}
               </div>
 
               {/* Creator Avatar with glowing ring */}
@@ -1160,14 +1199,15 @@ export default function PublicCardPage() {
                 {card.views_count?.toLocaleString('fa-IR')} بازدید
               </span>
 
-              <div className="relative">
+              <div>
                 <button 
-                  onClick={() => setActiveShareId(activeShareId === 'temp-2' ? null : 'temp-2')}
-                  className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-sm transition active:scale-95"
+                  type="button"
+                  onClick={() => setActiveShareId('open')}
+                  className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-sm transition active:scale-95 cursor-pointer"
+                  title="اشتراک‌گذاری کارت"
                 >
                   <Share2 className="h-5 w-5" />
                 </button>
-                {renderShareDropdown('temp-2', true)}
               </div>
             </div>
 
@@ -1449,12 +1489,13 @@ export default function PublicCardPage() {
               />
               <div className="absolute top-3 left-3 z-30">
                 <button 
-                  onClick={() => setActiveShareId(activeShareId === 'temp-3' ? null : 'temp-3')}
-                  className="p-2 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition active:scale-95 shadow-sm"
+                  type="button"
+                  onClick={() => setActiveShareId('open')}
+                  className="p-2 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition active:scale-95 shadow-sm cursor-pointer"
+                  title="اشتراک‌گذاری کارت"
                 >
                   <Share2 className="h-4 w-4" />
                 </button>
-                {renderShareDropdown('temp-3', true)}
               </div>
               <div className="absolute bottom-2 right-3 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-[10px] text-white/80 font-mono">
                 /{card.slug}
@@ -1719,12 +1760,13 @@ export default function PublicCardPage() {
 
               <div className="absolute top-3 left-3 z-30">
                 <button 
-                  onClick={() => setActiveShareId(activeShareId === 'temp-4' ? null : 'temp-4')}
-                  className="p-2 bg-black/60 hover:bg-black/80 rounded-full text-[#e2b53e] backdrop-blur-md transition active:scale-95 border border-amber-500/30 shadow-md"
+                  type="button"
+                  onClick={() => setActiveShareId('open')}
+                  className="p-2 bg-black/60 hover:bg-black/80 rounded-full text-[#e2b53e] backdrop-blur-md transition active:scale-95 border border-amber-500/30 shadow-md cursor-pointer"
+                  title="اشتراک‌گذاری کارت"
                 >
                   <Share2 className="h-4 w-4" />
                 </button>
-                {renderShareDropdown('temp-4', true)}
               </div>
             </div>
 
@@ -2046,25 +2088,27 @@ export default function PublicCardPage() {
                   />
                   <div className="absolute top-3 left-3 z-30">
                     <button 
-                      onClick={() => setActiveShareId(activeShareId === 'temp-custom-share' ? null : 'temp-custom-share')}
-                      className="p-2 rounded-full transition active:scale-95 shadow-md bg-black/50 hover:bg-black/70 text-white backdrop-blur-md"
+                      type="button"
+                      onClick={() => setActiveShareId('open')}
+                      className="p-2 rounded-full transition active:scale-95 shadow-md bg-black/50 hover:bg-black/70 text-white backdrop-blur-md cursor-pointer"
+                      title="اشتراک‌گذاری کارت"
                     >
                       <Share2 className="h-4 w-4" />
                     </button>
-                    {renderShareDropdown('temp-custom-share', true)}
                   </div>
                 </div>
               ) : (
                 <div className="flex justify-end items-center z-20 relative">
-                  <div className="relative">
+                  <div>
                     <button 
-                      onClick={() => setActiveShareId(activeShareId === 'temp-custom-share' ? null : 'temp-custom-share')}
-                      className="p-2 rounded-full transition active:scale-95 shadow-sm"
+                      type="button"
+                      onClick={() => setActiveShareId('open')}
+                      className="p-2 rounded-full transition active:scale-95 shadow-sm cursor-pointer"
                       style={{ backgroundColor: sColor, color: pColor }}
+                      title="اشتراک‌گذاری کارت"
                     >
                       <Share2 className="h-4 w-4" />
                     </button>
-                    {renderShareDropdown('temp-custom-share', true)}
                   </div>
                 </div>
               )}
