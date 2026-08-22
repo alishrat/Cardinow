@@ -2047,11 +2047,19 @@ export default function PublicCardPage() {
 
         {/* DYNAMIC FALLBACK FOR CUSTOM DIRECTUS TEMPLATES */}
         {isCustomTemplate && (() => {
-          const matchedTemp = templates.find(t => t.id === templateId || t.slug === templateId);
-          const tSchema = matchedTemp?.schema || {};
+          const matchedTemp = templates.find(t => 
+            toUUID(t.id) === toUUID(templateId) || 
+            t.id === templateId || 
+            t.slug === templateId || 
+            (t.slug && templateId && t.slug.toLowerCase() === templateId.toLowerCase())
+          );
+          let tSchema: any = matchedTemp?.schema || {};
+          if (typeof tSchema === 'string') {
+            try { tSchema = JSON.parse(tSchema); } catch { tSchema = {}; }
+          }
           
           // Schema-specific extractions
-          const isDarkTheme = tSchema.theme === 'dark';
+          const isDarkTheme = ['dark', 'neon', 'cyber', 'gold', 'glass'].includes(tSchema.theme || '') || tSchema.theme === 'dark';
           const tColors = tSchema.colors || {};
           const tTypography = tSchema.typography || {};
           const tLayout = tSchema.layout || {};
@@ -2062,27 +2070,37 @@ export default function PublicCardPage() {
           const sColor = secondaryColor;
           const bColor = bgColor;
           const txtColor = textCol;
-          const txtSecColor = tColors.text_secondary || secondaryColor;
+          const txtSecColor = tColors.text_secondary || (isDarkTheme ? '#94a3b8' : '#64748b');
           const cardBg = cardBgColor;
 
           // Layout & FX properties
           const avatarPosition = tLayout.avatar_position || 'overlap-center';
           const avatarShape = tLayout.avatar_shape || 'circle';
+          const avatarSize = tLayout.avatar_size || 'md';
           const headerStyle = tLayout.header_style || 'split';
           const buttonStyle = tLayout.button_style || 'pill';
+          const cardRadius = tLayout.card_radius || 'lg';
           const cardBorder = tLayout.card_border || 'none';
+          const coverHeight = tLayout.cover_height || 'standard';
+          const socialMode = tLayout.social_display_mode || 'grid-squares';
+          const bioStyle = tLayout.bio_style || 'card-boxed';
           const fxStyle = tFx.style || 'none';
 
           const isCircleAvatar = avatarShape === 'circle';
           const isGlowingAvatar = avatarShape === 'glowing-ring';
           const isSquareAvatar = avatarShape === 'square';
+          const isHexagon = avatarShape === 'hexagon';
+          const isDiamond = avatarShape === 'diamond';
+          const isSquircle = avatarShape === 'squircle';
 
-          const avatarRadiusClass = isCircleAvatar || isGlowingAvatar ? 'rounded-full' : isSquareAvatar ? 'rounded-2xl' : 'rounded-3xl';
+          const avatarRadiusClass = isCircleAvatar || isGlowingAvatar ? 'rounded-full' : isSquircle ? 'rounded-3xl' : isHexagon ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]' : isSquareAvatar ? 'rounded-2xl' : 'rounded-3xl';
+          const avatarSizeClass = avatarSize === 'sm' ? 'h-16 w-16' : avatarSize === 'lg' ? 'h-28 w-28' : avatarSize === 'xl' ? 'h-32 w-32' : 'h-24 w-24';
           const buttonRadiusClass = buttonStyle === 'pill' ? 'rounded-full' : buttonStyle === 'sharp' ? 'rounded-none' : 'rounded-2xl';
+          const radiusClass = cardRadius === 'none' ? 'rounded-none' : cardRadius === 'sm' ? 'rounded-xl' : cardRadius === 'md' ? 'rounded-2xl' : cardRadius === 'lg' ? 'rounded-3xl' : cardRadius === 'xl' ? 'rounded-[32px]' : 'rounded-[40px]';
 
           return (
             <div 
-              className={`rounded-3xl shadow-xl overflow-hidden transition-all p-5 space-y-5 relative ${
+              className={`${radiusClass} shadow-xl overflow-hidden transition-all p-5 space-y-5 relative ${
                 fxStyle === 'glassmorphism' ? 'backdrop-blur-xl bg-slate-900/80 border border-white/20 shadow-2xl' :
                 fxStyle === 'neon-glow' ? 'border border-cyan-500/50 shadow-[0_0_25px_rgba(6,182,212,0.35)]' :
                 fxStyle === 'gold-glow' ? 'border border-amber-500/50 shadow-[0_0_25px_rgba(245,158,11,0.35)]' :
@@ -2091,15 +2109,19 @@ export default function PublicCardPage() {
               style={{ 
                 backgroundColor: fxStyle !== 'glassmorphism' && fxStyle !== 'mesh-gradient' ? cardBg : undefined, 
                 color: txtColor,
-                fontFamily: 'var(--font-vazirmatn), sans-serif',
-                borderColor: cardBorder === 'solid-accent' ? pColor : cardBorder === 'double' ? pColor : undefined,
-                borderWidth: cardBorder === 'solid-accent' ? '2px' : cardBorder === 'double' ? '4px' : undefined,
+                fontFamily: tTypography.font_family ? `var(--font-${tTypography.font_family.toLowerCase()}), var(--font-vazirmatn), sans-serif` : 'var(--font-vazirmatn), sans-serif',
+                borderColor: cardBorder === 'solid-accent' ? pColor : cardBorder === 'double' ? pColor : cardBorder === 'thin' ? (isDarkTheme ? 'rgba(255,255,255,0.1)' : '#e2e8f0') : undefined,
+                borderWidth: cardBorder === 'solid-accent' ? '2px' : cardBorder === 'double' ? '4px' : cardBorder === 'thin' ? '1px' : undefined,
                 borderStyle: cardBorder === 'double' ? 'double' : undefined
               }}
             >
               {/* Cover photo with integrated share button */}
-              {card.cover_image ? (
-                <div className="h-36 rounded-2xl overflow-hidden relative border border-slate-200/20 shadow-sm shrink-0">
+              {coverHeight !== 'none' && (card.cover_image ? (
+                <div className={`w-full rounded-2xl overflow-hidden relative border border-slate-200/20 shadow-sm shrink-0 ${
+                  coverHeight === 'compact' ? 'h-24' :
+                  coverHeight === 'large' ? 'h-44' :
+                  coverHeight === 'hero' ? 'h-56' : 'h-36'
+                }`}>
                   <img 
                     src={getImageUrl(card.cover_image) || '/cover-fallback.avif'} 
                     alt="cover" 
@@ -2130,6 +2152,15 @@ export default function PublicCardPage() {
                     </button>
                   </div>
                 </div>
+              ))}
+
+              {/* Floating Top Avatar Position */}
+              {avatarPosition === 'floating-top' && (
+                <div className="flex justify-center -mb-2 z-10 relative">
+                  <div className={`${avatarSizeClass} overflow-hidden border-4 p-0.5 shadow-xl bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
+                  </div>
+                </div>
               )}
 
               {/* Overlapping Avatar Positions */}
@@ -2138,8 +2169,8 @@ export default function PublicCardPage() {
                   avatarPosition === 'overlap-right' ? 'justify-start pr-4' :
                   avatarPosition === 'overlap-left' ? 'justify-end pl-4' : 'justify-center'
                 }`}>
-                  <div className={`h-24 w-24 overflow-hidden border-4 p-0.5 shadow-xl bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''}`} style={{ borderColor: pColor }}>
-                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                  <div className={`${avatarSizeClass} overflow-hidden border-4 p-0.5 shadow-xl bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                   </div>
                 </div>
               )}
@@ -2149,17 +2180,43 @@ export default function PublicCardPage() {
                 <div className={`pt-1 flex ${
                   avatarPosition === 'below-right' ? 'justify-start' : 'justify-center'
                 }`}>
-                  <div className={`h-20 w-20 overflow-hidden border-2 p-0.5 shadow-md bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''}`} style={{ borderColor: pColor }}>
-                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                  <div className={`${avatarSizeClass} overflow-hidden border-2 p-0.5 shadow-md bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                   </div>
                 </div>
               )}
 
               {/* Header Info Layout */}
-              {headerStyle === 'split' ? (
+              {headerStyle === 'bento' ? (
+                <div className="p-4 bg-black/5 dark:bg-white/5 border border-slate-200/10 rounded-2xl flex items-center justify-between gap-4">
+                  {avatarPosition === 'inside-header' && (
+                    <div className={`${avatarSizeClass} overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                    </div>
+                  )}
+                  <div className="text-right">
+                    <h1 className="text-xl font-black" style={{ fontSize: tTypography.title_size || '22px' }}>{card.first_name} {card.last_name}</h1>
+                    <p className="text-xs font-bold mt-0.5" style={{ color: pColor }}>{card.job_title}</p>
+                    {card.company && <p className="text-[11px]" style={{ color: txtSecColor }}>{card.company}</p>}
+                  </div>
+                </div>
+              ) : headerStyle === 'content_creator' ? (
+                <div className="text-center space-y-2">
+                  {avatarPosition === 'inside-header' && (
+                    <div className="h-24 w-24 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-500 mx-auto shadow-xl">
+                      <div className="w-full h-full rounded-full overflow-hidden bg-slate-900">
+                        <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                  )}
+                  <h1 className="text-2xl font-black" style={{ fontSize: tTypography.title_size || '22px' }}>{card.first_name} {card.last_name}</h1>
+                  <p className="text-xs font-bold text-pink-400">{card.job_title || 'تولیدکننده محتوا'}</p>
+                  {card.company && <p className="text-[11px]" style={{ color: txtSecColor }}>{card.company}</p>}
+                </div>
+              ) : headerStyle === 'split' ? (
                 <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-200/20">
                   {avatarPosition === 'inside-header' && (
-                    <div className={`h-16 w-16 overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                    <div className={`${avatarSizeClass} overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
                       <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
                     </div>
                   )}
@@ -2172,7 +2229,7 @@ export default function PublicCardPage() {
               ) : (
                 <div className="text-center space-y-1">
                   {avatarPosition === 'inside-header' && (
-                    <div className={`h-20 w-20 overflow-hidden border-2 p-0.5 mx-auto mb-2 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                    <div className={`${avatarSizeClass} overflow-hidden border-2 p-0.5 mx-auto mb-2 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
                       <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
                     </div>
                   )}
@@ -2192,9 +2249,11 @@ export default function PublicCardPage() {
                           onClick={handleDownloadVCard}
                           className={`w-full py-3 px-4 font-bold flex items-center justify-center gap-2 transition hover:opacity-90 text-xs shadow-md ${buttonRadiusClass} ${
                             buttonStyle === 'glass' ? 'bg-white/10 border border-white/20 backdrop-blur-md text-white' :
-                            buttonStyle === 'gradient' ? 'bg-gradient-to-r from-amber-500 to-amber-700 text-white' : ''
+                            buttonStyle === 'gradient' ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white' :
+                            buttonStyle === 'neon' ? 'border border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.5)] text-cyan-300' :
+                            buttonStyle === '3d-press' ? 'border-b-4 border-black/40 active:translate-y-0.5' : ''
                           }`}
-                          style={{ backgroundColor: buttonStyle !== 'glass' && buttonStyle !== 'gradient' ? pColor : undefined, color: '#ffffff' }}
+                          style={{ backgroundColor: !['glass', 'gradient', 'neon'].includes(buttonStyle) ? pColor : undefined, color: '#ffffff' }}
                         >
                           <Download className="h-4 w-4" />
                           <span>{isVCardGenerated ? 'مخاطب ذخیره شد' : 'ذخیره در مخاطبان'}</span>
@@ -2213,11 +2272,12 @@ export default function PublicCardPage() {
                     return card.bio ? (
                       <div 
                         key="sec_cust_bio"
-                        className="p-3.5 rounded-2xl text-xs leading-relaxed text-center relative border whitespace-pre-line"
+                        className={bioStyle === 'card-boxed' ? "p-3.5 rounded-2xl text-xs leading-relaxed text-center relative border whitespace-pre-line" : "text-xs leading-relaxed text-center relative whitespace-pre-line opacity-90"}
                         style={{ 
                           borderColor: sColor, 
-                          backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-                          fontSize: tTypography.body_size || '14px'
+                          backgroundColor: bioStyle === 'card-boxed' ? (isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)') : undefined,
+                          fontSize: tTypography.body_size || '14px',
+                          color: txtSecColor
                         }}
                       >
                         {card.bio}

@@ -2818,36 +2818,50 @@ export function CustomerCardsView({
 
                       {/* Fallback Custom Template */}
                       {isCustomTemplate && (() => {
-                        const tSchema = activeTemplate?.schema || {};
-                        const isDarkTheme = tSchema.theme === 'dark';
+                        let tSchema: any = activeTemplate?.schema || {};
+                        if (typeof tSchema === 'string') {
+                          try { tSchema = JSON.parse(tSchema); } catch { tSchema = {}; }
+                        }
+                        const isDarkTheme = ['dark', 'neon', 'cyber', 'gold', 'glass'].includes(tSchema.theme || '') || tSchema.theme === 'dark';
                         const tColors = tSchema.colors || {};
                         const tLayout = tSchema.layout || {};
                         const tFx = tSchema.effects || {};
+                        const tTypography = tSchema.typography || {};
 
-                        const pColor = editingCard.custom_colors?.primary || tColors.primary || '#8d5b4c';
-                        const sColor = editingCard.custom_colors?.secondary || tColors.secondary || '#f4ece1';
-                        const bColor = editingCard.custom_colors?.background || tColors.background || '#faf6f0';
-                        const txtColor = editingCard.custom_colors?.text || tColors.text || '#2d221e';
-                        const txtSecColor = tColors.text_secondary || '#6e5a53';
-                        const customCardBg = editingCard.custom_colors?.card_bg || (isDarkTheme ? '#18181b' : '#ffffff');
-                        
+                        const pColor = editingCard.custom_colors?.primary?.trim() ? editingCard.custom_colors.primary : (tColors.primary || tmplDefaults.primary || '#2563eb');
+                        const sColor = editingCard.custom_colors?.secondary?.trim() ? editingCard.custom_colors.secondary : (tColors.secondary || tmplDefaults.secondary || '#3b82f6');
+                        const bColor = editingCard.custom_colors?.background?.trim() ? editingCard.custom_colors.background : (tColors.background || tmplDefaults.background || '#f1f5f9');
+                        const txtColor = editingCard.custom_colors?.text?.trim() ? editingCard.custom_colors.text : (tColors.text || (isDarkTheme ? '#f8fafc' : '#0f172a'));
+                        const txtSecColor = tColors.text_secondary || (isDarkTheme ? '#94a3b8' : '#64748b');
+                        const customCardBg = editingCard.custom_colors?.card_bg?.trim() ? editingCard.custom_colors.card_bg : (tColors.card_bg || (isDarkTheme ? '#0f172a' : '#ffffff'));
+
                         const avatarPosition = tLayout.avatar_position || 'overlap-center';
                         const avatarShape = tLayout.avatar_shape || 'circle';
+                        const avatarSize = tLayout.avatar_size || 'md';
                         const headerStyle = tLayout.header_style || 'split';
                         const buttonStyle = tLayout.button_style || 'pill';
+                        const cardRadius = tLayout.card_radius || 'lg';
                         const cardBorder = tLayout.card_border || 'none';
+                        const coverHeight = tLayout.cover_height || 'standard';
+                        const socialMode = tLayout.social_display_mode || 'grid-squares';
+                        const bioStyle = tLayout.bio_style || 'card-boxed';
                         const fxStyle = tFx.style || 'none';
 
                         const isCircleAvatar = avatarShape === 'circle';
                         const isGlowingAvatar = avatarShape === 'glowing-ring';
                         const isSquareAvatar = avatarShape === 'square';
+                        const isHexagon = avatarShape === 'hexagon';
+                        const isDiamond = avatarShape === 'diamond';
+                        const isSquircle = avatarShape === 'squircle';
 
-                        const avatarRadiusClass = isCircleAvatar || isGlowingAvatar ? 'rounded-full' : isSquareAvatar ? 'rounded-lg' : 'rounded-xl';
+                        const avatarRadiusClass = isCircleAvatar || isGlowingAvatar ? 'rounded-full' : isSquircle ? 'rounded-2xl' : isHexagon ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]' : isSquareAvatar ? 'rounded-lg' : 'rounded-xl';
+                        const avatarSizeClass = avatarSize === 'sm' ? 'h-10 w-10' : avatarSize === 'lg' ? 'h-18 w-18' : avatarSize === 'xl' ? 'h-22 w-22' : 'h-14 w-14';
                         const buttonRadiusClass = buttonStyle === 'pill' ? 'rounded-full' : buttonStyle === 'sharp' ? 'rounded-none' : 'rounded-lg';
+                        const radiusClass = cardRadius === 'none' ? 'rounded-none' : cardRadius === 'sm' ? 'rounded-xl' : cardRadius === 'md' ? 'rounded-2xl' : cardRadius === 'lg' ? 'rounded-3xl' : cardRadius === 'xl' ? 'rounded-[32px]' : 'rounded-[40px]';
 
                         return (
                           <div 
-                            className={`w-full min-h-full transition-all p-3.5 space-y-3.5 flex flex-col justify-between text-right font-sans overflow-y-auto ${
+                            className={`w-full min-h-full transition-all p-3.5 space-y-3.5 flex flex-col justify-between text-right font-sans overflow-y-auto ${radiusClass} ${
                               fxStyle === 'glassmorphism' ? 'backdrop-blur-xl bg-slate-900/80 border border-white/20 shadow-2xl' :
                               fxStyle === 'neon-glow' ? 'border border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.35)]' :
                               fxStyle === 'gold-glow' ? 'border border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.35)]' :
@@ -2856,8 +2870,9 @@ export function CustomerCardsView({
                             style={{ 
                               backgroundColor: fxStyle !== 'glassmorphism' && fxStyle !== 'mesh-gradient' ? customCardBg : undefined, 
                               color: txtColor,
-                              borderColor: cardBorder === 'solid-accent' ? pColor : cardBorder === 'double' ? pColor : undefined,
-                              borderWidth: cardBorder === 'solid-accent' ? '2px' : cardBorder === 'double' ? '3px' : undefined,
+                              fontFamily: tTypography.font_family ? `var(--font-${tTypography.font_family.toLowerCase()}), sans-serif` : undefined,
+                              borderColor: cardBorder === 'solid-accent' ? pColor : cardBorder === 'double' ? pColor : cardBorder === 'thin' ? (isDarkTheme ? 'rgba(255,255,255,0.1)' : '#e2e8f0') : undefined,
+                              borderWidth: cardBorder === 'solid-accent' ? '2px' : cardBorder === 'double' ? '3px' : cardBorder === 'thin' ? '1px' : undefined,
                               borderStyle: cardBorder === 'double' ? 'double' : undefined
                             }}
                           >
@@ -2865,30 +2880,36 @@ export function CustomerCardsView({
                               {/* Floating Top Avatar Position */}
                               {avatarPosition === 'floating-top' && (
                                 <div className="flex justify-center -mb-1 z-10 relative">
-                                  <div className={`h-14 w-14 overflow-hidden border-2 p-0.5 shadow-lg bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''}`} style={{ borderColor: pColor }}>
-                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                                  <div className={`${avatarSizeClass} overflow-hidden border-2 p-0.5 shadow-lg bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                                   </div>
                                 </div>
                               )}
 
                               {/* Cover photo for Custom Template */}
-                              <div className="h-20 bg-slate-200 relative shrink-0 overflow-hidden -mx-3.5 -mt-3.5 mb-2.5 rounded-b-xl">
-                                <img 
-                                  src={getImageUrl(editingCard.cover_image) || '/cover-fallback.avif'} 
-                                  alt="cover" 
-                                  className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30"></div>
-                              </div>
+                              {coverHeight !== 'none' && (
+                                <div className={`w-full bg-slate-200 relative shrink-0 overflow-hidden -mx-3.5 -mt-3.5 mb-2.5 rounded-b-xl ${
+                                  coverHeight === 'compact' ? 'h-12' :
+                                  coverHeight === 'large' ? 'h-20' :
+                                  coverHeight === 'hero' ? 'h-24' : 'h-16'
+                                }`}>
+                                  <img 
+                                    src={getImageUrl(editingCard.cover_image) || '/cover-fallback.avif'} 
+                                    alt="cover" 
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30"></div>
+                                </div>
+                              )}
 
                               {/* Overlapping Avatar Positions */}
                               {avatarPosition.startsWith('overlap-') && (
-                                <div className={`-mt-10 z-10 relative flex ${
+                                <div className={`-mt-8 z-10 relative flex ${
                                   avatarPosition === 'overlap-right' ? 'justify-start pr-2' :
                                   avatarPosition === 'overlap-left' ? 'justify-end pl-2' : 'justify-center'
                                 }`}>
-                                  <div className={`h-14 w-14 overflow-hidden border-2 p-0.5 shadow-md bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''}`} style={{ borderColor: pColor }}>
-                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                                  <div className={`${avatarSizeClass} overflow-hidden border-2 p-0.5 shadow-md bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                                   </div>
                                 </div>
                               )}
@@ -2898,16 +2919,45 @@ export function CustomerCardsView({
                                 <div className={`pt-0.5 flex ${
                                   avatarPosition === 'below-right' ? 'justify-start' : 'justify-center'
                                 }`}>
-                                  <div className={`h-12 w-12 overflow-hidden border p-0.5 shadow bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
-                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                                  <div className={`${avatarSizeClass} overflow-hidden border p-0.5 shadow bg-slate-900 ${avatarRadiusClass} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                                    <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                                   </div>
                                 </div>
                               )}
 
-                              {headerStyle === 'split' ? (
+                              {/* Header Layouts */}
+                              {headerStyle === 'bento' ? (
+                                <div className="p-2.5 bg-black/5 dark:bg-white/5 border border-slate-200/10 rounded-xl flex items-center gap-2">
+                                  {avatarPosition === 'inside-header' && (
+                                    <div className={`${avatarSizeClass} overflow-hidden border shrink-0 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                                      <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className="w-full h-full object-cover" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <h4 className="text-[10px] font-black">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                                    <p className="text-[8px] font-bold" style={{ color: pColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                                    {editingCard.company && <p className="text-[7px] opacity-70">{editingCard.company}</p>}
+                                  </div>
+                                </div>
+                              ) : headerStyle === 'content_creator' ? (
+                                <div className="flex flex-col items-center text-center space-y-1">
+                                  {avatarPosition === 'inside-header' && (
+                                    <div className="h-14 w-14 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-500 shrink-0">
+                                      <div className="w-full h-full rounded-full overflow-hidden bg-slate-900">
+                                        <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className="w-full h-full object-cover" />
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div>
+                                    <h4 className="text-[10px] font-black">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                                    <p className="text-[8px] font-bold text-pink-400">{editingCard.job_title || 'تولیدکننده محتوا'}</p>
+                                    {editingCard.company && <p className="text-[7px] opacity-70">{editingCard.company}</p>}
+                                  </div>
+                                </div>
+                              ) : headerStyle === 'split' ? (
                                 <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100/20">
                                   {avatarPosition === 'inside-header' && (
-                                    <div className={`h-10 w-10 overflow-hidden border shrink-0 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                                    <div className={`${avatarSizeClass} overflow-hidden border shrink-0 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
                                       <img 
                                         src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                         alt="profile" 
@@ -2924,7 +2974,7 @@ export function CustomerCardsView({
                               ) : (
                                 <div className="flex flex-col items-center text-center space-y-1">
                                   {avatarPosition === 'inside-header' && (
-                                    <div className={`h-12 w-12 overflow-hidden border p-0.5 mb-1 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
+                                    <div className={`${avatarSizeClass} overflow-hidden border p-0.5 mb-1 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
                                       <img 
                                         src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                         alt="profile" 
@@ -2950,9 +3000,11 @@ export function CustomerCardsView({
                                         onClick={() => editingCard && saveCardToContacts(editingCard)}
                                         className={`w-full py-1.5 px-2 text-white text-center text-[7.5px] font-bold cursor-pointer hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-1 shrink-0 ${buttonRadiusClass} ${
                                           buttonStyle === 'glass' ? 'bg-white/10 border border-white/20 backdrop-blur-md text-white' :
-                                          buttonStyle === 'gradient' ? 'bg-gradient-to-r from-amber-500 to-amber-700 text-white' : ''
+                                          buttonStyle === 'gradient' ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow' :
+                                          buttonStyle === 'neon' ? 'border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.5)] text-cyan-300' :
+                                          buttonStyle === '3d-press' ? 'border-b-4 border-black/40 active:translate-y-0.5' : ''
                                         }`} 
-                                        style={{ backgroundColor: buttonStyle !== 'glass' && buttonStyle !== 'gradient' ? pColor : undefined }}
+                                        style={{ backgroundColor: !['glass', 'gradient', 'neon'].includes(buttonStyle) ? pColor : undefined }}
                                       >
                                         <Download className="h-2.5 w-2.5" />
                                         <span>ذخیره در دفترچه مخاطبین</span>
@@ -2960,9 +3012,13 @@ export function CustomerCardsView({
                                     );
                                   case 'bio':
                                     return editingCard.bio ? (
-                                      <p key="sec_cust_bio" className="text-[7.5px] leading-relaxed text-center whitespace-pre-line" style={{ color: txtSecColor }}>
+                                      <div 
+                                        key="sec_cust_bio" 
+                                        className={bioStyle === 'card-boxed' ? "p-2 bg-black/5 dark:bg-white/5 border border-slate-200/10 rounded-xl text-[7.5px] leading-relaxed text-center whitespace-pre-line" : "text-[7.5px] leading-relaxed text-center whitespace-pre-line opacity-85"}
+                                        style={{ color: txtSecColor }}
+                                      >
                                         {editingCard.bio}
-                                      </p>
+                                      </div>
                                     ) : null;
                                   case 'primary_actions':
                                     return (editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) ? (
@@ -2994,50 +3050,85 @@ export function CustomerCardsView({
                                     return (
                                       <div key="sec_cust_social" className="space-y-1">
                                         <h5 className="text-[7px] font-bold opacity-70">راه‌های ارتباطی</h5>
-                                        <div className="grid grid-cols-4 gap-1">
-                                          {editingCard.social_links?.phone && (
-                                            <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
-                                              <Phone className="h-2.5 w-2.5" style={{ color: pColor }} />
-                                              <span className="text-[5.5px]" style={{ color: txtSecColor }}>تلفن</span>
-                                            </div>
-                                          )}
-                                          {editingCard.social_links?.whatsapp && (
-                                            <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
-                                              <MessageCircle className="h-2.5 w-2.5" style={{ color: pColor }} />
-                                              <span className="text-[5.5px]" style={{ color: txtSecColor }}>واتساپ</span>
-                                            </div>
-                                          )}
-                                          {editingCard.social_links?.telegram && (
-                                            <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
-                                              <Send className="h-2.5 w-2.5" style={{ color: pColor }} />
-                                              <span className="text-[5.5px]" style={{ color: txtSecColor }}>تلگرام</span>
-                                            </div>
-                                          )}
-                                          {editingCard.social_links?.instagram && (
-                                            <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
-                                              <Instagram className="h-2.5 w-2.5" style={{ color: pColor }} />
-                                              <span className="text-[5.5px]" style={{ color: txtSecColor }}>اینستا</span>
-                                            </div>
-                                          )}
-                                          {editingCard.social_links?.linkedin && (
-                                            <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
-                                              <Linkedin className="h-2.5 w-2.5" style={{ color: pColor }} />
-                                              <span className="text-[5.5px]" style={{ color: txtSecColor }}>لینکدین</span>
-                                            </div>
-                                          )}
-                                          {editingCard.social_links?.email && (
-                                            <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
-                                              <Mail className="h-2.5 w-2.5" style={{ color: pColor }} />
-                                              <span className="text-[5.5px]" style={{ color: txtSecColor }}>ایمیل</span>
-                                            </div>
-                                          )}
-                                          {editingCard.social_links?.website && (
-                                            <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
-                                              <Globe className="h-2.5 w-2.5" style={{ color: pColor }} />
-                                              <span className="text-[5.5px]" style={{ color: txtSecColor }}>سایت</span>
-                                            </div>
-                                          )}
-                                        </div>
+                                        {socialMode === 'vertical-rows' ? (
+                                          <div className="space-y-1">
+                                            {editingCard.social_links?.phone && (
+                                              <div className="flex items-center justify-between p-1 px-2 rounded-lg border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <span className="font-bold">تلفن</span>
+                                                <Phone className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.whatsapp && (
+                                              <div className="flex items-center justify-between p-1 px-2 rounded-lg border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <span className="font-bold">واتساپ</span>
+                                                <MessageCircle className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.telegram && (
+                                              <div className="flex items-center justify-between p-1 px-2 rounded-lg border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <span className="font-bold">تلگرام</span>
+                                                <Send className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.instagram && (
+                                              <div className="flex items-center justify-between p-1 px-2 rounded-lg border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <span className="font-bold">اینستاگرام</span>
+                                                <Instagram className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.website && (
+                                              <div className="flex items-center justify-between p-1 px-2 rounded-lg border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <span className="font-bold">وبسایت</span>
+                                                <Globe className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <div className="grid grid-cols-4 gap-1">
+                                            {editingCard.social_links?.phone && (
+                                              <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <Phone className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                                <span className="text-[5.5px]" style={{ color: txtSecColor }}>تلفن</span>
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.whatsapp && (
+                                              <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <MessageCircle className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                                <span className="text-[5.5px]" style={{ color: txtSecColor }}>واتساپ</span>
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.telegram && (
+                                              <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <Send className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                                <span className="text-[5.5px]" style={{ color: txtSecColor }}>تلگرام</span>
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.instagram && (
+                                              <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <Instagram className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                                <span className="text-[5.5px]" style={{ color: txtSecColor }}>اینستا</span>
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.linkedin && (
+                                              <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <Linkedin className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                                <span className="text-[5.5px]" style={{ color: txtSecColor }}>لینکدین</span>
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.email && (
+                                              <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <Mail className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                                <span className="text-[5.5px]" style={{ color: txtSecColor }}>ایمیل</span>
+                                              </div>
+                                            )}
+                                            {editingCard.social_links?.website && (
+                                              <div className="flex flex-col items-center justify-center p-1 rounded-md border text-[6.5px]" style={{ borderColor: sColor }}>
+                                                <Globe className="h-2.5 w-2.5" style={{ color: pColor }} />
+                                                <span className="text-[5.5px]" style={{ color: txtSecColor }}>سایت</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
                                       </div>
                                     );
                                   case 'custom_buttons':
