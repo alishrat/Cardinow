@@ -1399,7 +1399,7 @@ export function cleanDataForDirectus(obj: any): any {
       cleaned[key] = val;
     } else if (['id', 'user_id', 'tenant_id', 'template_id', 'card_id', 'plan_id'].includes(key) && typeof val === 'string') {
       cleaned[key] = toUUID(val);
-    } else if (['profile_image', 'cover_image', 'receipt_Image'].includes(key)) {
+    } else if (['profile_image', 'cover_image', 'receipt_Image', 'thumbnail', 'image'].includes(key)) {
       if (typeof val === 'string') {
         const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
         const match = val.match(uuidRegex);
@@ -1732,6 +1732,7 @@ export const dbService = {
         }
         return {
           ...temp,
+          thumbnail: temp.thumbnail || (typeof parsedSchema === 'object' ? parsedSchema?.thumbnail : null) || null,
           schema: parsedSchema
         };
       });
@@ -1746,6 +1747,17 @@ export const dbService = {
     
     // Ensure cleanId is attached to payload if needed
     cleanPayload.id = cleanId;
+
+    // Preserve non-UUID thumbnail URL inside schema if present
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (template.thumbnail && typeof template.thumbnail === 'string' && !uuidRegex.test(template.thumbnail)) {
+      if (typeof cleanPayload.schema === 'object' && cleanPayload.schema !== null) {
+        cleanPayload.schema = {
+          ...cleanPayload.schema,
+          thumbnail: template.thumbnail
+        };
+      }
+    }
 
     let checkOk = false;
     try {
