@@ -73,66 +73,40 @@ export function generateStyledQRCodeSVG({
     }
   }
 
-  // 2. FINDER PATTERNS (Leaf / Teardrop Outer Ring + Inner Eye Dot)
-  // Base TL Leaf Outer Ring Path (7x7 modules)
-  // Outer shape from (0,0) to (7,7), inner cutout from (1,1) to (6,6)
-  // Top-Left corner (0,0) is pointed leaf tip.
-  const tlOuterPath = `
-    M 0 0
-    L 4.2 0 A 2.8 2.8 0 0 1 7 2.8
-    L 7 4.2 A 2.8 2.8 0 0 1 4.2 7
-    L 2.8 7 A 2.8 2.8 0 0 1 0 4.2
-    C 0 2.2, 1.2 1.2, 0 0 Z
-    M 1 1.2
-    C 1.8 1.8, 1 2.2, 1 3.8
-    A 2.2 2.2 0 0 0 3.2 6
-    L 3.8 6 A 2.2 2.2 0 0 0 6 3.8
-    L 6 3.2 A 2.2 2.2 0 0 0 3.8 1
-    L 1 1 Z
-  `.replace(/\s+/g, ' ').trim();
-
-  // Clean vector path for exact leaf outer frame (width 7, height 7)
-  const leafOuterFrameSVG = `
-    <path d="M 0 0 C 1 1, 0 2.5, 0 4.2 A 2.8 2.8 0 0 0 2.8 7 L 4.2 7 A 2.8 2.8 0 0 0 7 4.2 L 7 2.8 A 2.8 2.8 0 0 0 4.2 0 L 2.8 0 C 1.5 0, 1 0, 0 0 Z M 1.2 1.2 L 3.8 1 C 4.8 1, 6 2, 6 3.5 L 6 3.8 C 6 5, 5 6, 3.8 6 L 3.5 6 C 2 6 1 4.8 1 3.8 L 1 3.5 C 1 2.2, 1.2 1.2, 1.2 1.2 Z" fill="${fgColor}" fill-rule="evenodd" />
-  `;
-
-  // Standard Leaf Outer Frame Path with evenodd rule:
-  // Outer contour: (0,0) pointed tip, (7,0) rounded, (7,7) rounded, (0,7) rounded
-  // Inner cutout: (1,1) to (6,6)
+  // 2. FINDER PATTERNS (Teardrop / Leaf Outer Ring + Inner Eye Dot)
+  // Base Top-Left Teardrop Frame (7x7 modules, tip at (0,0), 3 rounded corners at R=2.8)
+  // Inner Cutout (5x5 modules, tip at (1,1), 3 rounded corners at R=1.8)
   const makeFinderPattern = (
     mx: number,
     my: number,
     rotationDeg: number
   ) => {
-    const cx = mx + 3.5;
-    const cy = my + 3.5;
-
-    // Exact Leaf Outer Ring Path (7x7)
-    // Outer: M 0 0 L 4.5 0 A 2.5 2.5 0 0 1 7 2.5 L 7 4.5 A 2.5 2.5 0 0 1 4.5 7 L 2.5 7 A 2.5 2.5 0 0 1 0 4.5 Z
-    // Cutout: M 1 1 L 1 4.2 A 1.8 1.8 0 0 0 2.8 6 L 4.2 6 A 1.8 1.8 0 0 0 6 4.2 L 6 2.8 A 1.8 1.8 0 0 0 4.2 1 Z
-    const outerD = `
+    // Exact Teardrop Outer Path (7x7) + Inner Cutout Path (5x5)
+    const teardropD = `
       M 0 0
-      L 4.3 0 A 2.7 2.7 0 0 1 7 2.7
-      L 7 4.3 A 2.7 2.7 0 0 1 4.3 7
-      L 2.7 7 A 2.7 2.7 0 0 1 0 4.3
-      C 0 2.8, 1.5 1.5, 0 0 Z
-      M 1 1.2
-      C 1.8 1.8, 1 2.8, 1 4.2
-      A 1.8 1.8 0 0 0 2.8 6
-      L 4.2 6
-      A 1.8 1.8 0 0 0 6 4.2
-      L 6 2.8
-      A 1.8 1.8 0 0 0 4.2 1
-      L 2.8 1
-      C 1.8 1, 1.8 1, 1 1.2 Z
+      L 4.2 0
+      A 2.8 2.8 0 0 1 7 2.8
+      L 7 4.2
+      A 2.8 2.8 0 0 1 4.2 7
+      L 2.8 7
+      A 2.8 2.8 0 0 1 0 4.2
+      Z
+      M 1 1
+      L 4.2 1
+      A 1.8 1.8 0 0 1 6 2.8
+      L 6 4.2
+      A 1.8 1.8 0 0 1 4.2 6
+      L 2.8 6
+      A 1.8 1.8 0 0 1 1 4.2
+      Z
     `.replace(/\s+/g, ' ').trim();
 
     return `
       <g transform="translate(${mx}, ${my}) rotate(${rotationDeg}, 3.5, 3.5)">
-        <!-- Leaf Outer Frame -->
-        <path d="${outerD}" fill="${fgColor}" fill-rule="evenodd" />
+        <!-- Teardrop Outer Frame -->
+        <path d="${teardropD}" fill="${fgColor}" fill-rule="evenodd" />
         <!-- Inner Center Eye Dot (Circle/Disk) -->
-        <circle cx="3.5" cy="3.5" r="1.55" fill="${fgColor}" />
+        <circle cx="3.5" cy="3.5" r="1.5" fill="${fgColor}" />
       </g>
     `;
   };
