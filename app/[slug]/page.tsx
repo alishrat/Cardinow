@@ -493,10 +493,7 @@ export default function PublicCardPage() {
   const cardBgColor = card.custom_colors?.card_bg?.trim() ? card.custom_colors.card_bg : tmplDefaults.card_bg;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
-      {/* Root Fullscreen Share Modal */}
-      {renderShareModal()}
-
+    <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans relative" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
       {/* Dynamic Injecting Custom CSS */}
       {card.custom_css && (
         <style dangerouslySetInnerHTML={{ __html: card.custom_css }} />
@@ -2418,6 +2415,9 @@ export default function PublicCardPage() {
           );
         })()}
       </div>
+
+      {/* SHARE MODAL */}
+      {renderShareModal()}
 
       {/* NEWSLETTER SUBSCRIBE MODAL */}
       {showSubscribeModal && (

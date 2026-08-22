@@ -1055,264 +1055,222 @@ function DashboardContent() {
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 sm:p-6 rtl text-right font-sans" dir="rtl">
-        <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden p-6 lg:p-10 relative">
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative">
           
-          {/* Brand/Information column */}
-          <div className="order-2 lg:order-1 lg:col-span-5 space-y-6 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-semibold">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>اتصال ابری امن و پایدار</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <BrandLogo size="lg" />
-                <div>
-                  <h2 className="text-3xl font-black text-white">مگاکارت (MegaCard)</h2>
-                  <p className="text-blue-400 text-xs font-bold mt-0.5">پلتفرم مدیریت کارت ویزیت دیجیتال</p>
-                </div>
-              </div>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                سامانه هوشمند طراحی و مدیریت کارت ویزیت دیجیتال و نمایندگی اختصاصی. برای ورود یا ثبت‌نام رایگان از فرم زیر استفاده کنید.
-              </p>
-            </div>
-
-            <div className="space-y-4 bg-slate-950/40 p-5 rounded-2xl border border-slate-800/40">
-              <div className="flex items-center gap-3 text-xs text-slate-300">
-                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                <span>ساخت کارت ویزیت دیجیتال شخصی و رسمی</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-slate-300">
-                <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                <span>طرح‌های بصری متنوع و قالب‌های از پیش‌طراحی‌شده</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-slate-300">
-                <div className="h-2 w-2 rounded-full bg-purple-500"></div>
-                <span>ویرایش آنلاین، اطلاعات تماس کامل و دکمه‌های اقدام</span>
-              </div>
+          {/* Header */}
+          <div className="flex flex-col items-center text-center space-y-3">
+            <BrandLogo size="lg" />
+            <div>
+              <h2 className="text-2xl font-black text-white">مگاکارت</h2>
+              <p className="text-slate-400 text-xs mt-1">ورود / ثبت‌نام</p>
             </div>
           </div>
 
-          {/* Form column */}
-          <div className="order-1 lg:order-2 lg:col-span-7 bg-slate-950 p-6 rounded-2xl border border-slate-800/80 flex flex-col justify-center space-y-6">
-            
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Smartphone className="h-5 w-5 text-emerald-400" />
-                <span>{useEmailLogin ? 'ورود با ایمیل و رمز عبور' : 'ورود و ثبت نام سریع در مگاکارت'}</span>
-              </h3>
-              <p className="text-slate-400 text-xs mt-1">
-                {useEmailLogin 
-                  ? 'لطفاً ایمیل و رمز عبور حساب خود را وارد نمایید.' 
-                  : otpStep === 'mobile'
-                  ? 'شماره موبایل خود را وارد کنید. اگر حساب داشته باشید وارد می‌شوید و در غیر این صورت حساب جدید ساخته می‌شود.'
-                  : otpStep === 'code'
-                  ? 'کد ۵ رقمی پیامک شده را وارد کنید.'
-                  : 'مشخصات خود را برای تکمیل ثبت نام وارد کنید.'}
-              </p>
+          {/* Mode Switcher Tabs */}
+          <div className="grid grid-cols-2 p-1 bg-slate-950 rounded-2xl border border-slate-800 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => { setUseEmailLogin(true); setAuthError(null); }}
+              className={`py-2.5 rounded-xl transition-all ${
+                useEmailLogin 
+                  ? 'bg-blue-600 text-white shadow-md' 
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              ورود با رمز عبور
+            </button>
+            <button
+              type="button"
+              onClick={() => { setUseEmailLogin(false); setAuthError(null); }}
+              className={`py-2.5 rounded-xl transition-all ${
+                !useEmailLogin 
+                  ? 'bg-emerald-600 text-white shadow-md' 
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              ورود سریع با پیامک
+            </button>
+          </div>
+
+          {authError && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl text-center font-medium">
+              {authError}
             </div>
+          )}
 
-            {authError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl">
-                {authError}
+          {otpMessage && !useEmailLogin && (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs p-3 rounded-xl text-center font-medium">
+              {otpMessage}
+            </div>
+          )}
+
+          {useEmailLogin ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300">ایمیل یا شماره موبایل:</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="09123456789 یا info@example.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600"
+                />
               </div>
-            )}
 
-            {otpMessage && !useEmailLogin && (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs p-3 rounded-xl">
-                {otpMessage}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300">رمز عبور:</label>
+                <input 
+                  type="password" 
+                  required
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono"
+                />
               </div>
-            )}
 
-            {useEmailLogin ? (
-              <form onSubmit={handleLogin} className="space-y-4">
+              <button 
+                type="submit"
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20"
+              >
+                ورود به حساب
+              </button>
+            </form>
+          ) : (
+            otpStep === 'mobile' ? (
+              <form onSubmit={handleOtpSend} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">ایمیل یا شماره همراه:</label>
+                  <label className="text-xs font-bold text-slate-300">شماره موبایل:</label>
                   <input 
-                    type="text" 
+                    type="tel" 
                     required
-                    placeholder="name@example.com یا 09123456789"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">رمز عبور:</label>
-                  <input 
-                    type="password" 
-                    required
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono"
+                    placeholder="09123456789"
+                    value={otpMobile}
+                    onChange={(e) => setOtpMobile(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-base focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono text-center tracking-widest font-bold text-emerald-400"
                   />
                 </div>
 
                 <button 
                   type="submit"
-                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/10"
+                  disabled={otpLoading}
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  ورود به حساب
+                  {otpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  <span>دریافت کد پیامکی</span>
                 </button>
-
-                <div className="text-center pt-2">
-                  <button
+              </form>
+            ) : otpStep === 'code' ? (
+              <form onSubmit={handleOtpVerify} className="space-y-4">
+                <div className="text-xs text-slate-400 text-center">
+                  کد ۵ رقمی ارسال شده به <span className="font-mono text-emerald-400 font-bold">{otpMobile}</span> را وارد کنید:
+                </div>
+                <div className="space-y-1.5">
+                  <input 
+                    type="text" 
+                    required
+                    maxLength={5}
+                    placeholder="12345"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-lg focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono text-center tracking-widest font-bold"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button 
                     type="button"
-                    onClick={() => { setUseEmailLogin(false); setAuthError(null); }}
-                    className="text-xs text-emerald-400 hover:underline font-bold"
+                    onClick={() => setOtpStep('mobile')}
+                    className="w-1/3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
                   >
-                    ← ورود / ثبت نام با کد پیامکی موبایل
+                    ویرایش شماره
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={otpLoading}
+                    className="w-2/3 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {otpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    <span>تایید و ورود</span>
                   </button>
                 </div>
               </form>
             ) : (
-              otpStep === 'mobile' ? (
-                <form onSubmit={handleOtpSend} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-300">شماره موبایل همراه:</label>
-                    <input 
-                      type="tel" 
-                      required
-                      placeholder="09123456789"
-                      value={otpMobile}
-                      onChange={(e) => setOtpMobile(e.target.value)}
-                      className="w-full px-4 py-3.5 bg-slate-900 border border-slate-800 rounded-xl text-lg focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono text-center tracking-widest font-bold text-emerald-400"
-                    />
-                  </div>
+              /* Step 3: Complete Registration Details */
+              <form onSubmit={handleRegisterDetailsSubmit} className="space-y-4">
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-300 rounded-xl text-xs text-center">
+                  مشخصات خود را برای تکمیل ثبت‌نام وارد نمایید:
+                </div>
 
-                  <button 
-                    type="submit"
-                    disabled={otpLoading}
-                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/10 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {otpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    <span>ادامه و دریافت کد پیامکی</span>
-                  </button>
-
-                  <div className="text-center pt-2">
-                    <button
-                      type="button"
-                      onClick={() => { setUseEmailLogin(true); setAuthError(null); }}
-                      className="text-xs text-slate-400 hover:text-slate-200 transition"
-                    >
-                      ورود با ایمیل و رمز عبور
-                    </button>
-                  </div>
-                </form>
-              ) : otpStep === 'code' ? (
-                <form onSubmit={handleOtpVerify} className="space-y-4">
-                  <div className="text-xs text-slate-400 mb-2">
-                    کد ۵ رقمی ارسال شده به شماره <span className="font-mono text-emerald-400 font-bold">{otpMobile}</span> را وارد کنید:
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-400">کد تایید ۵ رقمی:</label>
+                    <label className="text-xs font-bold text-slate-300">نام:</label>
                     <input 
                       type="text" 
                       required
-                      maxLength={5}
-                      placeholder="12345"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-lg focus:border-emerald-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono text-center tracking-widest font-bold"
+                      placeholder="علی"
+                      value={registerFirstName}
+                      onChange={(e) => setRegisterFirstName(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600"
                     />
                   </div>
-                  <div className="flex gap-2">
-                    <button 
-                      type="button"
-                      onClick={() => setOtpStep('mobile')}
-                      className="w-1/3 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
-                    >
-                      ویرایش شماره
-                    </button>
-                    <button 
-                      type="submit"
-                      disabled={otpLoading}
-                      className="w-2/3 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/10 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {otpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                      <span>تایید و ادامه</span>
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                /* Step 3: Complete Registration Details */
-                <form onSubmit={handleRegisterDetailsSubmit} className="space-y-4">
-                  <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-300 rounded-xl text-xs leading-relaxed">
-                    شماره همراه شما تایید شد. لطفاً مشخصات خود را برای ساخت حساب کاربری تکمیل کنید:
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-400">نام:</label>
-                      <input 
-                        type="text" 
-                        required
-                        placeholder="مثال: علی"
-                        value={registerFirstName}
-                        onChange={(e) => setRegisterFirstName(e.target.value)}
-                        className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-400">نام خانوادگی:</label>
-                      <input 
-                        type="text" 
-                        required
-                        placeholder="مثال: علوی"
-                        value={registerLastName}
-                        onChange={(e) => setRegisterLastName(e.target.value)}
-                        className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600"
-                      />
-                    </div>
-                  </div>
-
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-400">آدرس ایمیل:</label>
+                    <label className="text-xs font-bold text-slate-300">نام خانوادگی:</label>
                     <input 
-                      type="email" 
+                      type="text" 
                       required
-                      placeholder="name@example.com"
-                      value={registerEmail}
-                      onChange={(e) => setRegisterEmail(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono"
+                      placeholder="علوی"
+                      value={registerLastName}
+                      onChange={(e) => setRegisterLastName(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600"
                     />
                   </div>
+                </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-400">رمز عبور اختیاری (جهت ورود بعدی با رمز):</label>
-                    <input 
-                      type="password" 
-                      placeholder="حداقل ۶ کاراکتر"
-                      value={registerPassword}
-                      onChange={(e) => setRegisterPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono"
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300">ایمیل:</label>
+                  <input 
+                    type="email" 
+                    required
+                    placeholder="name@example.com"
+                    value={registerEmail}
+                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono"
+                  />
+                </div>
 
-                  <button 
-                    type="submit"
-                    disabled={otpLoading}
-                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/10 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {otpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                    <span>تکمیل ثبت نام و ورود به حساب</span>
-                  </button>
-                </form>
-              )
-            )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300">رمز عبور (اختیاری):</label>
+                  <input 
+                    type="password" 
+                    placeholder="حداقل ۶ کاراکتر"
+                    value={registerPassword}
+                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-600 font-mono"
+                  />
+                </div>
 
-            <div className="text-center pt-2">
-              <span 
-                onClick={() => router.push('/')}
-                className="text-xs text-slate-400 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                برگشت به صفحه معرفی سامانه
-                <ArrowLeft className="h-3.5 w-3.5" />
-              </span>
-            </div>
+                <button 
+                  type="submit"
+                  disabled={otpLoading}
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {otpLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  <span>تکمیل ثبت‌نام</span>
+                </button>
+              </form>
+            )
+          )}
+
+          <div className="text-center pt-2">
+            <button 
+              type="button"
+              onClick={() => router.push('/')}
+              className="text-xs text-slate-500 hover:text-slate-300 transition"
+            >
+              بازگشت به صفحه اصلی
+            </button>
           </div>
-
         </div>
       </div>
     );

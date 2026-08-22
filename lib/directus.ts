@@ -1394,7 +1394,10 @@ export function cleanDataForDirectus(obj: any): any {
   
   const cleaned: any = {};
   for (const [key, val] of Object.entries(obj)) {
-    if (['id', 'user_id', 'tenant_id', 'template_id', 'card_id', 'plan_id'].includes(key) && typeof val === 'string') {
+    // Preserve template schema or json configurations exactly as-is without corrupting inner ID properties
+    if (key === 'schema' || key === 'settings' || key === 'social_links' || key === 'custom_colors' || key === 'custom_buttons') {
+      cleaned[key] = val;
+    } else if (['id', 'user_id', 'tenant_id', 'template_id', 'card_id', 'plan_id'].includes(key) && typeof val === 'string') {
       cleaned[key] = toUUID(val);
     } else if (['profile_image', 'cover_image', 'receipt_Image'].includes(key)) {
       if (typeof val === 'string') {
@@ -1741,15 +1744,25 @@ export const dbService = {
     const cleanPayload = cleanDataForDirectus(template);
     const cleanId = toUUID(template.id);
     
-    const check = await fetch(`${DIRECTUS_BASE_URL}/items/templates/${cleanId}`, {
+    // Ensure cleanId is attached to payload if needed
+    cleanPayload.id = cleanId;
+
+    let checkOk = false;
+    try {
+      const check = await fetch(`${DIRECTUS_BASE_URL}/items/templates/${cleanId}`, {
         headers: { ...getAuthHeaders() }
-    });
-    const method = check.ok ? 'PATCH' : 'POST';
-    const url = check.ok 
+      });
+      checkOk = check.ok;
+    } catch {
+      checkOk = false;
+    }
+
+    const method = checkOk ? 'PATCH' : 'POST';
+    const url = checkOk 
       ? `${DIRECTUS_BASE_URL}/items/templates/${cleanId}`
       : `${DIRECTUS_BASE_URL}/items/templates`;
 
-    const res = await fetch(url, {
+    let res = await fetch(url, {
       method,
       headers: { 
         'Content-Type': 'application/json',
@@ -1757,7 +1770,31 @@ export const dbService = {
       },
       body: JSON.stringify(cleanPayload)
     });
-    if (!res.ok) throw new Error('خطا در ذخیره‌سازی قالب در پایگاه داده');
+
+    // If schema type issue (some Directus versions expect stringified schema), retry with stringified schema
+    if (!res.ok && typeof cleanPayload.schema === 'object' && cleanPayload.schema !== null) {
+      const stringifiedPayload = {
+        ...cleanPayload,
+        schema: JSON.stringify(cleanPayload.schema)
+      };
+      const retryRes = await fetch(url, {
+        method,
+        headers: { 
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(stringifiedPayload)
+      });
+      if (retryRes.ok) {
+        return;
+      }
+    }
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => null);
+      const errMsg = errJson?.errors?.[0]?.message || 'خطا در ذخیره‌سازی قالب در پایگاه داده';
+      throw new Error(errMsg);
+    }
   },
 
   // ---- PLANS ----
@@ -3004,16 +3041,32 @@ export const authService = {
     let resolvedEmail = loginId;
 
     if (!isEmail) {
-      // Find the user's email based on their mobile number (which is stored in the public-readable 'location' field)
-      const lookupUrl = `${DIRECTUS_BASE_URL}/users?filter[location][_eq]=${encodeURIComponent(loginId)}`;
-      const lookupRes = await fetch(lookupUrl);
-      if (!lookupRes.ok) {
-        throw new Error('خطا در ارتباط با سرور پایگاه داده هنگام بررسی شماره موبایل.');
+      // Normalize mobile digits
+      let cleanMobile = loginId.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+                               .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString())
+                               .replace(/\D/g, '');
+      if (cleanMobile.startsWith('98') && cleanMobile.length === 12) {
+        cleanMobile = '0' + cleanMobile.slice(2);
+      } else if (cleanMobile.length === 10 && cleanMobile.startsWith('9')) {
+        cleanMobile = '0' + cleanMobile;
       }
-      const lookupJson = await lookupRes.ok ? await lookupRes.json() : null;
-      const apiUser = lookupJson?.data?.[0];
+
+      // Find the user's email based on their mobile number (checking both user_phone and location fields)
+      const lookupUrl = `${DIRECTUS_BASE_URL}/users?filter[_or][0][user_phone][_eq]=${encodeURIComponent(cleanMobile)}&filter[_or][1][location][_eq]=${encodeURIComponent(cleanMobile)}`;
+      let lookupRes = await fetch(lookupUrl);
+      let lookupJson = lookupRes.ok ? await lookupRes.json() : null;
+      let apiUser = lookupJson?.data?.[0];
+
       if (!apiUser) {
-        throw new Error('کاربری با این شماره موبایل یافت نشد.');
+        // Fallback check with original raw input
+        const fallbackUrl = `${DIRECTUS_BASE_URL}/users?filter[_or][0][user_phone][_eq]=${encodeURIComponent(loginId)}&filter[_or][1][location][_eq]=${encodeURIComponent(loginId)}`;
+        lookupRes = await fetch(fallbackUrl);
+        lookupJson = lookupRes.ok ? await lookupRes.json() : null;
+        apiUser = lookupJson?.data?.[0];
+      }
+
+      if (!apiUser) {
+        throw new Error('کاربری با این شماره موبایل در سیستم یافت نشد.');
       }
       resolvedEmail = apiUser.email;
     }
