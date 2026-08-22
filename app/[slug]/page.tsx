@@ -2190,8 +2190,8 @@ export default function PublicCardPage() {
               {headerStyle === 'bento' ? (
                 <div className="p-4 bg-black/5 dark:bg-white/5 border border-slate-200/10 rounded-2xl flex items-center justify-between gap-4">
                   {avatarPosition === 'inside-header' && (
-                    <div className={`${avatarSizeClass} overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
-                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                    <div className={`${avatarSizeClass} overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                     </div>
                   )}
                   <div className="text-right">
@@ -2203,9 +2203,9 @@ export default function PublicCardPage() {
               ) : headerStyle === 'content_creator' ? (
                 <div className="text-center space-y-2">
                   {avatarPosition === 'inside-header' && (
-                    <div className="h-24 w-24 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-500 mx-auto shadow-xl">
+                    <div className={`h-24 w-24 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-500 mx-auto shadow-xl ${isDiamond ? 'rotate-45 scale-90' : ''}`}>
                       <div className="w-full h-full rounded-full overflow-hidden bg-slate-900">
-                        <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className="w-full h-full object-cover" />
+                        <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                       </div>
                     </div>
                   )}
@@ -2216,8 +2216,8 @@ export default function PublicCardPage() {
               ) : headerStyle === 'split' ? (
                 <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-200/20">
                   {avatarPosition === 'inside-header' && (
-                    <div className={`${avatarSizeClass} overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
-                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                    <div className={`${avatarSizeClass} overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                     </div>
                   )}
                   <div className="text-right">
@@ -2229,8 +2229,8 @@ export default function PublicCardPage() {
               ) : (
                 <div className="text-center space-y-1">
                   {avatarPosition === 'inside-header' && (
-                    <div className={`${avatarSizeClass} overflow-hidden border-2 p-0.5 mx-auto mb-2 bg-slate-900 ${avatarRadiusClass}`} style={{ borderColor: pColor }}>
-                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass}`} />
+                    <div className={`${avatarSizeClass} overflow-hidden border-2 p-0.5 mx-auto mb-2 bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                      <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                     </div>
                   )}
                   <h1 className="text-2xl font-black" style={{ fontSize: tTypography.title_size || '22px' }}>{card.first_name} {card.last_name}</h1>
@@ -2310,53 +2310,86 @@ export default function PublicCardPage() {
                       </div>
                     ) : null;
                   case 'social_links':
+                    const socialsFull = [
+                      phone ? { key: 'phone', label: 'تماس', href: `tel:${phone}`, icon: Phone, val: phone } : null,
+                      whatsapp ? { key: 'whatsapp', label: 'واتساپ', href: `https://wa.me/${whatsapp}`, icon: MessageCircle, val: whatsapp } : null,
+                      telegram ? { key: 'telegram', label: 'تلگرام', href: `https://t.me/${telegram}`, icon: Send, val: telegram } : null,
+                      instagram ? { key: 'instagram', label: 'اینستاگرام', href: `https://instagram.com/${instagram}`, icon: Instagram, val: instagram } : null,
+                      linkedin ? { key: 'linkedin', label: 'لینکدین', href: `https://linkedin.com/in/${linkedin}`, icon: Linkedin, val: linkedin } : null,
+                      email ? { key: 'email', label: 'ایمیل', href: `mailto:${email}`, icon: Mail, val: email } : null,
+                      website ? { key: 'website', label: 'وبسایت', href: `https://${website}`, icon: Globe, val: website } : null,
+                    ].filter(Boolean) as { key: string; label: string; href: string; icon: any; val: string }[];
+
+                    if (socialsFull.length === 0) return null;
+
                     return (
                       <div key="sec_cust_social" className="space-y-2">
                         <span className="text-[10px] font-bold block text-center" style={{ color: txtSecColor }}>اطلاعات تماس</span>
-                        <div className="flex flex-wrap gap-2.5">
-                          {phone && (
-                            <a href={`tel:${phone}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                              <Phone className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                              <span className="text-[9px]" style={{ color: txtSecColor }}>تماس</span>
-                            </a>
-                          )}
-                          {email && (
-                            <a href={`mailto:${email}`} className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                              <Mail className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                              <span className="text-[9px]" style={{ color: txtSecColor }}>ایمیل</span>
-                            </a>
-                          )}
-                          {telegram && (
-                            <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                              <Send className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                              <span className="text-[9px]" style={{ color: txtSecColor }}>تلگرام</span>
-                            </a>
-                          )}
-                          {whatsapp && (
-                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                              <MessageCircle className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                              <span className="text-[9px]" style={{ color: txtSecColor }}>واتساپ</span>
-                            </a>
-                          )}
-                          {instagram && (
-                            <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                              <Instagram className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                              <span className="text-[9px]" style={{ color: txtSecColor }}>اینستا</span>
-                            </a>
-                          )}
-                          {linkedin && (
-                            <a href={`https://linkedin.com/in/${linkedin}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                              <Linkedin className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                              <span className="text-[9px]" style={{ color: txtSecColor }}>لینکدین</span>
-                            </a>
-                          )}
-                          {website && (
-                            <a href={`https://${website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                              <Globe className="h-4 w-4 mb-1" style={{ color: pColor }} />
-                              <span className="text-[9px]" style={{ color: txtSecColor }}>سایت</span>
-                            </a>
-                          )}
-                        </div>
+                        {socialMode === 'vertical-rows' ? (
+                          <div className="space-y-2">
+                            {socialsFull.map((item) => {
+                              const IconComp = item.icon;
+                              return (
+                                <a key={item.key} href={item.href} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 rounded-xl border transition text-xs hover:scale-[1.01]" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                  <span className="font-bold">{item.label}</span>
+                                  <IconComp className="h-4 w-4" style={{ color: pColor }} />
+                                </a>
+                              );
+                            })}
+                          </div>
+                        ) : socialMode === 'compact-chips' ? (
+                          <div className="flex flex-wrap gap-2">
+                            {socialsFull.map((item) => {
+                              const IconComp = item.icon;
+                              return (
+                                <a key={item.key} href={item.href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 p-2 px-3 rounded-full border text-xs transition hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                  <IconComp className="h-3.5 w-3.5" style={{ color: pColor }} />
+                                  <span className="font-bold">{item.label}</span>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        ) : socialMode === 'horizontal-bubbles' ? (
+                          <div className="flex flex-wrap justify-center gap-3 py-1">
+                            {socialsFull.map((item) => {
+                              const IconComp = item.icon;
+                              return (
+                                <a key={item.key} href={item.href} target="_blank" rel="noreferrer" className="h-10 w-10 rounded-full border flex items-center justify-center transition hover:scale-110 shadow-sm" style={{ borderColor: sColor, backgroundColor: pColor + '15' }}>
+                                  <IconComp className="h-5 w-5" style={{ color: pColor }} />
+                                </a>
+                              );
+                            })}
+                          </div>
+                        ) : socialMode === 'bento-tiles' ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            {socialsFull.map((item) => {
+                              const IconComp = item.icon;
+                              return (
+                                <a key={item.key} href={item.href} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 p-2.5 rounded-2xl border text-xs transition hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                  <div className="p-2 rounded-xl shrink-0" style={{ backgroundColor: pColor + '20' }}>
+                                    <IconComp className="h-4 w-4" style={{ color: pColor }} />
+                                  </div>
+                                  <div className="overflow-hidden">
+                                    <span className="font-bold block text-xs truncate" style={{ color: txtColor }}>{item.label}</span>
+                                    <span className="text-[10px] opacity-70 truncate block">{item.val}</span>
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2.5">
+                            {socialsFull.map((item) => {
+                              const IconComp = item.icon;
+                              return (
+                                <a key={item.key} href={item.href} target="_blank" rel="noreferrer" className="flex-1 min-w-[70px] flex flex-col items-center justify-center p-2 rounded-xl transition border hover:scale-105" style={{ borderColor: sColor, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                                  <IconComp className="h-4 w-4 mb-1" style={{ color: pColor }} />
+                                  <span className="text-[9px]" style={{ color: txtSecColor }}>{item.label}</span>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   case 'custom_buttons':
