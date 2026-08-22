@@ -14,6 +14,8 @@ import { Card, Template, toUUID, getImageUrl, dbService, toJalaliDate, SECTION_D
 import { saveCardToContacts } from '../../lib/vcard';
 import ProfileImageCropperModal from './ProfileImageCropperModal';
 import ImageCropperModal from './ImageCropperModal';
+import { StyledQRCode } from '../ui/StyledQRCode';
+import { downloadStyledQRCode } from '../../lib/styledQrCode';
 
 export function getTemplateDefaultColors(templateId?: string | null, templatesList: Template[] = []) {
   const cleanTId = (templateId || '').toLowerCase();
@@ -278,22 +280,9 @@ export function CustomerCardsView({
     try {
       const baseUrl = getCardBaseUrl();
       const cardUrl = `${baseUrl}/${card.slug}`;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(cardUrl)}`;
-
-      const res = await fetch(qrApiUrl);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `qrcode-${card.slug || 'card'}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch {
-      const baseUrl = getCardBaseUrl();
-      const cardUrl = `${baseUrl}/${card.slug}`;
-      window.open(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(cardUrl)}`, '_blank');
+      await downloadStyledQRCode(cardUrl, `qrcode-${card.slug || 'card'}.png`, 1000);
+    } catch (err) {
+      console.error('Error downloading QR code:', err);
     } finally {
       setDownloadingQr(false);
     }
@@ -866,18 +855,6 @@ export function CustomerCardsView({
                             <span className="text-[8px] text-slate-600">فرمت‌های مجاز: JPG, PNG</span>
                           </div>
                         )}
-                      </div>
-
-                      {/* Direct URL input for Cover Image */}
-                      <div className="space-y-1 pt-1">
-                        <span className="text-[10px] text-slate-400">یا لینک مستقیم تصویر کاور (URL):</span>
-                        <input 
-                          type="text"
-                          placeholder="https://..."
-                          value={editingCard.cover_image || ''}
-                          onChange={(e) => setEditingCard({ ...editingCard, cover_image: e.target.value })}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-[11px] text-white font-mono dir-ltr text-left"
-                        />
                       </div>
 
                       {editingCard.cover_image && (
@@ -3224,14 +3201,12 @@ export function CustomerCardsView({
               </p>
             </div>
 
-            {/* QR Code Canvas Box */}
-            <div className="bg-white p-4 rounded-2xl flex items-center justify-center border-4 border-slate-800 shadow-xl">
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
-                  `${getCardBaseUrl()}/${selectedQrCard.slug}`
-                )}`}
-                alt="QR Code"
-                className="w-56 h-56 object-contain rounded-lg"
+            {/* Styled QR Code Box */}
+            <div className="bg-white p-5 rounded-2xl flex items-center justify-center border-4 border-slate-800 shadow-xl">
+              <StyledQRCode 
+                value={`${getCardBaseUrl()}/${selectedQrCard.slug}`} 
+                size={230} 
+                className="mx-auto" 
               />
             </div>
 

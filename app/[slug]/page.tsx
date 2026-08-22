@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { dbService, Card, Template, getImageUrl, parseCardFields, getSectionOrders, toUUID, toPersianDigits, toEnglishDigits } from '../../lib/directus';
 import { saveCardToContacts } from '../../lib/vcard';
+import { StyledQRCode } from '../../components/ui/StyledQRCode';
+import { downloadStyledQRCode } from '../../lib/styledQrCode';
 import BrandLogo from '../../components/BrandLogo';
 import { 
   Phone, Mail, Globe, MapPin, Share2, Download, 
@@ -176,6 +178,26 @@ export default function PublicCardPage() {
               <span className={`text-[10px] px-2 py-0.5 rounded-lg font-mono transition ${copied ? 'bg-emerald-500 text-white font-bold' : 'bg-white/20 text-white'}`}>
                 {copied ? 'کپی شد ✓' : 'کپی'}
               </span>
+            </button>
+          </div>
+
+          {/* Styled QR Code Section */}
+          <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 flex items-center justify-between gap-3">
+            <div className="bg-white p-2 rounded-xl shrink-0 shadow-md">
+              <StyledQRCode value={shareUrl} size={64} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-bold text-white block">کد QR اختصاصی</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">اسکن و اشتراک سریع</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => downloadStyledQRCode(shareUrl, `qrcode-${card.slug}.png`, 1000)}
+              className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition text-[11px] font-bold flex items-center gap-1.5 shrink-0 cursor-pointer"
+              title="دانلود کیوآرکد"
+            >
+              <Download className="h-3.5 w-3.5 text-blue-400" />
+              <span>دانلود</span>
             </button>
           </div>
 
