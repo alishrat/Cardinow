@@ -25,7 +25,6 @@ export default function ImageCropperModal({
   const [zoom, setZoom] = useState<number>(1);
   const [rotation, setRotation] = useState<number>(0);
   const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [maskShape, setMaskShape] = useState<'circle' | 'square'>('circle');
 
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -202,13 +201,6 @@ export default function ImageCropperModal({
       ctx.fillStyle = isProfile ? '#ffffff' : '#0f172a';
       ctx.fillRect(0, 0, outputWidth, outputHeight);
 
-      // Circle clip for profile image if circle shape selected
-      if (isProfile && maskShape === 'circle') {
-        ctx.beginPath();
-        ctx.arc(outputWidth / 2, outputHeight / 2, outputWidth / 2, 0, Math.PI * 2);
-        ctx.clip();
-      }
-
       const scaleRatio = outputWidth / cropBoxWidth;
 
       ctx.save();
@@ -313,11 +305,10 @@ export default function ImageCropperModal({
             {/* Mask Overlay */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
               {isProfile ? (
-                <div 
-                  className={`w-full h-full border-2 border-dashed border-blue-400/90 shadow-[0_0_0_9999px_rgba(15,23,42,0.75)] transition-all ${
-                    maskShape === 'circle' ? 'rounded-full' : 'rounded-2xl'
-                  }`}
-                />
+                <div className="w-full h-full border-2 border-dashed border-blue-400/90 shadow-[0_0_0_9999px_rgba(15,23,42,0.75)] rounded-2xl relative flex items-center justify-center">
+                  {/* Faint circle guide line to assist face centering for circular templates */}
+                  <div className="w-full h-full rounded-full border border-blue-400/25 border-dashed" />
+                </div>
               ) : (
                 <div className="w-full h-full border-2 border-dashed border-amber-400/90 shadow-[0_0_0_9999px_rgba(15,23,42,0.75)] rounded-lg flex items-center justify-center">
                   <span className="text-[10px] text-amber-300 font-bold bg-slate-900/90 px-2 py-0.5 rounded border border-amber-500/30">
@@ -374,29 +365,11 @@ export default function ImageCropperModal({
 
           {/* Action Row */}
           <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-800/70">
-            {/* Shape toggle for profile */}
+            {/* Format info for profile */}
             {isProfile ? (
-              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setMaskShape('circle')}
-                  className={`px-2 py-1 rounded flex items-center gap-1 text-[11px] transition ${
-                    maskShape === 'circle' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Circle className="h-3.5 w-3.5" />
-                  <span>دایره</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMaskShape('square')}
-                  className={`px-2 py-1 rounded flex items-center gap-1 text-[11px] transition ${
-                    maskShape === 'square' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Square className="h-3.5 w-3.5" />
-                  <span>مربع</span>
-                </button>
+              <div className="text-[11px] text-slate-300 flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-800">
+                <Square className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                <span>برش مربع (سازگار با همه قالب‌ها)</span>
               </div>
             ) : (
               <div className="text-[11px] text-slate-400 flex items-center gap-1">
