@@ -288,7 +288,7 @@ function DashboardContent() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch('/api/directus/files', {
+      const res = await fetch('/api/cms/files', {
         method: 'POST',
         body: formData,
       });
@@ -771,7 +771,7 @@ function DashboardContent() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch('/api/directus/files', {
+      const res = await fetch('/api/cms/files', {
         method: 'POST',
         body: formData,
       });

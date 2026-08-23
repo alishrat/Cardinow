@@ -16,7 +16,7 @@ import {
 
 const getDirectusBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    return '/api/directus';
+    return '/api/cms';
   }
   let raw = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://directus-iuao17eclszuzc06zaqzodkr.89.42.199.190.sslip.io';
   if (raw && !/^https?:\/\//i.test(raw)) {
@@ -2115,6 +2115,15 @@ export default function PublicCardPage() {
                 borderStyle: cardBorder === 'double' ? 'double' : undefined
               }}
             >
+              {/* Floating Top Avatar Position */}
+              {avatarPosition === 'floating-top' && (
+                <div className="flex justify-center -mb-2 z-10 relative">
+                  <div className={`${avatarSizeClass} overflow-hidden border-4 p-0.5 shadow-xl bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
+                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
+                  </div>
+                </div>
+              )}
+
               {/* Cover photo with integrated share button */}
               {coverHeight !== 'none' && (card.cover_image ? (
                 <div className={`w-full rounded-2xl overflow-hidden relative border border-slate-200/20 shadow-sm shrink-0 ${
@@ -2154,15 +2163,6 @@ export default function PublicCardPage() {
                 </div>
               ))}
 
-              {/* Floating Top Avatar Position */}
-              {avatarPosition === 'floating-top' && (
-                <div className="flex justify-center -mb-2 z-10 relative">
-                  <div className={`${avatarSizeClass} overflow-hidden border-4 p-0.5 shadow-xl bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
-                    <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
-                  </div>
-                </div>
-              )}
-
               {/* Overlapping Avatar Positions */}
               {avatarPosition.startsWith('overlap-') && (
                 <div className={`-mt-16 z-10 relative flex ${
@@ -2188,7 +2188,7 @@ export default function PublicCardPage() {
 
               {/* Header Info Layout */}
               {headerStyle === 'bento' ? (
-                <div className="p-4 bg-black/5 dark:bg-white/5 border border-slate-200/10 rounded-2xl flex items-center justify-between gap-4">
+                <div className="p-4 bg-black/5 dark:bg-white/5 border border-slate-200/10 rounded-2xl flex items-center gap-4">
                   {avatarPosition === 'inside-header' && (
                     <div className={`${avatarSizeClass} overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
                       <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
@@ -2214,7 +2214,7 @@ export default function PublicCardPage() {
                   {card.company && <p className="text-[11px]" style={{ color: txtSecColor }}>{card.company}</p>}
                 </div>
               ) : headerStyle === 'split' ? (
-                <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-200/20">
+                <div className="flex items-center gap-4 pb-2 border-b border-slate-200/20">
                   {avatarPosition === 'inside-header' && (
                     <div className={`${avatarSizeClass} overflow-hidden border-2 shrink-0 bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-4 ring-amber-400/80 animate-pulse' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
                       <img src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />

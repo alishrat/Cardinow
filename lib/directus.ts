@@ -188,7 +188,7 @@ export interface AppUser {
 // Directus API Base URL
 const getDirectusBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    return '/api/directus';
+    return '/api/cms';
   }
   let raw = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://directus-iuao17eclszuzc06zaqzodkr.89.42.199.190.sslip.io';
   if (raw && !/^https?:\/\//i.test(raw)) {
@@ -224,7 +224,7 @@ export function getImageUrl(idOrUrl: string | null | undefined): string {
       } catch {}
     }
     const tokenQuery = token ? `?access_token=${encodeURIComponent(token)}` : '';
-    return `/api/directus/assets/${idOrUrl}${tokenQuery}`;
+    return `/api/cms/assets/${idOrUrl}${tokenQuery}`;
   }
   return idOrUrl;
 }
@@ -1714,9 +1714,12 @@ export const dbService = {
   // ---- TEMPLATES ----
   getTemplates: async (): Promise<Template[]> => {
     try {
-      const res = await fetch(`${DIRECTUS_BASE_URL}/items/templates`, {
+      let res = await fetch(`${DIRECTUS_BASE_URL}/items/templates`, {
         headers: { ...getAuthHeaders() }
       });
+      if (!res.ok) {
+        res = await fetch(`${DIRECTUS_BASE_URL}/items/templates`);
+      }
       if (!res.ok) throw new Error('Failed to fetch templates from database');
       const json = await res.json();
       const data = json?.data || [];
@@ -1816,9 +1819,21 @@ export const dbService = {
       if (tenantId) {
         url += `&filter[tenant_id][_eq]=${toUUID(tenantId)}`;
       }
-      const res = await fetch(url, {
+      let res = await fetch(url, {
         headers: { ...getAuthHeaders() }
       });
+      if (!res.ok) {
+        let fallbackUrl = `${DIRECTUS_BASE_URL}/items/plans`;
+        if (tenantId) {
+          fallbackUrl += `?filter[tenant_id][_eq]=${toUUID(tenantId)}`;
+        }
+        res = await fetch(fallbackUrl, {
+          headers: { ...getAuthHeaders() }
+        });
+        if (!res.ok) {
+          res = await fetch(fallbackUrl);
+        }
+      }
       if (!res.ok) throw new Error('Failed to fetch plans from database');
       const json = await res.json();
       const data = json?.data || [];

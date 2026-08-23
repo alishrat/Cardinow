@@ -2893,7 +2893,7 @@ export function CustomerCardsView({
 
                               {/* Cover photo for Custom Template */}
                               {coverHeight !== 'none' && (
-                                <div className={`w-full bg-slate-200 relative shrink-0 overflow-hidden -mx-3.5 -mt-3.5 mb-2.5 rounded-b-xl ${
+                                <div className={`w-full bg-slate-200 relative shrink-0 overflow-hidden mb-2.5 rounded-xl border border-slate-200/20 ${
                                   coverHeight === 'compact' ? 'h-12' :
                                   coverHeight === 'large' ? 'h-20' :
                                   coverHeight === 'hero' ? 'h-24' : 'h-16'
