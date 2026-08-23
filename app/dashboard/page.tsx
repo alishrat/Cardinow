@@ -590,6 +590,31 @@ function DashboardContent() {
   // --- CUSTOMER ACTIONS ---
   const handleAddNewCard = async () => {
     if (!user || isCreatingCard) return;
+
+    // Check subscription expiration for customer
+    if (user.role === 'customer') {
+      const activeSub = subscriptions.find(s => toUUID(s.user_id) === toUUID(user.id) && s.status === 'active');
+      const subEndDate = activeSub?.end_date || user.subscription_end_date;
+      const isSubExpired = Boolean(subEndDate && new Date(subEndDate) < new Date());
+
+      if (isSubExpired) {
+        setCardError('اعتبار اشتراک شما به پایان رسیده است. جهت ساخت کارت جدید لطفاً اشتراک خود را تمدید کنید.');
+        setActiveTab('billing');
+        return;
+      }
+
+      // Check max cards limit
+      const activePlan = activeSub ? plans.find(p => toUUID(p.id) === toUUID(activeSub.plan_id)) : null;
+      const userCardsCount = cards.filter(c => toUUID(c.user_id) === toUUID(user.id)).length;
+      const maxAllowed = activePlan ? (activePlan.max_cards !== undefined && activePlan.max_cards !== null ? Number(activePlan.max_cards) : 1) : 1;
+
+      if (maxAllowed !== -1 && userCardsCount >= maxAllowed) {
+        setCardError(`سقف مجاز ساخت کارت ویزیت بر اساس پلن فعلی شما (${maxAllowed} عدد) تکمیل گردیده است. برای ساخت کارت بیشتر، لطفاً اشتراک خود را ارتقا دهید.`);
+        setActiveTab('billing');
+        return;
+      }
+    }
+
     setIsCreatingCard(true);
     setCardError(null);
     setCardSuccess(null);

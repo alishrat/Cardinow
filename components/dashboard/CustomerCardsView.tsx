@@ -298,6 +298,12 @@ export function CustomerCardsView({
     setTimeout(() => setPreviewCopiedField(null), 2000);
   };
 
+  const userCardsCount = cards.filter(c => toUUID(c.user_id) === toUUID(user.id)).length;
+  const maxCardsAllowed = userPlan ? (userPlan.max_cards !== undefined && userPlan.max_cards !== null ? Number(userPlan.max_cards) : 1) : 1;
+  const subEndDate = userSub?.end_date || user?.subscription_end_date;
+  const isSubExpired = Boolean(subEndDate && new Date(subEndDate) < new Date());
+  const isLimitReached = maxCardsAllowed !== -1 && userCardsCount >= maxCardsAllowed;
+
   return (
     <div className="space-y-6">
       
@@ -326,14 +332,23 @@ export function CustomerCardsView({
         <>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
             <div>
-              <h2 className="text-xl font-bold text-white">مدیریت کارت‌های ویزیت دیجیتال</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-white">مدیریت کارت‌های ویزیت دیجیتال</h2>
+                <span className="text-xs font-bold text-slate-300 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">
+                  استفاده شده: <span className={isLimitReached ? 'text-amber-400 font-extrabold' : 'text-emerald-400 font-extrabold'}>{toPersianDigits(userCardsCount)}</span> از <span className="text-blue-400 font-extrabold">{maxCardsAllowed === -1 ? 'نامحدود' : toPersianDigits(maxCardsAllowed)}</span>
+                </span>
+              </div>
               <p className="text-xs text-slate-400 mt-1">لیست کارت‌های فعال و پیش‌نویس شما در سامانه.</p>
             </div>
 
             <button
               onClick={handleAddNewCard}
               disabled={isCreatingCard}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 rounded-xl text-xs font-extrabold text-white transition flex items-center gap-1.5 shadow shadow-blue-600/10"
+              className={`px-5 py-2.5 rounded-xl text-xs font-extrabold text-white transition flex items-center gap-1.5 shadow ${
+                isLimitReached || isSubExpired 
+                  ? 'bg-gradient-to-r from-amber-600 to-blue-600 hover:from-amber-500 hover:to-blue-500 shadow-amber-600/10'
+                  : 'bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 shadow-blue-600/10'
+              }`}
             >
               {isCreatingCard ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {isCreatingCard ? 'در حال ایجاد...' : 'ساخت کارت ویزیت جدید'}
@@ -342,17 +357,48 @@ export function CustomerCardsView({
 
           {/* Prominent Subscription Alert/Banner */}
           {user.role === 'customer' && (
-            userSub ? (
+            isSubExpired ? (
+              <div className="bg-gradient-to-r from-red-950/40 via-amber-950/30 to-slate-900 border border-red-800/40 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg shadow-red-950/20">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+                    <HelpCircle className="h-5 w-5 animate-pulse" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-xs font-bold text-red-400">اعتبار اشتراک شما به پایان رسیده است!</h4>
+                      <span className="text-[10px] bg-red-500/20 text-red-300 font-extrabold px-2 py-0.5 rounded-md">
+                        منقضی شده ({toJalaliDate(subEndDate)})
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-300">
+                      جهت ساخت کارت ویزیت جدید و فعال ماندن کامل قابلیت‌ها، لطفاً نسبت به تمدید اشتراک خود اقدام کنید.
+                    </p>
+                  </div>
+                </div>
+                {onNavigateToBilling && (
+                  <button
+                    onClick={onNavigateToBilling}
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 shadow shadow-red-600/20 shrink-0 w-full md:w-auto justify-center"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    تمدید آنی اشتراک
+                  </button>
+                )}
+              </div>
+            ) : userSub ? (
               <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-bold text-white">طرح فعال شما:</span>
                       <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-extrabold px-2 py-0.5 rounded-md">
                         {userPlan?.title || 'طرح اختصاصی'}
+                      </span>
+                      <span className="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-md">
+                        سقف کارت: {toPersianDigits(userCardsCount)} از {maxCardsAllowed === -1 ? 'نامحدود' : toPersianDigits(maxCardsAllowed)}
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-400">
@@ -366,7 +412,7 @@ export function CustomerCardsView({
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-[11px] font-bold transition flex items-center gap-1.5 border border-slate-700 shrink-0 w-full md:w-auto justify-center"
                   >
                     <CreditCard className="h-3.5 w-3.5" />
-                    مدیریت یا تمدید اشتراک
+                    مدیریت یا ارتقای اشتراک
                   </button>
                 )}
               </div>
@@ -379,7 +425,7 @@ export function CustomerCardsView({
                   <div className="space-y-0.5">
                     <h4 className="text-xs font-bold text-amber-400">فاقد اشتراک فعال هستید!</h4>
                     <p className="text-[10px] text-slate-300">
-                      برای حذف محدودیت تعداد بازدید، فعال‌سازی پیوندهای کارت‌های خود و ویرایش پیشرفته، اشتراک خود را تهیه کنید.
+                      برای افزایش سقف ساخت کارت، فعال‌سازی پیوندهای کارت‌های خود و ویرایش پیشرفته، اشتراک خود را تهیه کنید.
                     </p>
                   </div>
                 </div>

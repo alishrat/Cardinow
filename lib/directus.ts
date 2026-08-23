@@ -174,6 +174,7 @@ export interface UserSession {
   role: 'customer' | 'tenant' | 'admin';
   tenant_id?: string | null; // If role is tenant
   access_token?: string | null;
+  subscription_end_date?: string | null;
 }
 
 export interface AppUser {
@@ -183,6 +184,7 @@ export interface AppUser {
   role: 'customer' | 'tenant' | 'admin';
   tenant_id?: string | null;
   access_token?: string | null;
+  subscription_end_date?: string | null;
 }
 
 // Directus API Base URL

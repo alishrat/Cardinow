@@ -374,6 +374,8 @@ export async function POST(req: NextRequest) {
 
             const subId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `SUB-${Date.now()}`;
 
+            const endDateStr = endDate.toISOString().split('T')[0];
+
             await fetch(`${DIRECTUS_URL}/items/subscriptions`, {
               method: 'POST',
               headers: {
@@ -386,7 +388,19 @@ export async function POST(req: NextRequest) {
                 plan_id: planId,
                 status: 'active',
                 start_date: startDate.toISOString().split('T')[0],
-                end_date: endDate.toISOString().split('T')[0]
+                end_date: endDateStr
+              })
+            });
+
+            // Also sync subscription_end_date on the user item in Directus
+            await fetch(`${DIRECTUS_URL}/users/${userId}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+              },
+              body: JSON.stringify({
+                subscription_end_date: endDateStr
               })
             });
           } catch (subErr) {
