@@ -103,6 +103,16 @@ export interface WalletTransaction {
   user_name?: string;
 }
 
+export interface SiteSettings {
+  bank_card?: string;
+  bank_name?: string;
+  contact_phone?: string;
+  address?: string;
+  enamad?: string;
+  zarinpal_merchant?: string;
+  zarinpal_sandbox?: boolean;
+}
+
 export interface Card {
   id: string;
   user_id: string;
@@ -2426,14 +2436,18 @@ export const dbService = {
       console.warn('Failed to update local transactions cache:', e);
     }
   },
-  getSiteSettings: async (): Promise<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string; zarinpal_sandbox?: boolean } | null> => {
+
+  getSiteSettings: async (): Promise<SiteSettings | null> => {
     try {
       let bank_card = '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸';
       let bank_name = 'مگاکارت دیجیتال سیستم';
+      let contact_phone = '';
+      let address = '';
+      let enamad = '';
       let zarinpal_merchant = '';
       let zarinpal_sandbox = false;
 
-      // 1. Fetch zarinpal merchant from settings
+      // 1. Fetch settings from settings collection
       try {
         const resSettings = await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
           headers: { ...getAuthHeaders() },
@@ -2442,18 +2456,23 @@ export const dbService = {
         if (resSettings.ok) {
           const json = await resSettings.json();
           const record = Array.isArray(json?.data) ? json.data[0] : json?.data;
-          if (record?.zarinpal_merchant) {
-            zarinpal_merchant = record.zarinpal_merchant;
-          }
-          if (record?.zarinpal_sandbox === true || record?.zarinpal_sandbox === 'true' || record?.zarinpal_sandbox === 1) {
-            zarinpal_sandbox = true;
+          if (record) {
+            if (record.bank_card) bank_card = record.bank_card;
+            if (record.bank_name) bank_name = record.bank_name;
+            if (record.contact_phone) contact_phone = record.contact_phone;
+            if (record.address) address = record.address;
+            if (record.enamad) enamad = record.enamad;
+            if (record.zarinpal_merchant) zarinpal_merchant = record.zarinpal_merchant;
+            if (record.zarinpal_sandbox === true || record.zarinpal_sandbox === 'true' || record.zarinpal_sandbox === 1) {
+              zarinpal_sandbox = true;
+            }
           }
         }
       } catch (e) {
         console.warn('Could not read Directus settings collection:', e);
       }
 
-      // 2. Fetch bank card and name from site_settings
+      // 2. Fallback to site_settings collection if needed
       try {
         const resSite = await fetch(`${DIRECTUS_BASE_URL}/items/site_settings`, {
           headers: { ...getAuthHeaders() },
@@ -2462,17 +2481,22 @@ export const dbService = {
         if (resSite.ok) {
           const json = await resSite.json();
           const record = Array.isArray(json?.data) ? json.data[0] : json?.data;
-          if (record?.bank_card || record?.card_number) {
-            bank_card = record.bank_card || record.card_number;
-          }
-          if (record?.bank_name || record?.account_name) {
-            bank_name = record.bank_name || record.account_name;
-          }
-          if (record?.zarinpal_merchant && !zarinpal_merchant) {
-            zarinpal_merchant = record.zarinpal_merchant;
-          }
-          if (record?.zarinpal_sandbox === true || record?.zarinpal_sandbox === 'true') {
-            zarinpal_sandbox = true;
+          if (record) {
+            if ((!bank_card || bank_card === '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸') && (record.bank_card || record.card_number)) {
+              bank_card = record.bank_card || record.card_number;
+            }
+            if ((!bank_name || bank_name === 'مگاکارت دیجیتال سیستم') && (record.bank_name || record.account_name)) {
+              bank_name = record.bank_name || record.account_name;
+            }
+            if (record.contact_phone && !contact_phone) contact_phone = record.contact_phone;
+            if (record.address && !address) address = record.address;
+            if (record.enamad && !enamad) enamad = record.enamad;
+            if (record.zarinpal_merchant && !zarinpal_merchant) {
+              zarinpal_merchant = record.zarinpal_merchant;
+            }
+            if (record.zarinpal_sandbox === true || record.zarinpal_sandbox === 'true') {
+              zarinpal_sandbox = true;
+            }
           }
         }
       } catch (e) {
@@ -2489,37 +2513,49 @@ export const dbService = {
       return {
         bank_card,
         bank_name,
+        contact_phone,
+        address,
+        enamad,
         zarinpal_merchant,
         zarinpal_sandbox
       };
     } catch {
       console.warn('Directus site settings fetch failed, using defaults');
-      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', zarinpal_merchant: '', zarinpal_sandbox: false };
+      return { bank_card: '۵۰۲۲-۲۹۱۰-۱۲۳۴-۵۶۷۸', bank_name: 'مگاکارت دیجیتال سیستم', contact_phone: '', address: '', enamad: '', zarinpal_merchant: '', zarinpal_sandbox: false };
     }
   },
-  saveSiteSettings: async (settings: { bank_card?: string; bank_name?: string; zarinpal_merchant?: string; zarinpal_sandbox?: boolean }): Promise<void> => {
+  saveSiteSettings: async (settings: SiteSettings): Promise<void> => {
     try {
       if (typeof window !== 'undefined') {
         localStorage.setItem('megacard_zarinpal_sandbox', String(Boolean(settings.zarinpal_sandbox)));
       }
 
-      // 1. Save merchant to settings collection
-      if (settings.zarinpal_merchant !== undefined) {
-        try {
+      // 1. Save all settings to settings collection
+      try {
+        const settingsPayload: any = {};
+        if (settings.bank_card !== undefined) settingsPayload.bank_card = settings.bank_card;
+        if (settings.bank_name !== undefined) settingsPayload.bank_name = settings.bank_name;
+        if (settings.contact_phone !== undefined) settingsPayload.contact_phone = settings.contact_phone;
+        if (settings.address !== undefined) settingsPayload.address = settings.address;
+        if (settings.enamad !== undefined) settingsPayload.enamad = settings.enamad;
+        if (settings.zarinpal_merchant !== undefined) settingsPayload.zarinpal_merchant = settings.zarinpal_merchant;
+        if (settings.zarinpal_sandbox !== undefined) settingsPayload.zarinpal_sandbox = settings.zarinpal_sandbox;
+
+        if (Object.keys(settingsPayload).length > 0) {
           await fetch(`${DIRECTUS_BASE_URL}/items/settings`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
               ...getAuthHeaders()
             },
-            body: JSON.stringify({ zarinpal_merchant: settings.zarinpal_merchant })
+            body: JSON.stringify(settingsPayload)
           });
-        } catch (e) {
-          console.warn('Failed to patch settings collection:', e);
         }
+      } catch (e) {
+        console.warn('Failed to patch settings collection:', e);
       }
 
-      // 2. Save bank details to site_settings collection
+      // 2. Also try patching site_settings collection for backwards compatibility
       if (settings.bank_card !== undefined || settings.bank_name !== undefined) {
         try {
           const payload: any = {};
@@ -2538,7 +2574,7 @@ export const dbService = {
         }
       }
     } catch (err: any) {
-      throw new Error('خطا در ذخیره تنظیمات حساب بانکی: ' + err.message);
+      throw new Error('خطا در ذخیره تنظیمات: ' + err.message);
     }
   },
 

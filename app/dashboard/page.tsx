@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
-  dbService, authService, initializeDB, Card, Tenant, Template, Plan, ProductService, Subscription, Transaction, Wallet, WalletTransaction, UserSession, CardAnalytics, toUUID, sanitizeDbError, getImageUrl, toJalaliDate, onTokenExpired
+  dbService, authService, initializeDB, Card, Tenant, Template, Plan, ProductService, Subscription, Transaction, Wallet, WalletTransaction, UserSession, CardAnalytics, SiteSettings, toUUID, sanitizeDbError, getImageUrl, toJalaliDate, onTokenExpired
 } from '../../lib/directus';
 import { 
   Plus, Edit2, Trash2, Globe, ExternalLink, Copy, Check, Eye, Save, Search, 
@@ -330,12 +330,15 @@ function DashboardContent() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [viewingReceiptUrl, setViewingReceiptUrl] = useState<string | null>(null);
 
-  const [siteSettings, setSiteSettings] = useState<{ bank_card?: string; bank_name?: string; zarinpal_merchant?: string; zarinpal_sandbox?: boolean } | null>(null);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
   const [bankCardInput, setBankCardInput] = useState('');
   const [bankNameInput, setBankNameInput] = useState('');
   const [zarinpalMerchantInput, setZarinpalMerchantInput] = useState('');
   const [zarinpalSandboxInput, setZarinpalSandboxInput] = useState(false);
+  const [contactPhoneInput, setContactPhoneInput] = useState('');
+  const [addressInput, setAddressInput] = useState('');
+  const [enamadInput, setEnamadInput] = useState('');
 
   // Tenant Panel States
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -399,6 +402,9 @@ function DashboardContent() {
         setBankNameInput(fetchedSiteSettings.bank_name || '');
         setZarinpalMerchantInput(fetchedSiteSettings.zarinpal_merchant || '');
         setZarinpalSandboxInput(Boolean(fetchedSiteSettings.zarinpal_sandbox));
+        setContactPhoneInput(fetchedSiteSettings.contact_phone || '');
+        setAddressInput(fetchedSiteSettings.address || '');
+        setEnamadInput(fetchedSiteSettings.enamad || '');
       }
 
       const session = authService.getCurrentUser();
@@ -828,9 +834,12 @@ function DashboardContent() {
         bank_card: bankCardInput.trim(),
         bank_name: bankNameInput.trim(),
         zarinpal_merchant: zarinpalMerchantInput.trim(),
-        zarinpal_sandbox: zarinpalSandboxInput
+        zarinpal_sandbox: zarinpalSandboxInput,
+        contact_phone: contactPhoneInput.trim(),
+        address: addressInput.trim(),
+        enamad: enamadInput.trim()
       });
-      showToast('تنظیمات درگاه پرداخت و حساب بانکی با موفقیت به‌روزرسانی شد.', 'success');
+      showToast('تنظیمات سامانه و حساب بانکی با موفقیت به‌روزرسانی شد.', 'success');
       await refreshData();
     } catch (err: any) {
       showToast('خطا در ذخیره تنظیمات: ' + err.message, 'error');
@@ -2439,6 +2448,43 @@ function DashboardContent() {
                       dir="ltr"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-900">
+                  <div className="space-y-1.5 text-right">
+                    <label className="text-[11px] font-bold text-slate-400 block">شماره تماس پشتیبانی سایت:</label>
+                    <input
+                      type="text"
+                      value={contactPhoneInput}
+                      onChange={(e) => setContactPhoneInput(e.target.value)}
+                      placeholder="مثال: ۰۲۱۱۲۳۴۵۶۷۸ یا ۰۹۱۲۳۴۵۶۷۸۹"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-blue-500 font-mono text-left"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div className="space-y-1.5 text-right md:col-span-2">
+                    <label className="text-[11px] font-bold text-slate-400 block">آدرس دفتر / مرکز پشتیبانی:</label>
+                    <input
+                      type="text"
+                      value={addressInput}
+                      onChange={(e) => setAddressInput(e.target.value)}
+                      placeholder="مثال: تهران، خیابان آزادی، پلاک ۱۲۳، واحد ۴"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 text-right pt-2 border-t border-slate-900">
+                  <label className="text-[11px] font-bold text-slate-400 block">کد اینماد (HTML / Embed Code / Link):</label>
+                  <textarea
+                    rows={2}
+                    value={enamadInput}
+                    onChange={(e) => setEnamadInput(e.target.value)}
+                    placeholder="کد HTML ای‌نماد یا لینک نماد اعتماد الکترونیکی را اینجا وارد کنید..."
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-blue-500 font-mono text-left"
+                    dir="ltr"
+                  />
+                  <p className="text-[10px] text-slate-500">این کد به صورت مستقیم در بخش نمادهای اعتماد فوتر سایت نمایش داده خواهد شد.</p>
                 </div>
 
                 {/* Sandbox Toggle */}

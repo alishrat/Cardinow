@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 let rawBaseUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://directus-iuao17eclszuzc06zaqzodkr.89.42.199.190.sslip.io';
 if (rawBaseUrl && !/^https?:\/\//i.test(rawBaseUrl)) {
   rawBaseUrl = `https://${rawBaseUrl}`;

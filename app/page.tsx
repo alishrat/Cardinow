@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { dbService, Template, Plan, Card, getImageUrl, toPersianDigits, DEFAULT_DEMO_CARD, toUUID } from '../lib/directus';
+import { dbService, Template, Plan, Card, SiteSettings, getImageUrl, toPersianDigits, DEFAULT_DEMO_CARD, toUUID } from '../lib/directus';
 import BrandLogo from '../components/BrandLogo';
 import { 
   CreditCard, Smartphone, ShieldCheck, Sparkles, Zap, Award, 
@@ -16,6 +16,7 @@ export default function LandingPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [demoCard, setDemoCard] = useState<Card | null>(null);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'users' | 'agencies'>('users');
@@ -27,11 +28,15 @@ export default function LandingPage() {
     try {
       setLoading(true);
       setError(null);
-      const [fetchedTemplates, fetchedPlans] = await Promise.all([
+      const [fetchedTemplates, fetchedPlans, fetchedSettings] = await Promise.all([
         dbService.getTemplates(),
-        dbService.getPlans() // Fetch all plans without restricting to tenant-id on the server-side query
+        dbService.getPlans(), // Fetch all plans without restricting to tenant-id on the server-side query
+        dbService.getSiteSettings()
       ]);
       setTemplates(fetchedTemplates);
+      if (fetchedSettings) {
+        setSiteSettings(fetchedSettings);
+      }
       
       // Fetch target demo card (slug 'demo')
       try {
@@ -119,9 +124,20 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-1.5 md:gap-3">
+            {siteSettings?.contact_phone && (
+              <a 
+                href={`tel:${siteSettings.contact_phone.replace(/[^0-9+]/g, '')}`}
+                className="px-2.5 py-1.5 text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl transition flex items-center gap-1.5 text-[10px] md:text-xs font-bold shrink-0"
+                title={`پشتیبانی: ${siteSettings.contact_phone}`}
+              >
+                <Phone className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                <span className="hidden sm:inline font-mono dir-ltr">{toPersianDigits(siteSettings.contact_phone)}</span>
+              </a>
+            )}
+
             <button 
               onClick={() => router.push('/dashboard')}
-              className="px-4 md:px-6 py-1.5 md:py-2 rounded-xl text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/10 transition flex items-center gap-1"
+              className="px-4 md:px-6 py-1.5 md:py-2 rounded-xl text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/10 transition flex items-center gap-1 cursor-pointer"
             >
               <span>ورود / ثبت‌نام</span>
               <ChevronLeft className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -1643,22 +1659,79 @@ export default function LandingPage() {
 
       {/* 7. FOOTER */}
       <footer className="bg-slate-950 border-t border-slate-900 py-12 px-6 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-500">
-          <BrandLogo 
-            size="sm"
-            showText 
-            titleText="سامانه کارت ویزیت دیجیتال مگاکارت"
-            subText="میزبانی امن داده‌ها با پایداری ۹۹.۹٪"
-          />
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-slate-900/80 text-sm">
+            
+            {/* Col 1: Brand & Description */}
+            <div className="space-y-3 md:col-span-1">
+              <BrandLogo 
+                size="sm"
+                showText 
+                titleText="سامانه کارت ویزیت دیجیتال مگاکارت"
+                subText="میزبانی امن داده‌ها با پایداری ۹۹.۹٪"
+              />
+              <p className="text-xs text-slate-400 leading-relaxed">
+                سامانه هوشمند ساخت و اشتراک‌گذاری کارت‌های ویزیت دیجیتال و NFC با قابلیت شخصی‌سازی کامل، تحلیل بازدیدها و ارتباط یکپارچه با مشتریان.
+              </p>
+            </div>
 
-          <p className="text-center text-xs opacity-70">
-            تمامی حقوق مادی و معنوی محفوظ است. توسعه یافته بر روی بستر کلود با بالاترین سطح حریم خصوصی.
-          </p>
+            {/* Col 2: Quick Navigation */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-xs text-white">دسترسی سریع</h4>
+              <ul className="space-y-2 text-xs text-slate-400 font-medium">
+                <li><a href="#features" className="hover:text-blue-400 transition">امکانات کلیدی</a></li>
+                <li><a href="#templates" className="hover:text-blue-400 transition">تم‌های اختصاصی</a></li>
+                <li><a href="#plans" className="hover:text-blue-400 transition">تعرفه‌ها و پلن‌ها</a></li>
+                <li><a href="#agencies" className="hover:text-blue-400 transition">بخش نمایندگی</a></li>
+              </ul>
+            </div>
 
-          <div className="flex gap-4 text-xs font-semibold text-slate-400">
-            <a href="#features" className="hover:text-blue-500 transition">امکانات</a>
-            <a href="#templates" className="hover:text-blue-500 transition">تم‌ها</a>
-            <a href="#plans" className="hover:text-blue-500 transition">تعرفه‌ها</a>
+            {/* Col 3: Support Contact Info */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-xs text-white">ارتباط با ما</h4>
+              <div className="space-y-2 text-xs text-slate-400">
+                {siteSettings?.contact_phone && (
+                  <a href={`tel:${siteSettings.contact_phone.replace(/[^0-9+]/g, '')}`} className="flex items-center gap-2 hover:text-blue-400 transition">
+                    <Phone className="h-4 w-4 text-blue-500 shrink-0" />
+                    <span>تلفن تماس: {toPersianDigits(siteSettings.contact_phone)}</span>
+                  </a>
+                )}
+                {siteSettings?.address && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">آدرس: {siteSettings.address}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Col 4: Enamad / Trust Seal */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-xs text-white">نماد اعتماد الکترونیکی</h4>
+              {siteSettings?.enamad ? (
+                <div 
+                  className="bg-slate-900/80 border border-slate-800 p-3 rounded-2xl flex items-center justify-center text-center overflow-hidden min-h-[100px]"
+                  dangerouslySetInnerHTML={{ __html: siteSettings.enamad }}
+                />
+              ) : (
+                <div className="bg-slate-900/50 border border-slate-800/80 p-3 rounded-2xl flex items-center gap-2 text-slate-500 text-xs">
+                  <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
+                  <span>دارای نماد اعتماد و مجوزهای قانونی رسمی</span>
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <p className="text-center sm:text-right opacity-70">
+              تمامی حقوق مادی و معنوی این سامانه متعلق به مگاکارت می‌باشد.
+            </p>
+            {siteSettings?.contact_phone && (
+              <a href={`tel:${siteSettings.contact_phone.replace(/[^0-9+]/g, '')}`} className="text-blue-400 hover:underline font-mono font-bold dir-ltr">
+                {siteSettings.contact_phone}
+              </a>
+            )}
           </div>
         </div>
       </footer>

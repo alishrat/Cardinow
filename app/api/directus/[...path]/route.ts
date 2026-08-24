@@ -1,6 +1,8 @@
 import { handleProxy } from "@/lib/proxy-handler";
 import { NextRequest } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest, context: any) {
   return handleProxy(req, context);
 }
