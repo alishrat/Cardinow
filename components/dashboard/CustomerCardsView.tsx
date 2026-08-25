@@ -1783,18 +1783,18 @@ export function CustomerCardsView({
                                 case 'primary_actions':
                                   return (editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) ? (
                                     <div key="sec_classic_primary" className="space-y-1 pt-1.5 border-t border-slate-200/50">
-                                      <h5 className="text-[7.5px] font-bold opacity-60">تلفن‌های همراه</h5>
+                                      <h5 className="text-[7.5px] font-bold opacity-60" style={{ color: textColor }}>تلفن‌های همراه</h5>
                                       <div className="space-y-1">
                                         {editingCard.social_links?.mobile && (
                                           <div className="flex items-center justify-between p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
                                             <span>موبایل اصلی:</span>
-                                            <span className="font-mono text-slate-500">{editingCard.social_links.mobile}</span>
+                                            <span className="font-mono" style={{ color: primaryColor }}>{editingCard.social_links.mobile}</span>
                                           </div>
                                         )}
                                         {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
                                           <div key={idx} className="flex items-center justify-between p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
                                             <span>تلفن جانبی {idx + 1}:</span>
-                                            <span className="font-mono text-slate-500">{ph}</span>
+                                            <span className="font-mono" style={{ color: primaryColor }}>{ph}</span>
                                           </div>
                                         ))}
                                       </div>
@@ -1803,7 +1803,7 @@ export function CustomerCardsView({
                                 case 'social_links':
                                   return (
                                     <div key="sec_classic_social" className="space-y-1">
-                                      <h5 className="text-[7.5px] font-bold opacity-60">راه‌های ارتباطی</h5>
+                                      <h5 className="text-[7.5px] font-bold opacity-60" style={{ color: textColor }}>راه‌های ارتباطی</h5>
                                       <div className="grid grid-cols-4 gap-1">
                                         {editingCard.social_links?.phone && (
                                           <div className="flex flex-col items-center justify-center p-1 bg-white/80 border border-slate-200/40 rounded-lg text-[6.5px] font-bold shadow-sm" style={{ color: textColor }}>
@@ -1859,7 +1859,7 @@ export function CustomerCardsView({
                                 case 'custom_buttons':
                                   return (editingCard.custom_buttons && editingCard.custom_buttons.length > 0) ? (
                                     <div key="sec_classic_custom" className="space-y-1 pt-1.5 border-t border-slate-200/50">
-                                      <h5 className="text-[7.5px] font-bold opacity-60">لینک‌های کاربردی</h5>
+                                      <h5 className="text-[7.5px] font-bold opacity-60" style={{ color: textColor }}>لینک‌های کاربردی</h5>
                                       {editingCard.custom_buttons.map((btn) => (
                                         <div 
                                           key={btn.id}
@@ -1877,7 +1877,7 @@ export function CustomerCardsView({
                                     <div key="sec_classic_loc" className="space-y-1 pt-1.5 border-t border-slate-200/50">
                                       {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
                                         <>
-                                          <h5 className="text-[7.5px] font-bold opacity-60">مسیریابی روی نقشه</h5>
+                                          <h5 className="text-[7.5px] font-bold opacity-60" style={{ color: textColor }}>مسیریابی روی نقشه</h5>
                                           <div className="grid grid-cols-2 gap-1 mb-1">
                                             {editingCard.neshan && (
                                               <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-lg text-[7px] font-bold" style={{ color: textColor }}>
@@ -1908,11 +1908,11 @@ export function CustomerCardsView({
                                       )}
                                       {editingCard.address && (
                                         <>
-                                          <h5 className="text-[7.5px] font-bold opacity-60 flex items-center gap-1">
+                                          <h5 className="text-[7.5px] font-bold opacity-60 flex items-center gap-1" style={{ color: textColor }}>
                                             <MapPin className="h-3 w-3 text-emerald-500 shrink-0" />
                                             <span>نشانی و دفتر مرکزی</span>
                                           </h5>
-                                          <p className="p-2 bg-white/80 border border-slate-200/40 rounded-lg text-[7px] text-slate-700 leading-relaxed text-center">
+                                          <p className="p-2 bg-white/80 border border-slate-200/40 rounded-lg text-[7px] leading-relaxed text-center" style={{ color: textColor }}>
                                             {editingCard.address}
                                           </p>
                                         </>
@@ -1922,7 +1922,7 @@ export function CustomerCardsView({
                                 case 'bank_info':
                                   return (editingCard.bank_card || editingCard.bank_account || editingCard.bank_shaba) ? (
                                     <div key="sec_classic_bank" className="space-y-1.5 pt-1.5 border-t border-slate-200/50">
-                                      <h5 className="text-[7.5px] font-bold opacity-60 flex items-center gap-1">
+                                      <h5 className="text-[7.5px] font-bold opacity-60 flex items-center gap-1" style={{ color: textColor }}>
                                         <CreditCard className="h-3 w-3 text-[#e2b53e] shrink-0" />
                                         <span>شماره حساب و کارت</span>
                                       </h5>
@@ -1933,8 +1933,8 @@ export function CustomerCardsView({
                                             className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
                                             title="کپی"
                                           >
-                                            <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_card' ? 'کپی شد!' : 'کارت:'}</span>
-                                            <span className="font-mono font-bold text-slate-700">{editingCard.bank_card}</span>
+                                            <span className="font-bold" style={{ color: primaryColor }}>{previewCopiedField === 'bank_card' ? 'کپی شد!' : 'کارت:'}</span>
+                                            <span className="font-mono font-bold" style={{ color: textColor }}>{editingCard.bank_card}</span>
                                           </div>
                                         )}
                                         {editingCard.bank_account && (
@@ -1943,8 +1943,8 @@ export function CustomerCardsView({
                                             className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
                                             title="کپی"
                                           >
-                                            <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_account' ? 'کپی شد!' : 'حساب:'}</span>
-                                            <span className="font-mono font-bold text-slate-700">{editingCard.bank_account}</span>
+                                            <span className="font-bold" style={{ color: primaryColor }}>{previewCopiedField === 'bank_account' ? 'کپی شد!' : 'حساب:'}</span>
+                                            <span className="font-mono font-bold" style={{ color: textColor }}>{editingCard.bank_account}</span>
                                           </div>
                                         )}
                                         {editingCard.bank_shaba && (
@@ -1953,8 +1953,8 @@ export function CustomerCardsView({
                                             className="p-1.5 bg-white/80 hover:bg-white border border-slate-200/40 rounded-lg flex items-center justify-between text-[7px] cursor-pointer transition active:scale-[0.98]"
                                             title="کپی"
                                           >
-                                            <span className="opacity-60 font-bold text-emerald-600">{previewCopiedField === 'bank_shaba' ? 'کپی شد!' : 'شبا:'}</span>
-                                            <span className="font-mono font-bold text-slate-700" dir="ltr">{editingCard.bank_shaba}</span>
+                                            <span className="font-bold" style={{ color: primaryColor }}>{previewCopiedField === 'bank_shaba' ? 'کپی شد!' : 'شبا:'}</span>
+                                            <span className="font-mono font-bold" dir="ltr" style={{ color: textColor }}>{editingCard.bank_shaba}</span>
                                           </div>
                                         )}
                                       </div>
@@ -2005,18 +2005,18 @@ export function CustomerCardsView({
                                 );
                               case 'bio':
                                 return editingCard.bio ? (
-                                  <div key="sec_bento_bio" className="p-2.5 bg-slate-800/60 border border-slate-700/50 rounded-xl text-[7.5px] text-slate-300 leading-relaxed whitespace-pre-line">
+                                  <div key="sec_bento_bio" className="p-2.5 bg-slate-800/60 border border-slate-700/50 rounded-xl text-[7.5px] leading-relaxed whitespace-pre-line" style={{ color: textColor }}>
                                     {editingCard.bio}
                                   </div>
                                 ) : null;
                               case 'primary_actions':
                                 return (editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) ? (
                                   <div key="sec_bento_primary" className="p-2 bg-slate-800/60 border border-slate-700/50 rounded-xl space-y-1">
-                                    <span className="text-[7px] text-indigo-300 font-bold block">تلفن‌های همراه:</span>
+                                    <span className="text-[7px] font-bold block" style={{ color: primaryColor }}>تلفن‌های همراه:</span>
                                     {editingCard.social_links?.mobile && (
-                                      <div className="flex justify-between items-center text-[7px] font-mono text-slate-200 p-1 bg-slate-900/60 rounded-lg">
-                                        <span>اصلی:</span>
-                                        <span className="text-indigo-400 font-bold">{editingCard.social_links.mobile}</span>
+                                      <div className="flex justify-between items-center text-[7px] font-mono p-1 bg-slate-900/60 rounded-lg">
+                                        <span style={{ color: textColor }}>اصلی:</span>
+                                        <span className="font-bold" style={{ color: primaryColor }}>{editingCard.social_links.mobile}</span>
                                       </div>
                                     )}
                                   </div>
@@ -2060,9 +2060,9 @@ export function CustomerCardsView({
                               case 'bank_info':
                                 return (editingCard.bank_card || editingCard.bank_shaba) ? (
                                   <div key="sec_bento_bank" className="p-2 bg-slate-800/60 border border-slate-700/50 rounded-xl space-y-1 text-[7px]">
-                                    <span className="text-amber-400 font-bold block">اطلاعات بانکی:</span>
+                                    <span className="font-bold block" style={{ color: primaryColor }}>اطلاعات بانکی:</span>
                                     {editingCard.bank_card && (
-                                      <div className="font-mono text-slate-300 text-[6.5px]">{editingCard.bank_card}</div>
+                                      <div className="font-mono text-[6.5px] font-bold" style={{ color: textColor }}>{editingCard.bank_card}</div>
                                     )}
                                   </div>
                                 ) : null;
@@ -2210,19 +2210,19 @@ export function CustomerCardsView({
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_neon_bio" className="text-[8px] text-zinc-400 leading-relaxed bg-zinc-950/60 p-2 border border-zinc-850 rounded-xl whitespace-pre-line">
+                                    <p key="sec_neon_bio" className="text-[8px] leading-relaxed bg-zinc-950/60 p-2 border border-zinc-850 rounded-xl whitespace-pre-line" style={{ color: textColor }}>
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
                                 case 'primary_actions':
                                   return (editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) ? (
                                     <div key="sec_neon_primary" className="space-y-1.5 pt-1.5 border-t border-white/10">
-                                      <h5 className="text-[7.5px] font-bold text-slate-400">تلفن‌های همراه دیگر</h5>
+                                      <h5 className="text-[7.5px] font-bold opacity-80" style={{ color: textColor }}>تلفن‌های همراه دیگر</h5>
                                       <div className="space-y-1">
                                         {editingCard.social_links?.mobile && (
                                           <div className="flex items-center justify-between p-1 bg-white/5 border border-white/5 rounded-lg text-[7px] font-bold">
                                             <span>موبایل اصلی:</span>
-                                            <span className="font-mono text-slate-300">{editingCard.social_links.mobile}</span>
+                                            <span className="font-mono" style={{ color: primaryColor }}>{editingCard.social_links.mobile}</span>
                                           </div>
                                         )}
                                         {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
@@ -2237,7 +2237,7 @@ export function CustomerCardsView({
                                 case 'social_links':
                                   return (
                                     <div key="sec_neon_social" className="space-y-1.5">
-                                      <h5 className="text-[7.5px] font-bold text-slate-400">راه‌های ارتباطی سریع</h5>
+                                      <h5 className="text-[7.5px] font-bold opacity-80" style={{ color: textColor }}>راه‌های ارتباطی سریع</h5>
                                       <div className="grid grid-cols-4 gap-1.5">
                                         {editingCard.social_links?.phone && (
                                           <div className="flex flex-col items-center justify-center p-1.5 bg-white/5 border border-white/5 rounded-lg text-[6.5px] font-bold">
@@ -2287,7 +2287,7 @@ export function CustomerCardsView({
                                 case 'custom_buttons':
                                   return (editingCard.custom_buttons && editingCard.custom_buttons.length > 0) ? (
                                     <div key="sec_neon_custom" className="space-y-1 pt-1.5 border-t border-white/10">
-                                      <h5 className="text-[7.5px] font-bold text-slate-400">لینک‌های کاربردی</h5>
+                                      <h5 className="text-[7.5px] font-bold opacity-80" style={{ color: textColor }}>لینک‌های کاربردی</h5>
                                       {editingCard.custom_buttons.map((btn) => (
                                         <div 
                                           key={btn.id}
@@ -2304,7 +2304,7 @@ export function CustomerCardsView({
                                     <div key="sec_neon_loc" className="space-y-1.5 pt-1.5 border-t border-white/10">
                                       {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
                                         <>
-                                          <h5 className="text-[7.5px] font-bold text-slate-400">مسیریابی روی نقشه</h5>
+                                          <h5 className="text-[7.5px] font-bold opacity-80" style={{ color: textColor }}>مسیریابی روی نقشه</h5>
                                           <div className="grid grid-cols-2 gap-1.5">
                                             {editingCard.neshan && (
                                               <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/5 rounded-lg text-[7px] font-bold">
@@ -2339,7 +2339,7 @@ export function CustomerCardsView({
                                             <MapPin className="h-3 w-3 text-cyan-400 shrink-0" />
                                             <span>نشانی و دفتر مرکزی</span>
                                           </h5>
-                                          <p className="p-2 bg-white/5 border border-white/5 rounded-lg text-[7px] text-slate-300 leading-relaxed text-center">
+                                          <p className="p-2 bg-white/5 border border-white/5 rounded-lg text-[7px] leading-relaxed text-center" style={{ color: textColor }}>
                                             {editingCard.address}
                                           </p>
                                         </>
@@ -2361,7 +2361,7 @@ export function CustomerCardsView({
                                             title="کپی"
                                           >
                                             <span className="text-emerald-400 font-bold">{previewCopiedField === 'bank_card' ? 'کپی شد!' : 'کارت:'}</span>
-                                            <span className="font-mono font-bold text-cyan-400">{editingCard.bank_card}</span>
+                                            <span className="font-mono font-bold" style={{ color: primaryColor }}>{editingCard.bank_card}</span>
                                           </div>
                                         )}
                                         {editingCard.bank_account && (
@@ -2371,7 +2371,7 @@ export function CustomerCardsView({
                                             title="کپی"
                                           >
                                             <span className="text-emerald-400 font-bold">{previewCopiedField === 'bank_account' ? 'کپی شد!' : 'حساب:'}</span>
-                                            <span className="font-mono font-bold text-cyan-400">{editingCard.bank_account}</span>
+                                            <span className="font-mono font-bold" style={{ color: primaryColor }}>{editingCard.bank_account}</span>
                                           </div>
                                         )}
                                         {editingCard.bank_shaba && (
@@ -2381,7 +2381,7 @@ export function CustomerCardsView({
                                             title="کپی"
                                           >
                                             <span className="text-emerald-400 font-bold">{previewCopiedField === 'bank_shaba' ? 'کپی شد!' : 'شبا:'}</span>
-                                            <span className="font-mono font-bold text-cyan-400" dir="ltr">{editingCard.bank_shaba}</span>
+                                            <span className="font-mono font-bold" dir="ltr" style={{ color: primaryColor }}>{editingCard.bank_shaba}</span>
                                           </div>
                                         )}
                                       </div>
@@ -2420,7 +2420,7 @@ export function CustomerCardsView({
 
                             <div className="space-y-0.5">
                               <h4 className="text-xs font-black text-stone-900">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                              <p className="text-[8px] font-medium text-stone-500 uppercase tracking-widest">{editingCard.job_title || 'سمت شغلی'}</p>
+                              <p className="text-[8px] font-medium uppercase tracking-widest" style={{ color: primaryColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
                               {editingCard.company && <p className="text-[8px] text-stone-400">{editingCard.company}</p>}
                             </div>
 
@@ -2447,19 +2447,19 @@ export function CustomerCardsView({
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_min_bio" className="text-[8px] text-stone-600 leading-relaxed text-center px-2 whitespace-pre-line">
+                                    <p key="sec_min_bio" className="text-[8px] leading-relaxed text-center px-2 whitespace-pre-line" style={{ color: textColor }}>
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
                                 case 'primary_actions':
                                   return (editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) ? (
                                     <div key="sec_min_primary" className="w-full space-y-1 pt-1.5 border-t border-stone-200">
-                                      <h5 className="text-[7.5px] font-bold text-stone-500 text-right">تلفن‌های همراه</h5>
+                                      <h5 className="text-[7.5px] font-bold text-right opacity-70" style={{ color: textColor }}>تلفن‌های همراه</h5>
                                       <div className="space-y-1">
                                         {editingCard.social_links?.mobile && (
                                           <div className="flex items-center justify-between p-1 bg-white border border-stone-200 rounded-lg text-[7px] font-bold text-stone-700">
                                             <span>موبایل اصلی:</span>
-                                            <span className="font-mono text-stone-500">{editingCard.social_links.mobile}</span>
+                                            <span className="font-mono" style={{ color: primaryColor }}>{editingCard.social_links.mobile}</span>
                                           </div>
                                         )}
                                         {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
@@ -2474,7 +2474,7 @@ export function CustomerCardsView({
                                 case 'social_links':
                                   return (
                                     <div key="sec_min_social" className="w-full space-y-1 pt-1.5 border-t border-stone-200">
-                                      <h5 className="text-[7.5px] font-bold text-stone-500 text-right">راه‌های ارتباطی</h5>
+                                      <h5 className="text-[7.5px] font-bold text-right opacity-70" style={{ color: textColor }}>راه‌های ارتباطی</h5>
                                       <div className="grid grid-cols-2 gap-1.5">
                                         {editingCard.social_links?.phone && (
                                           <div className="p-1.5 bg-white border border-stone-200 rounded-xl flex items-center gap-1.5 text-[7px] font-bold text-stone-700">
@@ -2530,7 +2530,7 @@ export function CustomerCardsView({
                                 case 'custom_buttons':
                                   return (editingCard.custom_buttons && editingCard.custom_buttons.length > 0) ? (
                                     <div key="sec_min_custom" className="w-full space-y-1 pt-1.5 border-t border-stone-200">
-                                      <h5 className="text-[7.5px] font-bold text-stone-500 text-right">لینک‌های کاربردی</h5>
+                                      <h5 className="text-[7.5px] font-bold text-right opacity-70" style={{ color: textColor }}>لینک‌های کاربردی</h5>
                                       {editingCard.custom_buttons.map((btn) => (
                                         <div 
                                           key={btn.id}
@@ -2547,7 +2547,7 @@ export function CustomerCardsView({
                                     <div key="sec_min_loc" className="w-full space-y-1 pt-1.5 border-t border-stone-200">
                                       {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
                                         <>
-                                          <h5 className="text-[7.5px] font-bold text-stone-500 text-right">مسیریابی آدرس</h5>
+                                          <h5 className="text-[7.5px] font-bold text-right opacity-70" style={{ color: textColor }}>مسیریابی آدرس</h5>
                                           <div className="grid grid-cols-2 gap-1.5">
                                             {editingCard.neshan && (
                                               <div className="p-1 bg-white border border-stone-200 rounded-lg flex items-center gap-1 text-[7px] font-bold text-stone-700">
@@ -2578,11 +2578,11 @@ export function CustomerCardsView({
                                       )}
                                       {editingCard.address && (
                                         <>
-                                          <h5 className="text-[7.5px] font-bold text-stone-500 text-right flex items-center gap-1 mt-1">
+                                          <h5 className="text-[7.5px] font-bold text-right flex items-center gap-1 mt-1 opacity-70" style={{ color: textColor }}>
                                             <MapPin className="h-3 w-3 text-stone-500 shrink-0" />
                                             <span>نشانی و دفتر مرکزی</span>
                                           </h5>
-                                          <p className="p-2 bg-stone-100 rounded-lg text-[7px] text-stone-700 leading-relaxed text-center border border-stone-200/50">
+                                          <p className="p-2 bg-stone-100 rounded-lg text-[7px] leading-relaxed text-center border border-stone-200/50" style={{ color: textColor }}>
                                             {editingCard.address}
                                           </p>
                                         </>
@@ -2592,7 +2592,7 @@ export function CustomerCardsView({
                                 case 'bank_info':
                                   return (editingCard.bank_card || editingCard.bank_account || editingCard.bank_shaba) ? (
                                     <div key="sec_min_bank" className="w-full space-y-1.5 pt-1.5 border-t border-stone-200">
-                                      <h5 className="text-[7.5px] font-bold text-stone-500 text-right flex items-center gap-1">
+                                      <h5 className="text-[7.5px] font-bold text-right flex items-center gap-1 opacity-70" style={{ color: textColor }}>
                                         <CreditCard className="h-3 w-3 text-stone-600 shrink-0" />
                                         <span>شماره حساب و کارت</span>
                                       </h5>
@@ -2670,7 +2670,7 @@ export function CustomerCardsView({
 
                             <div className="space-y-0.5 text-right">
                               <h4 className="text-xs font-serif font-bold text-amber-200 tracking-wide">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                              <p className="text-[7.5px] font-mono uppercase tracking-wider text-amber-500">{editingCard.job_title || 'سمت شغلی'}</p>
+                              <p className="text-[7.5px] font-mono uppercase tracking-wider" style={{ color: primaryColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
                               {editingCard.company && <p className="text-[7px] text-stone-500">{editingCard.company}</p>}
                             </div>
 
@@ -2690,18 +2690,18 @@ export function CustomerCardsView({
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_lux_bio" className="text-[7.5px] text-stone-400 leading-relaxed bg-stone-950/40 p-2 rounded-lg border border-stone-800/40 text-justify whitespace-pre-line">
+                                    <p key="sec_lux_bio" className="text-[7.5px] leading-relaxed bg-stone-950/40 p-2 rounded-lg border border-stone-800/40 text-justify whitespace-pre-line" style={{ color: textColor }}>
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
                                 case 'primary_actions':
                                   return (editingCard.social_links?.mobile || (editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.length > 0)) ? (
                                     <div key="sec_lux_primary" className="space-y-1 pt-1.5 border-t border-stone-800/60">
-                                      <h5 className="text-[7.5px] font-serif text-amber-500/70 text-right">شماره‌های همراه</h5>
+                                      <h5 className="text-[7.5px] font-serif text-right opacity-80" style={{ color: textColor }}>شماره‌های همراه</h5>
                                       {editingCard.social_links?.mobile && (
                                         <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
                                           <span className="opacity-50">تلفن همراه اصلی:</span>
-                                          <span className="font-mono text-amber-500/90">{editingCard.social_links.mobile}</span>
+                                          <span className="font-mono" style={{ color: primaryColor }}>{editingCard.social_links.mobile}</span>
                                         </div>
                                       )}
                                       {editingCard.social_links?.extra_phones && editingCard.social_links.extra_phones.map((ph: string, idx: number) => (
@@ -2715,7 +2715,7 @@ export function CustomerCardsView({
                                 case 'social_links':
                                   return (
                                     <div key="sec_lux_social" className="space-y-1.5 pt-1 border-t border-stone-800/60">
-                                      <h5 className="text-[7.5px] font-serif text-amber-500/70 text-right">راه‌های ارتباطی مجلل</h5>
+                                      <h5 className="text-[7.5px] font-serif text-right opacity-80" style={{ color: textColor }}>راه‌های ارتباطی مجلل</h5>
                                       <div className="grid grid-cols-2 gap-1.5">
                                         {editingCard.social_links?.phone && (
                                           <div className="py-1 border-b border-stone-800/60 flex justify-between items-center text-[7px] text-stone-300">
@@ -2775,7 +2775,7 @@ export function CustomerCardsView({
                                     <div key="sec_lux_loc" className="space-y-1.5 pt-1.5 border-t border-stone-800/60">
                                       {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
                                         <>
-                                          <h5 className="text-[7.5px] font-serif text-amber-500/70 text-right">مسیریابی آدرس</h5>
+                                          <h5 className="text-[7.5px] font-serif text-right opacity-80" style={{ color: textColor }}>مسیریابی آدرس</h5>
                                           <div className="grid grid-cols-2 gap-1.5">
                                             {editingCard.neshan && (
                                               <div className="p-1 bg-stone-900 border border-amber-500/20 rounded text-[7px] flex items-center gap-1 text-amber-200">
@@ -2806,11 +2806,11 @@ export function CustomerCardsView({
                                       )}
                                       {editingCard.address && (
                                         <div className="space-y-1 pt-1.5">
-                                          <h5 className="text-[7.5px] font-serif text-amber-500/70 text-right flex items-center gap-1 justify-end">
+                                          <h5 className="text-[7.5px] font-serif text-right flex items-center gap-1 justify-end opacity-80" style={{ color: textColor }}>
                                             <span>نشانی و دفتر مرکزی</span>
                                             <MapPin className="h-3 w-3 text-amber-500 shrink-0" />
                                           </h5>
-                                          <p className="p-2 bg-stone-950/60 border border-amber-500/10 rounded-lg text-[7px] text-stone-200 leading-relaxed text-center">
+                                          <p className="p-2 bg-stone-950/60 border border-amber-500/10 rounded-lg text-[7px] leading-relaxed text-center" style={{ color: textColor }}>
                                             {editingCard.address}
                                           </p>
                                         </div>
@@ -2820,7 +2820,7 @@ export function CustomerCardsView({
                                 case 'bank_info':
                                   return (editingCard.bank_card || editingCard.bank_account || editingCard.bank_shaba) ? (
                                     <div key="sec_lux_bank" className="space-y-1.5 pt-1.5 border-t border-stone-800/60">
-                                      <h5 className="text-[7.5px] font-serif text-amber-500/70 text-right flex items-center gap-1 justify-end">
+                                      <h5 className="text-[7.5px] font-serif text-right flex items-center gap-1 justify-end opacity-80" style={{ color: textColor }}>
                                         <span>شماره حساب و کارت VIP</span>
                                         <CreditCard className="h-3 w-3 text-amber-500 shrink-0" />
                                       </h5>
@@ -2832,7 +2832,7 @@ export function CustomerCardsView({
                                             title="کپی"
                                           >
                                             <span className="text-emerald-400 font-bold">{previewCopiedField === 'bank_card' ? 'کپی شد!' : 'کارت:'}</span>
-                                            <span className="font-mono font-bold text-amber-500">{editingCard.bank_card}</span>
+                                            <span className="font-mono font-bold" style={{ color: primaryColor }}>{editingCard.bank_card}</span>
                                           </div>
                                         )}
                                         {editingCard.bank_account && (
@@ -2842,7 +2842,7 @@ export function CustomerCardsView({
                                             title="کپی"
                                           >
                                             <span className="text-emerald-400 font-bold">{previewCopiedField === 'bank_account' ? 'کپی شد!' : 'حساب:'}</span>
-                                            <span className="font-mono font-bold text-amber-500">{editingCard.bank_account}</span>
+                                            <span className="font-mono font-bold" style={{ color: primaryColor }}>{editingCard.bank_account}</span>
                                           </div>
                                         )}
                                         {editingCard.bank_shaba && (
@@ -2852,7 +2852,7 @@ export function CustomerCardsView({
                                             title="کپی"
                                           >
                                             <span className="text-emerald-400 font-bold">{previewCopiedField === 'bank_shaba' ? 'کپی شد!' : 'شبا:'}</span>
-                                            <span className="font-mono font-bold text-amber-500" dir="ltr">{editingCard.bank_shaba}</span>
+                                            <span className="font-mono font-bold" dir="ltr" style={{ color: primaryColor }}>{editingCard.bank_shaba}</span>
                                           </div>
                                         )}
                                       </div>
