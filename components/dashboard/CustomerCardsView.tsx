@@ -2883,7 +2883,11 @@ export function CustomerCardsView({
                         const sColor = editingCard.custom_colors?.secondary?.trim() ? editingCard.custom_colors.secondary : (tColors.secondary || tmplDefaults.secondary || '#3b82f6');
                         const bColor = editingCard.custom_colors?.background?.trim() ? editingCard.custom_colors.background : (tColors.background || tmplDefaults.background || '#f1f5f9');
                         const txtColor = editingCard.custom_colors?.text?.trim() ? editingCard.custom_colors.text : (tColors.text || (isDarkTheme ? '#f8fafc' : '#0f172a'));
-                        const txtSecColor = tColors.text_secondary || (isDarkTheme ? '#94a3b8' : '#64748b');
+                        const txtSecColor = editingCard.custom_colors?.secondary?.trim() 
+                          ? editingCard.custom_colors.secondary 
+                          : editingCard.custom_colors?.text?.trim()
+                          ? editingCard.custom_colors.text
+                          : (tColors.text_secondary || (isDarkTheme ? '#94a3b8' : '#64748b'));
                         const customCardBg = editingCard.custom_colors?.card_bg?.trim() ? editingCard.custom_colors.card_bg : (tColors.card_bg || (isDarkTheme ? '#0f172a' : '#ffffff'));
 
                         const avatarPosition = tLayout.avatar_position || 'overlap-center';
@@ -3112,7 +3116,7 @@ export function CustomerCardsView({
 
                                     return (
                                       <div key="sec_cust_social" className="space-y-1">
-                                        <h5 className="text-[7px] font-bold opacity-70">راه‌های ارتباطی</h5>
+                                        <h5 className="text-[7px] font-bold opacity-70" style={{ color: txtSecColor }}>راه‌های ارتباطی</h5>
                                         {socialMode === 'vertical-rows' ? (
                                           <div className="space-y-1">
                                             {socialsList.map((item) => {
@@ -3200,7 +3204,7 @@ export function CustomerCardsView({
                                       <div key="sec_cust_loc" className="space-y-1 pt-1.5 border-t" style={{ borderColor: sColor }}>
                                         {(editingCard.neshan || editingCard.balad || editingCard.waze || editingCard.googlemap) && (
                                           <>
-                                            <h5 className="text-[7px] font-bold opacity-70">مسیریابی</h5>
+                                            <h5 className="text-[7px] font-bold opacity-70" style={{ color: txtSecColor }}>مسیریابی</h5>
                                             <div className="grid grid-cols-2 gap-1">
                                               {editingCard.neshan && (
                                                 <div className="p-1 rounded border text-[6.5px] flex items-center gap-1 justify-center" style={{ borderColor: sColor }}>
@@ -3294,7 +3298,7 @@ export function CustomerCardsView({
                               {/* Custom Buttons */}
                               {editingCard.custom_buttons && editingCard.custom_buttons.length > 0 && (
                                 <div className="space-y-1 pt-1.5 border-t" style={{ borderColor: sColor }}>
-                                  <h5 className="text-[7px] font-bold opacity-70">لینک‌های اختصاصی</h5>
+                                  <h5 className="text-[7px] font-bold opacity-70" style={{ color: txtSecColor }}>لینک‌های اختصاصی</h5>
                                   {editingCard.custom_buttons.map((btn) => (
                                     <div key={btn.id} className="p-1 rounded flex justify-between items-center text-[7px]" style={{ backgroundColor: sColor, color: pColor }}>
                                       <span>{btn.label}</span>

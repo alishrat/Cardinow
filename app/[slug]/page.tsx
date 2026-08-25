@@ -2070,7 +2070,11 @@ export default function PublicCardPage() {
           const sColor = secondaryColor;
           const bColor = bgColor;
           const txtColor = textCol;
-          const txtSecColor = tColors.text_secondary || (isDarkTheme ? '#94a3b8' : '#64748b');
+          const txtSecColor = card.custom_colors?.secondary?.trim() 
+            ? card.custom_colors.secondary 
+            : card.custom_colors?.text?.trim() 
+            ? card.custom_colors.text 
+            : (tColors.text_secondary || (isDarkTheme ? '#94a3b8' : '#64748b'));
           const cardBg = cardBgColor;
 
           // Layout & FX properties
