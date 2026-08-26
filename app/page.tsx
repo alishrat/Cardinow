@@ -1688,37 +1688,39 @@ export default function LandingPage() {
 
             {/* Col 3: Support Contact Info */}
             <div className="space-y-3">
-              <h4 className="font-bold text-xs text-white">ارتباط با ما</h4>
+              <h4 className="font-bold text-xs text-white">نشانی و پشتیبانی</h4>
               <div className="space-y-2 text-xs text-slate-400">
-                {siteSettings?.contact_phone && (
-                  <a href={`tel:${siteSettings.contact_phone.replace(/[^0-9+]/g, '')}`} className="flex items-center gap-2 hover:text-blue-400 transition">
-                    <Phone className="h-4 w-4 text-blue-500 shrink-0" />
-                    <span>تلفن تماس: {toPersianDigits(siteSettings.contact_phone)}</span>
-                  </a>
-                )}
-                {siteSettings?.address && (
+                {siteSettings?.address ? (
                   <div className="flex items-start gap-2">
                     <MapPin className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
                     <span className="leading-relaxed">آدرس: {siteSettings.address}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">پشتیبانی آنلاین ۲۴ ساعته از طریق پنل کاربری</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Col 4: Enamad / Trust Seal */}
+            {/* Col 4: Enamad / Trust Seal & Badges */}
             <div className="space-y-3">
-              <h4 className="font-bold text-xs text-white">نماد اعتماد الکترونیکی</h4>
-              {siteSettings?.enamad ? (
-                <div 
-                  className="bg-slate-900/80 border border-slate-800 p-3 rounded-2xl flex items-center justify-center text-center overflow-hidden min-h-[100px]"
-                  dangerouslySetInnerHTML={{ __html: siteSettings.enamad }}
-                />
-              ) : (
-                <div className="bg-slate-900/50 border border-slate-800/80 p-3 rounded-2xl flex items-center gap-2 text-slate-500 text-xs">
-                  <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
-                  <span>دارای نماد اعتماد و مجوزهای قانونی رسمی</span>
+              <h4 className="font-bold text-xs text-white">نمادهای اعتماد و پرداخت امن</h4>
+              <div className="flex flex-wrap items-center gap-2.5">
+                {siteSettings?.enamad && (
+                  <div 
+                    className="bg-slate-900/80 border border-slate-800 p-2 rounded-xl flex items-center justify-center text-center overflow-hidden min-h-[70px]"
+                    dangerouslySetInnerHTML={{ __html: siteSettings.enamad }}
+                  />
+                )}
+                <div className="bg-slate-900/90 border border-slate-800 p-2 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0">
+                  <img src="/zarinpal-badge.png" alt="درگاه پرداخت امن زرین‌پال" className="h-14 w-auto object-contain rounded-lg" />
                 </div>
-              )}
+                <div className="bg-slate-900/90 border border-slate-800 p-2 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0">
+                  <img src="/ssl-badge.png" alt="گواهی امنیت SSL" className="h-14 w-auto object-contain rounded-lg" />
+                </div>
+              </div>
             </div>
 
           </div>
@@ -1727,11 +1729,6 @@ export default function LandingPage() {
             <p className="text-center sm:text-right opacity-70">
               تمامی حقوق مادی و معنوی این سامانه متعلق به مگاکارت می‌باشد.
             </p>
-            {siteSettings?.contact_phone && (
-              <a href={`tel:${siteSettings.contact_phone.replace(/[^0-9+]/g, '')}`} className="text-blue-400 hover:underline font-mono font-bold dir-ltr">
-                {siteSettings.contact_phone}
-              </a>
-            )}
           </div>
         </div>
       </footer>

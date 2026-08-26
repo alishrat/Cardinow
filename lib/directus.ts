@@ -21,6 +21,7 @@ export interface Template {
   slug: string;
   thumbnail?: string | null;
   schema?: any | null;
+  schema_json?: any | null;
   is_premium: boolean;
   is_active: boolean;
 }

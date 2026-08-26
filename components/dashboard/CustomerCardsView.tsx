@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, Edit2, Trash2, Globe, ExternalLink, Copy, Check, Eye, Save, 
   Settings, User, LayoutGrid, CreditCard, BarChart2, ShieldCheck, 
@@ -541,7 +542,7 @@ export function CustomerCardsView({
         /* ==============================================
             SANDBOX LIVE CARD EDITOR (SPLIT SCREEN)
            ============================================== */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* Left Column: Form Fields */}
           <div className="lg:col-span-7 bg-slate-950/60 p-5 rounded-2xl border border-slate-850 space-y-6">
@@ -1675,7 +1676,7 @@ export function CustomerCardsView({
           </div>
 
           {/* Right Column: Live mobile preview iframe simulation */}
-          <div className="lg:col-span-5 flex flex-col justify-start items-center space-y-4">
+          <div className="lg:col-span-5 flex flex-col justify-start items-center space-y-4 lg:sticky lg:top-20 self-start pb-6">
             <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
               <Smartphone className="h-4 w-4 text-emerald-400 animate-pulse" />
               شبیه‌ساز پیش‌نمایش زنده در گوشی مخاطب:
@@ -3324,74 +3325,129 @@ export function CustomerCardsView({
       {/* ==============================================
           QR CODE PREVIEW & DOWNLOAD MODAL
          ============================================== */}
-      {selectedQrCard && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative animate-in fade-in zoom-in-95 rtl" dir="rtl">
-            
-            <button
+      <AnimatePresence>
+        {selectedQrCard && (() => {
+          const qrTmplDefaults = getTemplateDefaultColors(selectedQrCard.template_id, templates);
+          const qrPrimaryColor = selectedQrCard.custom_colors?.primary?.trim() ? selectedQrCard.custom_colors.primary : (qrTmplDefaults?.primary || '#2563eb');
+          const qrCardBg = selectedQrCard.custom_colors?.card_bg?.trim() ? selectedQrCard.custom_colors.card_bg : (qrTmplDefaults?.card_bg || '#0f172a');
+          const qrTextColor = selectedQrCard.custom_colors?.text?.trim() ? selectedQrCard.custom_colors.text : (qrTmplDefaults?.text || '#ffffff');
+          const qrBgColor = selectedQrCard.custom_colors?.background?.trim() ? selectedQrCard.custom_colors.background : (qrTmplDefaults?.background || '#090d16');
+
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
               onClick={() => setSelectedQrCard(null)}
-              className="absolute top-4 left-4 text-slate-400 hover:text-white text-lg transition p-1 hover:bg-slate-800 rounded-lg"
             >
-              ✕
-            </button>
-
-            <div className="text-center space-y-1">
-              <div className="h-11 w-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mx-auto mb-2 shadow-inner">
-                <QrCode className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-white text-base">کد QR اختصاصی کارت ویزیت</h3>
-              <p className="text-xs text-slate-400">
-                {selectedQrCard.first_name} {selectedQrCard.last_name} {selectedQrCard.job_title ? `(${selectedQrCard.job_title})` : ''}
-              </p>
-            </div>
-
-            {/* Styled QR Code Box */}
-            <div className="bg-white p-5 rounded-2xl flex items-center justify-center border-4 border-slate-800 shadow-xl">
-              <StyledQRCode 
-                value={`${getCardBaseUrl()}/${selectedQrCard.slug}`} 
-                size={230} 
-                className="mx-auto" 
-              />
-            </div>
-
-            {/* Direct URL Box */}
-            <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-850 flex items-center justify-between text-xs font-mono ltr" dir="ltr">
-              <span className="text-slate-300 truncate max-w-[190px] text-[11px]">
-                {getCardBaseUrl()}/{selectedQrCard.slug}
-              </span>
-              <button
-                onClick={() => handleCopyCardLink(selectedQrCard.slug)}
-                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-white rounded-lg text-[10px] font-bold shrink-0 transition"
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 15 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                style={{
+                  backgroundColor: qrCardBg,
+                  color: qrTextColor,
+                  borderColor: `${qrPrimaryColor}45`
+                }}
+                className="border rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative rtl overflow-hidden" 
+                dir="rtl"
+                onClick={(e) => e.stopPropagation()}
               >
-                {isCopiedSlug === selectedQrCard.slug ? 'کپی شد ✓' : 'کپی لینک'}
-              </button>
-            </div>
+                <button
+                  onClick={() => setSelectedQrCard(null)}
+                  style={{ color: qrTextColor }}
+                  className="absolute top-4 left-4 opacity-70 hover:opacity-100 text-lg transition p-1 hover:bg-white/10 rounded-lg cursor-pointer"
+                >
+                  ✕
+                </button>
 
-            {/* Download & View buttons */}
-            <div className="space-y-2 pt-1">
-              <button
-                onClick={() => handleDownloadQrCode(selectedQrCard)}
-                disabled={downloadingQr}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
-              >
-                {downloadingQr ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                <span>دانلود تصویر کیوآرکد (PNG)</span>
-              </button>
+                <div className="text-center space-y-1">
+                  <div 
+                    className="h-11 w-11 rounded-2xl border flex items-center justify-center mx-auto mb-2 shadow-inner"
+                    style={{ 
+                      backgroundColor: `${qrPrimaryColor}20`, 
+                      borderColor: `${qrPrimaryColor}40`, 
+                      color: qrPrimaryColor 
+                    }}
+                  >
+                    <QrCode className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-bold text-base" style={{ color: qrTextColor }}>کد QR اختصاصی کارت ویزیت</h3>
+                  <p className="text-xs opacity-75" style={{ color: qrTextColor }}>
+                    {selectedQrCard.first_name} {selectedQrCard.last_name} {selectedQrCard.job_title ? `(${selectedQrCard.job_title})` : ''}
+                  </p>
+                </div>
 
-              <a
-                href={`/${selectedQrCard.slug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2 bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2"
-              >
-                <ExternalLink className="h-3.5 w-3.5 text-blue-400" />
-                <span>مشاهده صفحه آنلاین کارت</span>
-              </a>
-            </div>
+                {/* Styled QR Code Box */}
+                <div 
+                  className="bg-white p-5 rounded-2xl flex items-center justify-center border-4 shadow-xl"
+                  style={{ borderColor: `${qrPrimaryColor}40` }}
+                >
+                  <StyledQRCode 
+                    value={`${getCardBaseUrl()}/${selectedQrCard.slug}`} 
+                    size={230} 
+                    className="mx-auto" 
+                  />
+                </div>
 
-          </div>
-        </div>
-      )}
+                {/* Direct URL Box */}
+                <div 
+                  className="p-2.5 rounded-xl border flex items-center justify-between text-xs font-mono ltr" 
+                  dir="ltr"
+                  style={{ backgroundColor: `${qrBgColor}bb`, borderColor: `${qrPrimaryColor}30` }}
+                >
+                  <span className="truncate max-w-[190px] text-[11px]" style={{ color: qrTextColor }}>
+                    {getCardBaseUrl()}/{selectedQrCard.slug}
+                  </span>
+                  <button
+                    onClick={() => handleCopyCardLink(selectedQrCard.slug)}
+                    style={{ backgroundColor: qrPrimaryColor, color: '#ffffff' }}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold shrink-0 transition hover:brightness-110 active:scale-95 cursor-pointer"
+                  >
+                    {isCopiedSlug === selectedQrCard.slug ? 'کپی شد ✓' : 'کپی لینک'}
+                  </button>
+                </div>
+
+                {/* Download & View buttons */}
+                <div className="space-y-2 pt-1">
+                  <button
+                    onClick={() => handleDownloadQrCode(selectedQrCard)}
+                    disabled={downloadingQr}
+                    style={{ 
+                      backgroundColor: qrPrimaryColor, 
+                      color: '#ffffff',
+                      boxShadow: `0 8px 20px ${qrPrimaryColor}35`
+                    }}
+                    className="w-full py-2.5 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50 cursor-pointer"
+                  >
+                    {downloadingQr ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    <span>دانلود تصویر کیوآرکد (PNG)</span>
+                  </button>
+
+                  <a
+                    href={`/${selectedQrCard.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ 
+                      backgroundColor: `${qrPrimaryColor}15`, 
+                      borderColor: `${qrPrimaryColor}30`, 
+                      color: qrTextColor 
+                    }}
+                    className="w-full py-2 border font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 hover:brightness-110"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" style={{ color: qrPrimaryColor }} />
+                    <span>مشاهده صفحه آنلاین کارت</span>
+                  </a>
+                </div>
+
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
 
       {/* Profile Image Cropper Modal */}
       <ImageCropperModal

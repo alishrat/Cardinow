@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'motion/react';
 import { dbService, Card, Template, getImageUrl, parseCardFields, getSectionOrders, toUUID, toPersianDigits, toEnglishDigits } from '../../lib/directus';
 import { saveCardToContacts } from '../../lib/vcard';
 import { StyledQRCode } from '../../components/ui/StyledQRCode';
@@ -111,163 +112,249 @@ export default function PublicCardPage() {
   };
 
   const renderShareModal = () => {
-    if (!activeShareId || !card) return null;
+    if (!card) return null;
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-    const shareTitle = `کارت ویزیت هوشمند ${card.first_name} ${card.last_name}`;
+    const shareTitle = `کارت ویزیت هوشمند ${card.first_name || ''} ${card.last_name || ''}`.trim();
+
+    // Resolve template defaults and custom theme colors for modal
+    let tmplDefaults = {
+      primary: '#2563eb',
+      secondary: '#3b82f6',
+      background: '#0f172a',
+      card_bg: '#1e293b',
+      text: '#ffffff'
+    };
+
+    const currentTemplate = templates.find(t => t.id === card?.template_id || t.slug === card?.template_id);
+    const schemaObj = currentTemplate?.schema_json || currentTemplate?.schema;
+    if (schemaObj) {
+      let schemaColors = schemaObj.colors || schemaObj;
+      if (schemaColors) {
+        tmplDefaults = {
+          primary: schemaColors.primary || tmplDefaults.primary,
+          secondary: schemaColors.secondary || tmplDefaults.secondary,
+          background: schemaColors.background || tmplDefaults.background,
+          card_bg: schemaColors.card_bg || tmplDefaults.card_bg,
+          text: schemaColors.text || tmplDefaults.text,
+        };
+      }
+    }
+
+    const modalPrimaryColor = card.custom_colors?.primary?.trim() ? card.custom_colors.primary : tmplDefaults.primary;
+    const modalSecondaryColor = card.custom_colors?.secondary?.trim() ? card.custom_colors.secondary : tmplDefaults.secondary;
+    const modalBgColor = card.custom_colors?.background?.trim() ? card.custom_colors.background : tmplDefaults.background;
+    const modalTextColor = card.custom_colors?.text?.trim() ? card.custom_colors.text : tmplDefaults.text;
+    const modalCardBg = card.custom_colors?.card_bg?.trim() ? card.custom_colors.card_bg : tmplDefaults.card_bg;
 
     return (
-      <div 
-        className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-        onClick={() => setActiveShareId(null)}
-      >
-        <div 
-          className="bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 text-right animate-in zoom-in-95 duration-200 relative text-white"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Modal Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <Share2 className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs sm:text-sm text-white">اشتراک‌گذاری کارت</h3>
-                <p className="text-[10px] text-slate-400">ارسال و اشتراک با دیگران</p>
-              </div>
-            </div>
-            <button 
-              type="button"
-              onClick={() => setActiveShareId(null)}
-              className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Mini Profile Card Preview */}
-          <div className="p-3 bg-slate-950/70 rounded-2xl border border-slate-800 flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-white/10">
-              <img 
-                src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
-                alt="profile" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h4 className="font-bold text-xs text-white truncate">{card.first_name} {card.last_name}</h4>
-              <p className="text-[10px] text-slate-400 truncate">{card.job_title || card.company || 'کارت ویزیت دیجیتال'}</p>
-              <span className="text-[9px] text-blue-400 font-mono block mt-0.5" dir="ltr">/{card.slug}</span>
-            </div>
-          </div>
-
-          {/* Copy Link Button */}
-          <div>
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(shareUrl);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
+      <AnimatePresence>
+        {activeShareId && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setActiveShareId(null)}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="border rounded-3xl p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 text-right relative overflow-hidden rtl"
+              dir="rtl"
+              style={{
+                backgroundColor: modalCardBg || '#1e293b',
+                color: modalTextColor || '#ffffff',
+                borderColor: `${modalPrimaryColor}45`
               }}
-              className="w-full py-2.5 px-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs transition flex items-center justify-between shadow-lg shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
             >
-              <span className="flex items-center gap-2">
-                <Copy className="h-4 w-4" />
-                <span>کپی لینک کارت ویزیت</span>
-              </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-lg font-mono transition ${copied ? 'bg-emerald-500 text-white font-bold' : 'bg-white/20 text-white'}`}>
-                {copied ? 'کپی شد ✓' : 'کپی'}
-              </span>
-            </button>
-          </div>
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div 
+                    className="p-2 rounded-xl border flex items-center justify-center shadow-sm"
+                    style={{ 
+                      backgroundColor: `${modalPrimaryColor}20`, 
+                      borderColor: `${modalPrimaryColor}40`, 
+                      color: modalPrimaryColor 
+                    }}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm" style={{ color: modalTextColor }}>اشتراک‌گذاری کارت</h3>
+                    <p className="text-[10px] opacity-75" style={{ color: modalTextColor }}>ارسال و اشتراک سریع با دیگران</p>
+                  </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setActiveShareId(null)}
+                  className="p-1.5 rounded-full hover:bg-white/10 transition cursor-pointer opacity-70 hover:opacity-100"
+                  style={{ color: modalTextColor }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
 
-          {/* Styled QR Code Section */}
-          <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 flex items-center justify-between gap-3">
-            <div className="bg-white p-2 rounded-xl shrink-0 shadow-md">
-              <StyledQRCode value={shareUrl} size={64} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-xs font-bold text-white block">کد QR اختصاصی</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">اسکن و اشتراک سریع</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => downloadStyledQRCode(shareUrl, `qrcode-${card.slug}.png`, 1000)}
-              className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition text-[11px] font-bold flex items-center gap-1.5 shrink-0 cursor-pointer"
-              title="دانلود کیوآرکد"
-            >
-              <Download className="h-3.5 w-3.5 text-blue-400" />
-              <span>دانلود</span>
-            </button>
-          </div>
-
-          {/* Direct Messengers Share Grid */}
-          <div className="space-y-2 pt-1">
-            <span className="text-[10px] font-bold text-slate-400 block px-0.5">ارسال مستقیم در پیام‌رسان‌ها:</span>
-            <div className="grid grid-cols-2 gap-2">
-              {/* Telegram */}
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 text-sky-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
-              >
-                <Send className="h-3.5 w-3.5 text-sky-400 shrink-0" />
-                <span>تلگرام</span>
-              </a>
-
-              {/* WhatsApp */}
-              <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + '\n' + shareUrl)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
-              >
-                <MessageCircle className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                <span>واتساپ</span>
-              </a>
-
-              {/* SMS */}
-              <a
-                href={`sms:?body=${encodeURIComponent(shareTitle + '\n' + shareUrl)}`}
-                className="p-2.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
-              >
-                <Phone className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                <span>پیامک (SMS)</span>
-              </a>
-
-              {/* Twitter / X */}
-              <a
-                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
-              >
-                <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span>توییتر / X</span>
-              </a>
-            </div>
-
-            {/* Native Mobile OS Share (if supported) */}
-            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.share({
-                    title: shareTitle,
-                    text: `${card.first_name} ${card.last_name} - ${card.job_title || ''}`,
-                    url: shareUrl
-                  }).catch(() => {});
+              {/* Mini Profile Card Preview */}
+              <div 
+                className="p-3 rounded-2xl border flex items-center gap-3"
+                style={{ 
+                  backgroundColor: `${modalBgColor}90`, 
+                  borderColor: `${modalPrimaryColor}30` 
                 }}
-                className="w-full mt-1.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white flex items-center justify-center gap-2 transition cursor-pointer"
               >
-                <Share2 className="h-3.5 w-3.5 text-blue-400" />
-                <span>اشتراک با سایر برنامه‌های گوشی</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+                <div 
+                  className="h-12 w-12 rounded-xl overflow-hidden shrink-0 border"
+                  style={{ borderColor: `${modalPrimaryColor}40`, backgroundColor: `${modalCardBg}bb` }}
+                >
+                  <img 
+                    src={getImageUrl(card.profile_image) || '/profile-fallback.jpg'} 
+                    alt="profile" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-bold text-xs truncate" style={{ color: modalTextColor }}>{card.first_name} {card.last_name}</h4>
+                  <p className="text-[10px] opacity-75 truncate" style={{ color: modalTextColor }}>{card.job_title || card.company || 'کارت ویزیت دیجیتال'}</p>
+                  <span className="text-[9px] font-mono block mt-0.5" dir="ltr" style={{ color: modalPrimaryColor }}>/{card.slug}</span>
+                </div>
+              </div>
+
+              {/* Copy Link Button */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(shareUrl);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  style={{ 
+                    backgroundColor: modalPrimaryColor, 
+                    color: '#ffffff',
+                    boxShadow: `0 8px 20px ${modalPrimaryColor}40`
+                  }}
+                  className="w-full py-2.5 px-3.5 rounded-xl font-bold text-xs transition flex items-center justify-between hover:brightness-110 active:scale-[0.98] cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <Copy className="h-4 w-4" />
+                    <span>کپی لینک کارت ویزیت</span>
+                  </span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-lg font-mono transition ${copied ? 'bg-emerald-500 text-white font-bold' : 'bg-white/20 text-white'}`}>
+                    {copied ? 'کپی شد ✓' : 'کپی'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Styled QR Code Section */}
+              <div 
+                className="p-3 rounded-2xl border flex items-center justify-between gap-3"
+                style={{ 
+                  backgroundColor: `${modalBgColor}90`, 
+                  borderColor: `${modalPrimaryColor}30` 
+                }}
+              >
+                <div className="bg-white p-2 rounded-xl shrink-0 shadow-md">
+                  <StyledQRCode value={shareUrl} size={64} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold block" style={{ color: modalTextColor }}>کد QR اختصاصی</span>
+                  <span className="text-[10px] opacity-75 block mt-0.5" style={{ color: modalTextColor }}>اسکن و اشتراک سریع</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => downloadStyledQRCode(shareUrl, `qrcode-${card.slug}.png`, 1000)}
+                  style={{ 
+                    backgroundColor: `${modalSecondaryColor}25`, 
+                    borderColor: `${modalSecondaryColor}45`, 
+                    color: modalTextColor 
+                  }}
+                  className="px-2.5 py-1.5 border rounded-xl transition text-[11px] font-bold flex items-center gap-1.5 shrink-0 hover:brightness-110 cursor-pointer"
+                  title="دانلود کیوآرکد"
+                >
+                  <Download className="h-3.5 w-3.5" style={{ color: modalPrimaryColor }} />
+                  <span>دانلود</span>
+                </button>
+              </div>
+
+              {/* Direct Messengers Share Grid */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[10px] font-bold block px-0.5 opacity-75" style={{ color: modalTextColor }}>ارسال مستقیم در پیام‌رسان‌ها:</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Telegram */}
+                  <a
+                    href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 text-sky-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
+                  >
+                    <Send className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+                    <span>تلگرام</span>
+                  </a>
+
+                  {/* WhatsApp */}
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + '\n' + shareUrl)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    <span>واتساپ</span>
+                  </a>
+
+                  {/* SMS */}
+                  <a
+                    href={`sms:?body=${encodeURIComponent(shareTitle + '\n' + shareUrl)}`}
+                    className="p-2.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
+                  >
+                    <Phone className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                    <span>پیامک (SMS)</span>
+                  </a>
+
+                  {/* Twitter / X */}
+                  <a
+                    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-xl flex items-center gap-2 text-[11px] font-bold transition active:scale-[0.98]"
+                  >
+                    <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span>توییتر / X</span>
+                  </a>
+                </div>
+
+                {/* Native Mobile OS Share (if supported) */}
+                {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.share({
+                        title: shareTitle,
+                        text: `${card.first_name || ''} ${card.last_name || ''} - ${card.job_title || ''}`,
+                        url: shareUrl
+                      }).catch(() => {});
+                    }}
+                    style={{ 
+                      backgroundColor: `${modalPrimaryColor}15`, 
+                      borderColor: `${modalPrimaryColor}30`, 
+                      color: modalTextColor 
+                    }}
+                    className="w-full mt-1.5 py-2 border rounded-xl text-[11px] font-bold flex items-center justify-center gap-2 transition hover:brightness-110 cursor-pointer"
+                  >
+                    <Share2 className="h-3.5 w-3.5" style={{ color: modalPrimaryColor }} />
+                    <span>اشتراک با سایر برنامه‌های گوشی</span>
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     );
   };
 
@@ -2539,110 +2626,126 @@ export default function PublicCardPage() {
       {renderShareModal()}
 
       {/* NEWSLETTER SUBSCRIBE MODAL */}
-      {showSubscribeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative space-y-5">
-            <button 
-              onClick={() => setShowSubscribeModal(false)}
-              className="absolute left-4 top-4 p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition"
+      <AnimatePresence>
+        {showSubscribeModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+            onClick={() => setShowSubscribeModal(false)}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="bg-slate-900 border border-slate-800 text-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative space-y-5"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="h-5 w-5" />
-            </button>
+              <button 
+                onClick={() => setShowSubscribeModal(false)}
+                className="absolute left-4 top-4 p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
 
-            <div className="text-center space-y-2 pt-2">
-              <div className="mx-auto w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400">
-                <Bell className="h-6 w-6" />
+              <div className="text-center space-y-2 pt-2">
+                <div className="mx-auto w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400">
+                  <Bell className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold">عضویت در خبرنامه پیامکی</h3>
+                <p className="text-xs text-slate-400">
+                  با عضویت در خبرنامه <span className="font-bold text-white">{card?.first_name} {card?.last_name}</span>، پیامک‌های اطلاع‌رسانی، تخفیف‌ها و اخبار جدید را دریافت کنید.
+                </p>
               </div>
-              <h3 className="text-lg font-bold">عضویت در خبرنامه پیامکی</h3>
-              <p className="text-xs text-slate-400">
-                با عضویت در خبرنامه <span className="font-bold text-white">{card?.first_name} {card?.last_name}</span>، پیامک‌های اطلاع‌رسانی، تخفیف‌ها و اخبار جدید را دریافت کنید.
-              </p>
-            </div>
 
-            {subscribeError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl text-center font-medium">
-                {subscribeError}
-              </div>
-            )}
+              {subscribeError && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl text-center font-medium">
+                  {subscribeError}
+                </div>
+              )}
 
-            {subscribeStep === 'mobile' && (
-              <form onSubmit={handleSubscribeSendOtp} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400 block">شماره تلفن همراه شما:</label>
-                  <input 
-                    type="tel" 
-                    required
-                    placeholder="09123456789"
-                    value={subscribeMobile}
-                    onChange={(e) => setSubscribeMobile(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-lg font-mono tracking-widest focus:border-emerald-500 focus:outline-none transition-all"
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  disabled={subscribeLoading}
-                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {subscribeLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  <span>ارسال کد تایید پیامکی</span>
-                </button>
-              </form>
-            )}
-
-            {subscribeStep === 'code' && (
-              <form onSubmit={handleSubscribeVerifyOtp} className="space-y-4">
-                <div className="text-xs text-slate-400 text-center">
-                  کد تایید ۵ رقمی به شماره <span className="font-mono text-emerald-400 font-bold">{subscribeMobile}</span> پیامک شد:
-                </div>
-                <div className="space-y-1.5">
-                  <input 
-                    type="text" 
-                    required
-                    maxLength={5}
-                    placeholder="12345"
-                    value={subscribeCode}
-                    onChange={(e) => setSubscribeCode(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-2xl font-mono tracking-widest font-bold focus:border-emerald-500 focus:outline-none transition-all"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button 
-                    type="button"
-                    onClick={() => setSubscribeStep('mobile')}
-                    className="w-1/3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
-                  >
-                    اصلاح شماره
-                  </button>
+              {subscribeStep === 'mobile' && (
+                <form onSubmit={handleSubscribeSendOtp} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-400 block">شماره تلفن همراه شما:</label>
+                    <input 
+                      type="tel" 
+                      required
+                      placeholder="09123456789"
+                      value={subscribeMobile}
+                      onChange={(e) => setSubscribeMobile(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-lg font-mono tracking-widest focus:border-emerald-500 focus:outline-none transition-all"
+                    />
+                  </div>
                   <button 
                     type="submit"
                     disabled={subscribeLoading}
-                    className="w-2/3 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {subscribeLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                    <span>تایید و عضویت</span>
+                    {subscribeLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    <span>ارسال کد تایید پیامکی</span>
+                  </button>
+                </form>
+              )}
+
+              {subscribeStep === 'code' && (
+                <form onSubmit={handleSubscribeVerifyOtp} className="space-y-4">
+                  <div className="text-xs text-slate-400 text-center">
+                    کد تایید ۵ رقمی به شماره <span className="font-mono text-emerald-400 font-bold">{subscribeMobile}</span> پیامک شد:
+                  </div>
+                  <div className="space-y-1.5">
+                    <input 
+                      type="text" 
+                      required
+                      maxLength={5}
+                      placeholder="12345"
+                      value={subscribeCode}
+                      onChange={(e) => setSubscribeCode(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-2xl font-mono tracking-widest font-bold focus:border-emerald-500 focus:outline-none transition-all"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setSubscribeStep('mobile')}
+                      className="w-1/3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
+                    >
+                      اصلاح شماره
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={subscribeLoading}
+                      className="w-2/3 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {subscribeLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      <span>تایید و عضویت</span>
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {subscribeStep === 'success' && (
+                <div className="text-center space-y-4 py-3">
+                  <div className="mx-auto w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center">
+                    <Check className="h-6 w-6" />
+                  </div>
+                  <p className="text-sm font-bold text-emerald-400">{subscribeMessage}</p>
+                  <button 
+                    onClick={() => setShowSubscribeModal(false)}
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition"
+                  >
+                    بستن پنجره
                   </button>
                 </div>
-              </form>
-            )}
+              )}
 
-            {subscribeStep === 'success' && (
-              <div className="text-center space-y-4 py-3">
-                <div className="mx-auto w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center">
-                  <Check className="h-6 w-6" />
-                </div>
-                <p className="text-sm font-bold text-emerald-400">{subscribeMessage}</p>
-                <button 
-                  onClick={() => setShowSubscribeModal(false)}
-                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition"
-                >
-                  بستن پنجره
-                </button>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
