@@ -1660,10 +1660,10 @@ export default function LandingPage() {
       {/* 7. FOOTER */}
       <footer className="bg-slate-950 border-t border-slate-900 py-12 px-6 mt-auto">
         <div className="max-w-7xl mx-auto space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-slate-900/80 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 pb-8 border-b border-slate-900/80 text-sm">
             
             {/* Col 1: Brand & Description */}
-            <div className="space-y-3 md:col-span-1">
+            <div className="space-y-3 lg:col-span-3">
               <BrandLogo 
                 size="sm"
                 showText 
@@ -1676,7 +1676,7 @@ export default function LandingPage() {
             </div>
 
             {/* Col 2: Quick Navigation */}
-            <div className="space-y-3">
+            <div className="space-y-3 lg:col-span-2">
               <h4 className="font-bold text-xs text-white">دسترسی سریع</h4>
               <ul className="space-y-2 text-xs text-slate-400 font-medium">
                 <li><a href="#features" className="hover:text-blue-400 transition">امکانات کلیدی</a></li>
@@ -1687,7 +1687,7 @@ export default function LandingPage() {
             </div>
 
             {/* Col 3: Support Contact Info */}
-            <div className="space-y-3">
+            <div className="space-y-3 lg:col-span-3">
               <h4 className="font-bold text-xs text-white">نشانی و پشتیبانی</h4>
               <div className="space-y-2 text-xs text-slate-400">
                 {siteSettings?.address ? (
@@ -1705,20 +1705,20 @@ export default function LandingPage() {
             </div>
 
             {/* Col 4: Enamad / Trust Seal & Badges */}
-            <div className="space-y-3">
+            <div className="space-y-3 lg:col-span-4">
               <h4 className="font-bold text-xs text-white">نمادهای اعتماد و پرداخت امن</h4>
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto sm:overflow-visible py-1">
                 {siteSettings?.enamad && (
                   <div 
-                    className="bg-slate-900/80 border border-slate-800 p-2 rounded-xl flex items-center justify-center text-center overflow-hidden min-h-[70px]"
+                    className="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl flex items-center justify-center overflow-hidden h-12 shrink-0 [&_img]:h-8 [&_img]:max-h-8 [&_img]:w-auto [&_img]:object-contain [&_a]:flex [&_a]:items-center [&_a]:justify-center [&_iframe]:h-8 [&_iframe]:w-auto"
                     dangerouslySetInnerHTML={{ __html: siteSettings.enamad }}
                   />
                 )}
-                <div className="bg-slate-900/90 border border-slate-800 p-2 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0">
-                  <img src="/zarinpal-badge.png" alt="درگاه پرداخت امن زرین‌پال" className="h-14 w-auto object-contain rounded-lg" />
+                <div className="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0 h-12">
+                  <img src="/zarinpal-badge.png" alt="درگاه پرداخت امن زرین‌پال" className="h-8 w-auto object-contain rounded-md" />
                 </div>
-                <div className="bg-slate-900/90 border border-slate-800 p-2 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0">
-                  <img src="/ssl-badge.png" alt="گواهی امنیت SSL" className="h-14 w-auto object-contain rounded-lg" />
+                <div className="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0 h-12">
+                  <img src="/ssl-badge.png" alt="گواهی امنیت SSL" className="h-8 w-auto object-contain rounded-md" />
                 </div>
               </div>
             </div>
