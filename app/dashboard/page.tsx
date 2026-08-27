@@ -1375,7 +1375,7 @@ function DashboardContent() {
                     }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
-                    کارت‌های ویزیت من
+                    کارت‌های ویزیت
                   </button>
 
                   <button
@@ -1387,7 +1387,7 @@ function DashboardContent() {
                     }`}
                   >
                     <Users className="h-4 w-4 text-emerald-400" />
-                    اعضای خبرنامه و پیامک گروهی
+                    اعضای خبرنامه
                   </button>
 
                   <button
@@ -1400,7 +1400,7 @@ function DashboardContent() {
                   >
                     <div className="flex items-center gap-2.5">
                       <WalletIcon className="h-4 w-4 text-blue-400" />
-                      <span>کیف پول من</span>
+                      <span>کیف پول</span>
                     </div>
                     {userWallet && (
                       <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded-full dir-ltr">
@@ -1418,7 +1418,7 @@ function DashboardContent() {
                     }`}
                   >
                     <CreditCard className="h-4 w-4" />
-                    خرید و ارتقای اشتراک
+                    خرید اشتراک
                   </button>
 
                   <button
@@ -1430,7 +1430,7 @@ function DashboardContent() {
                     }`}
                   >
                     <BarChart2 className="h-4 w-4" />
-                    آمار بازدید کارت‌ها
+                    آمار بازدید
                   </button>
 
                   <button
@@ -1442,7 +1442,7 @@ function DashboardContent() {
                     }`}
                   >
                     <ShoppingBag className="h-4 w-4 text-emerald-400" />
-                    فروشگاه محصولات و خدمات
+                    فروشگاه محصولات
                   </button>
                 </>
               )}
@@ -1459,7 +1459,7 @@ function DashboardContent() {
                     }`}
                   >
                     <Settings className="h-4 w-4" />
-                    برندینگ و اطلاعات نماینده
+                    تنظیمات برندینگ
                   </button>
 
                   <button
@@ -1471,7 +1471,7 @@ function DashboardContent() {
                     }`}
                   >
                     <Sliders className="h-4 w-4" />
-                    مدیریت پلن‌های اشتراک
+                    پلن‌های اشتراک
                   </button>
 
                   <button
@@ -1483,7 +1483,7 @@ function DashboardContent() {
                     }`}
                   >
                     <DollarSign className="h-4 w-4" />
-                    تراکنش‌های مشتریان شما
+                    تراکنش‌های مشتریان
                   </button>
                 </>
               )}
@@ -1500,7 +1500,7 @@ function DashboardContent() {
                     }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
-                    نظارت بر کارت‌های ویزیت
+                    کارت‌های ویزیت
                   </button>
 
                   <button
@@ -1512,7 +1512,7 @@ function DashboardContent() {
                     }`}
                   >
                     <Users className="h-4 w-4" />
-                    مدیریت کاربران سامانه
+                    مدیریت کاربران
                   </button>
 
                   <button
@@ -1524,7 +1524,7 @@ function DashboardContent() {
                     }`}
                   >
                     <BarChart2 className="h-4 w-4" />
-                    آمار کلی بازدیدهای پلتفرم
+                    آمار پلتفرم
                   </button>
 
                   <button
@@ -1536,7 +1536,7 @@ function DashboardContent() {
                     }`}
                   >
                     <DollarSign className="h-4 w-4" />
-                    کل تراکنش‌های مالی پلتفرم
+                    تراکنش‌های مالی
                   </button>
 
                   <button
@@ -1548,7 +1548,7 @@ function DashboardContent() {
                     }`}
                   >
                     <WalletIcon className="h-4 w-4 text-amber-400" />
-                    مدیریت کیف‌پول‌ها و شارژ دستی
+                    مدیریت کیف‌پول‌ها
                   </button>
 
                   <button
@@ -1560,7 +1560,7 @@ function DashboardContent() {
                     }`}
                   >
                     <Palette className="h-4 w-4" />
-                    مدیریت قالب‌های ظاهری
+                    قالب‌های ظاهری
                   </button>
 
                   <button
@@ -1572,7 +1572,7 @@ function DashboardContent() {
                     }`}
                   >
                     <Sliders className="h-4 w-4" />
-                    مدیریت پلن‌های تعرفه‌ای
+                    پلن‌های تعرفه‌ای
                   </button>
 
                   <button
@@ -1584,7 +1584,7 @@ function DashboardContent() {
                     }`}
                   >
                     <ShoppingBag className="h-4 w-4 text-emerald-400" />
-                    مدیریت محصولات و خدمات
+                    مدیریت محصولات
                   </button>
                 </>
               )}
