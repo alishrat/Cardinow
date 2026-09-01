@@ -143,11 +143,18 @@ function DashboardContent() {
       const res = await fetch('/api/otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile: otpMobile, purpose: 'login' })
+        body: JSON.stringify({
+          identifier: loginEmail,
+          mobile: otpMobile,
+          purpose: 'login'
+        })
       });
       const json = await res.json();
       if (!json.success) {
         throw new Error(json.error || 'خطا در ارسال کد تایید');
+      }
+      if (json.mobile) {
+        setOtpMobile(json.mobile);
       }
       setOtpMessage(json.message || 'کد تایید پیامکی ارسال شد.');
       setOtpCode('');
@@ -1291,7 +1298,19 @@ function DashboardContent() {
                 otpStep === 'mobile' ? (
                   <form onSubmit={handleOtpSend} className="space-y-4">
                     <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 text-center leading-relaxed">
-                      کد تایید یکبار مصرف به شماره <span className="font-mono font-bold text-emerald-400 dir-ltr inline-block">{otpMobile || loginEmail}</span> پیامک خواهد شد.
+                      {loginEmail.includes('@') || /[a-zA-Z]/.test(loginEmail) ? (
+                        <span>
+                          کد تایید یکبار مصرف به شماره موبایل ثبت‌شده برای ایمیل{' '}
+                          <span className="font-mono font-bold text-emerald-400 dir-ltr inline-block">{loginEmail}</span>{' '}
+                          پیامک خواهد شد.
+                        </span>
+                      ) : (
+                        <span>
+                          کد تایید یکبار مصرف به شماره{' '}
+                          <span className="font-mono font-bold text-emerald-400 dir-ltr inline-block">{otpMobile || loginEmail}</span>{' '}
+                          پیامک خواهد شد.
+                        </span>
+                      )}
                     </div>
 
                     <button 

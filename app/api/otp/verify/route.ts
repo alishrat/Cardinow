@@ -153,8 +153,13 @@ export async function POST(req: NextRequest) {
       let userObj: any = null;
 
       try {
-        // Filter by user_phone or location
-        const userRes = await fetch(`${DIRECTUS_URL}/users?filter[_or][0][user_phone][_eq]=${encodeURIComponent(mobile)}&filter[_or][1][location][_eq]=${encodeURIComponent(mobile)}`);
+        const headers: Record<string, string> = {};
+        if (process.env.DIRECTUS_STATIC_TOKEN) {
+          headers['Authorization'] = `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`;
+        }
+        const encodedMobile = encodeURIComponent(mobile);
+        const filter = `filter[_or][0][user_phone][_eq]=${encodedMobile}&filter[_or][1][location][_eq]=${encodedMobile}&filter[_or][2][mobile][_eq]=${encodedMobile}&filter[_or][3][phone][_eq]=${encodedMobile}`;
+        const userRes = await fetch(`${DIRECTUS_URL}/users?${filter}`, { headers });
         if (userRes.ok) {
           const userJson = await userRes.json();
           if (Array.isArray(userJson?.data) && userJson.data.length > 0) {

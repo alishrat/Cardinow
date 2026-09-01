@@ -24,14 +24,72 @@ function normalizeMobile(input: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { mobile: rawMobile, purpose = 'login' } = await req.json();
-    const mobile = normalizeMobile(rawMobile);
+    const { mobile: rawMobile, identifier: rawIdentifier, purpose = 'login' } = await req.json();
+    const input = (rawIdentifier || rawMobile || '').trim();
 
-    if (!mobile || !/^09\d{9}$/.test(mobile)) {
+    if (!input) {
       return NextResponse.json(
-        { success: false, error: 'شماره موبایل وارد شده معتبر نیست. (مثال: 09123456789)' },
+        { success: false, error: 'لطفاً شماره تماس یا ایمیل خود را وارد نمایید.' },
         { status: 400 }
       );
+    }
+
+    let mobile = '';
+    let isEmailOrUsername = false;
+
+    // Check if input is email / non-mobile string
+    if (input.includes('@') || /[a-zA-Z]/.test(input)) {
+      isEmailOrUsername = true;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (process.env.DIRECTUS_STATIC_TOKEN) {
+        headers['Authorization'] = `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`;
+      }
+
+      let userObj: any = null;
+      try {
+        const encodedInput = encodeURIComponent(input);
+        const encodedLower = encodeURIComponent(input.toLowerCase());
+        const filter = `filter[_or][0][email][_eq]=${encodedInput}&filter[_or][1][email][_eq]=${encodedLower}`;
+        const userRes = await fetch(`${DIRECTUS_URL}/users?${filter}`, { headers });
+        if (userRes.ok) {
+          const userJson = await userRes.json();
+          if (Array.isArray(userJson?.data) && userJson.data.length > 0) {
+            userObj = userJson.data[0];
+          }
+        }
+      } catch (uErr) {
+        console.warn('Error fetching user by email in OTP send:', uErr);
+      }
+
+      if (!userObj) {
+        return NextResponse.json(
+          { success: false, error: 'حساب کاربری با این ایمیل یا شناسه یافت نشد.' },
+          { status: 400 }
+        );
+      }
+
+      const phoneVal = userObj.user_phone || userObj.location || userObj.mobile || userObj.phone;
+      const extractedMobile = normalizeMobile(phoneVal || '');
+
+      if (!extractedMobile || !/^09\d{9}$/.test(extractedMobile)) {
+        return NextResponse.json(
+          { success: false, error: 'شماره تماسی برای این کاربر ثبت نشده است. لطفاً از گزینه ورود با رمز عبور استفاده کنید.' },
+          { status: 400 }
+        );
+      }
+
+      mobile = extractedMobile;
+    } else {
+      mobile = normalizeMobile(input);
+      if (!mobile || !/^09\d{9}$/.test(mobile)) {
+        return NextResponse.json(
+          { success: false, error: 'شماره موبایل وارد شده معتبر نیست. (مثال: 09123456789)' },
+          { status: 400 }
+        );
+      }
     }
 
     // Generate 5-digit OTP
@@ -173,7 +231,9 @@ export async function POST(req: NextRequest) {
 
           if (res.ok) {
             smsSent = true;
-            smsMessage = 'کد تایید با موفقیت از طریق پیامک ارسال شد.';
+            smsMessage = isEmailOrUsername 
+              ? `کد تایید به شماره ${mobile} پیامک شد.`
+              : 'کد تایید با موفقیت از طریق پیامک ارسال شد.';
             break;
           } else {
             const rawText = await res.text();
