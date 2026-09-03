@@ -3109,7 +3109,7 @@ export const authService = {
     if (!isEmail) {
       // Normalize mobile digits
       let cleanMobile = loginId.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
-                               .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString())
+                               .replace(/[٠-٩]/g, d => '٠١٢٣۴٥٦٧٨٩'.indexOf(d).toString())
                                .replace(/\D/g, '');
       if (cleanMobile.startsWith('98') && cleanMobile.length === 12) {
         cleanMobile = '0' + cleanMobile.slice(2);
@@ -3117,19 +3117,32 @@ export const authService = {
         cleanMobile = '0' + cleanMobile;
       }
 
-      // Find the user's email based on their mobile number (checking both user_phone and location fields)
-      const lookupUrl = `${DIRECTUS_BASE_URL}/users?filter[_or][0][user_phone][_eq]=${encodeURIComponent(cleanMobile)}&filter[_or][1][location][_eq]=${encodeURIComponent(cleanMobile)}`;
-      let lookupRes = await fetch(lookupUrl);
+      const v1 = cleanMobile;
+      const v2 = cleanMobile.slice(1);
+      const v3 = '+98' + cleanMobile.slice(1);
+      const v4 = '98' + cleanMobile.slice(1);
+      const v5 = loginId.trim();
+
+      const variations = Array.from(new Set([v1, v2, v3, v4, v5].filter(Boolean)));
+
+      const headers: Record<string, string> = {};
+      const token = process.env.NEXT_PUBLIC_DIRECTUS_STATIC_TOKEN || process.env.DIRECTUS_STATIC_TOKEN;
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const filterItems: string[] = [];
+      variations.forEach(v => {
+        filterItems.push(`filter[_or][${filterItems.length}][user_phone][_eq]=${encodeURIComponent(v)}`);
+        filterItems.push(`filter[_or][${filterItems.length}][location][_eq]=${encodeURIComponent(v)}`);
+        filterItems.push(`filter[_or][${filterItems.length}][email][_eq]=${encodeURIComponent(v)}`);
+        filterItems.push(`filter[_or][${filterItems.length}][email][_eq]=${encodeURIComponent(v + '@megacard.local')}`);
+      });
+
+      const lookupUrl = `${DIRECTUS_BASE_URL}/users?${filterItems.join('&')}`;
+      let lookupRes = await fetch(lookupUrl, { headers });
       let lookupJson = lookupRes.ok ? await lookupRes.json() : null;
       let apiUser = lookupJson?.data?.[0];
-
-      if (!apiUser) {
-        // Fallback check with original raw input
-        const fallbackUrl = `${DIRECTUS_BASE_URL}/users?filter[_or][0][user_phone][_eq]=${encodeURIComponent(loginId)}&filter[_or][1][location][_eq]=${encodeURIComponent(loginId)}`;
-        lookupRes = await fetch(fallbackUrl);
-        lookupJson = lookupRes.ok ? await lookupRes.json() : null;
-        apiUser = lookupJson?.data?.[0];
-      }
 
       if (!apiUser) {
         throw new Error('کاربری با این شماره موبایل در سیستم یافت نشد.');

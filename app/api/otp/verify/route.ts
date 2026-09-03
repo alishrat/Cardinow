@@ -151,15 +151,37 @@ export async function POST(req: NextRequest) {
     if (purpose === 'login') {
       // Find matching user in directus_users
       let userObj: any = null;
+      const headers: Record<string, string> = {};
+      const staticToken = process.env.DIRECTUS_STATIC_TOKEN || process.env.NEXT_PUBLIC_DIRECTUS_STATIC_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN || process.env.DIRECTUS_TOKEN;
+      if (staticToken) {
+        headers['Authorization'] = `Bearer ${staticToken}`;
+      }
 
       try {
-        const headers: Record<string, string> = {};
-        if (process.env.DIRECTUS_STATIC_TOKEN) {
-          headers['Authorization'] = `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`;
-        }
-        const encodedMobile = encodeURIComponent(mobile);
-        const filter = `filter[_or][0][user_phone][_eq]=${encodedMobile}&filter[_or][1][location][_eq]=${encodedMobile}&filter[_or][2][mobile][_eq]=${encodedMobile}&filter[_or][3][phone][_eq]=${encodedMobile}`;
-        const userRes = await fetch(`${DIRECTUS_URL}/users?${filter}`, { headers });
+        // Clean digits and generate standard variations (0912..., 912..., +98912..., 98912...)
+        let cleanDigits = mobile.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+                                .replace(/[٠-٩]/g, d => '٠١٢٣۴٥٦٧٨٩'.indexOf(d).toString())
+                                .replace(/\D/g, '');
+        if (cleanDigits.startsWith('98') && cleanDigits.length === 12) cleanDigits = '0' + cleanDigits.slice(2);
+        else if (cleanDigits.length === 10 && cleanDigits.startsWith('9')) cleanDigits = '0' + cleanDigits;
+
+        const v1 = cleanDigits;
+        const v2 = cleanDigits.slice(1);
+        const v3 = '+98' + cleanDigits.slice(1);
+        const v4 = '98' + cleanDigits.slice(1);
+        const v5 = mobile.trim();
+
+        const variations = Array.from(new Set([v1, v2, v3, v4, v5].filter(Boolean)));
+
+        const filterItems: string[] = [];
+        variations.forEach(v => {
+          filterItems.push(`filter[_or][${filterItems.length}][user_phone][_eq]=${encodeURIComponent(v)}`);
+          filterItems.push(`filter[_or][${filterItems.length}][location][_eq]=${encodeURIComponent(v)}`);
+          filterItems.push(`filter[_or][${filterItems.length}][email][_eq]=${encodeURIComponent(v)}`);
+          filterItems.push(`filter[_or][${filterItems.length}][email][_eq]=${encodeURIComponent(v + '@megacard.local')}`);
+        });
+
+        const userRes = await fetch(`${DIRECTUS_URL}/users?${filterItems.join('&')}`, { headers });
         if (userRes.ok) {
           const userJson = await userRes.json();
           if (Array.isArray(userJson?.data) && userJson.data.length > 0) {
@@ -187,7 +209,7 @@ export async function POST(req: NextRequest) {
         const targetEmail = userEmail?.trim() || `${mobile}@megacard.local`;
         if (userEmail && userEmail.trim()) {
           try {
-            const checkEmailRes = await fetch(`${DIRECTUS_URL}/users?filter[email][_eq]=${encodeURIComponent(targetEmail)}`);
+            const checkEmailRes = await fetch(`${DIRECTUS_URL}/users?filter[email][_eq]=${encodeURIComponent(targetEmail)}`, { headers });
             if (checkEmailRes.ok) {
               const checkEmailJson = await checkEmailRes.json();
               if (Array.isArray(checkEmailJson?.data) && checkEmailJson.data.length > 0) {
@@ -217,9 +239,13 @@ export async function POST(req: NextRequest) {
         }
 
         try {
+          const createHeaders: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...headers
+          };
           const createRes = await fetch(`${DIRECTUS_URL}/users`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: createHeaders,
             body: JSON.stringify(newUserBody)
           });
 

@@ -44,8 +44,9 @@ export async function POST(req: NextRequest) {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json'
       };
-      if (process.env.DIRECTUS_STATIC_TOKEN) {
-        headers['Authorization'] = `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`;
+      const staticToken = process.env.DIRECTUS_STATIC_TOKEN || process.env.NEXT_PUBLIC_DIRECTUS_STATIC_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN || process.env.DIRECTUS_TOKEN;
+      if (staticToken) {
+        headers['Authorization'] = `Bearer ${staticToken}`;
       }
 
       let userObj: any = null;
