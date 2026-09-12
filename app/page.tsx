@@ -688,7 +688,7 @@ export default function LandingPage() {
                                 </button>
                                 <button className="py-2 px-2 bg-slate-800 text-white rounded-xl text-[9px] font-bold flex items-center justify-center gap-1 shadow-sm">
                                   <Bell className="h-3.5 w-3.5 shrink-0" />
-                                  <span>عضویت در خبرنامه</span>
+                                  <span>پیوستن به کلاب</span>
                                 </button>
                               </div>
 
@@ -833,7 +833,7 @@ export default function LandingPage() {
                               </button>
                               <button className="py-2.5 px-2 bg-slate-800 border border-indigo-500/40 text-indigo-300 rounded-xl text-[9px] font-bold flex items-center justify-center gap-1.5 shadow-sm">
                                 <Bell className="h-3.5 w-3.5 shrink-0" />
-                                <span>خبرنامه</span>
+                                <span>پیوستن به کلاب</span>
                               </button>
                             </div>
 
@@ -944,7 +944,7 @@ export default function LandingPage() {
                               </button>
                               <button className="py-2.5 px-2 bg-zinc-900 border border-pink-500/30 text-pink-300 rounded-full text-[9px] font-bold flex items-center justify-center gap-1">
                                 <Bell className="h-3.5 w-3.5 shrink-0 text-pink-400" />
-                                <span>عضویت کلاب</span>
+                                <span>پیوستن به کلاب</span>
                               </button>
                             </div>
 
@@ -1058,7 +1058,7 @@ export default function LandingPage() {
                                 </button>
                                 <button className="py-2 px-2 bg-white/10 border border-white/20 text-white rounded-xl text-[9px] font-bold flex items-center justify-center gap-1">
                                   <Bell className="h-3.5 w-3.5 shrink-0 text-pink-400" />
-                                  <span>عضویت کلاب</span>
+                                  <span>پیوستن به کلاب</span>
                                 </button>
                               </div>
 
@@ -1707,18 +1707,18 @@ export default function LandingPage() {
             {/* Col 4: Enamad / Trust Seal & Badges */}
             <div className="space-y-3 lg:col-span-4">
               <h4 className="font-bold text-xs text-white">نمادهای اعتماد و پرداخت امن</h4>
-              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto sm:overflow-visible py-1">
+              <div className="flex flex-row items-center gap-2.5 flex-nowrap py-1">
                 {siteSettings?.enamad && (
                   <div 
-                    className="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl flex items-center justify-center overflow-hidden h-12 shrink-0 [&_img]:h-8 [&_img]:max-h-8 [&_img]:w-auto [&_img]:object-contain [&_a]:flex [&_a]:items-center [&_a]:justify-center [&_iframe]:h-8 [&_iframe]:w-auto"
+                    className="bg-slate-900/90 border border-slate-800 px-2 py-1 rounded-xl flex items-center justify-center overflow-hidden h-11 shrink-0 [&_img]:h-7 [&_img]:max-h-7 [&_img]:w-auto [&_img]:object-contain [&_a]:flex [&_a]:items-center [&_a]:justify-center [&_iframe]:h-7 [&_iframe]:w-auto"
                     dangerouslySetInnerHTML={{ __html: siteSettings.enamad }}
                   />
                 )}
-                <div className="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0 h-12">
-                  <img src="/zarinpal-badge.png" alt="درگاه پرداخت امن زرین‌پال" className="h-8 w-auto object-contain rounded-md" />
+                <div className="bg-slate-900/90 border border-slate-800 px-2 py-1 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0 h-11">
+                  <img src="/zarinpal-badge.png" alt="درگاه پرداخت امن زرین‌پال" className="h-7 w-auto object-contain rounded" />
                 </div>
-                <div className="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0 h-12">
-                  <img src="/ssl-badge.png" alt="گواهی امنیت SSL" className="h-8 w-auto object-contain rounded-md" />
+                <div className="bg-slate-900/90 border border-slate-800 px-2 py-1 rounded-xl flex items-center justify-center hover:border-slate-700 transition shadow-sm shrink-0 h-11">
+                  <img src="/ssl-badge.png" alt="گواهی امنیت SSL" className="h-7 w-auto object-contain rounded" />
                 </div>
               </div>
             </div>

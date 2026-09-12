@@ -158,34 +158,37 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        // Clean digits and generate standard variations (0912..., 912..., +98912..., 98912...)
-        let cleanDigits = mobile.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
-                                .replace(/[٠-٩]/g, d => '٠١٢٣۴٥٦٧٨٩'.indexOf(d).toString())
-                                .replace(/\D/g, '');
-        if (cleanDigits.startsWith('98') && cleanDigits.length === 12) cleanDigits = '0' + cleanDigits.slice(2);
-        else if (cleanDigits.length === 10 && cleanDigits.startsWith('9')) cleanDigits = '0' + cleanDigits;
-
-        const v1 = cleanDigits;
-        const v2 = cleanDigits.slice(1);
-        const v3 = '+98' + cleanDigits.slice(1);
-        const v4 = '98' + cleanDigits.slice(1);
-        const v5 = mobile.trim();
-
-        const variations = Array.from(new Set([v1, v2, v3, v4, v5].filter(Boolean)));
-
-        const filterItems: string[] = [];
-        variations.forEach(v => {
-          filterItems.push(`filter[_or][${filterItems.length}][user_phone][_eq]=${encodeURIComponent(v)}`);
-          filterItems.push(`filter[_or][${filterItems.length}][location][_eq]=${encodeURIComponent(v)}`);
-          filterItems.push(`filter[_or][${filterItems.length}][email][_eq]=${encodeURIComponent(v)}`);
-          filterItems.push(`filter[_or][${filterItems.length}][email][_eq]=${encodeURIComponent(v + '@megacard.local')}`);
-        });
-
-        const userRes = await fetch(`${DIRECTUS_URL}/users?${filterItems.join('&')}`, { headers });
+        // Directus user query with multiple fallback matches
+        const encodedMobile = encodeURIComponent(mobile);
+        const userRes = await fetch(`${DIRECTUS_URL}/users?filter[user_phone][_eq]=${encodedMobile}`, { headers });
         if (userRes.ok) {
           const userJson = await userRes.json();
           if (Array.isArray(userJson?.data) && userJson.data.length > 0) {
             userObj = userJson.data[0];
+          }
+        }
+
+        // Resilient in-memory matching fallback across all users
+        if (!userObj) {
+          const allUsersRes = await fetch(`${DIRECTUS_URL}/users?limit=250`, { headers });
+          if (allUsersRes.ok) {
+            const allUsersJson = await allUsersRes.json();
+            const allUsers = allUsersJson?.data || [];
+            
+            const targetClean = mobile.replace(/\D/g, '');
+            const targetTail9 = targetClean.slice(-9); // last 9 digits (e.g. 9123456789)
+
+            userObj = allUsers.find((u: any) => {
+              const uPhone = normalizeMobile(u.user_phone || u.phone || u.mobile || u.location || '');
+              const uPhoneClean = (u.user_phone || u.phone || u.mobile || u.location || '').toString().replace(/\D/g, '');
+              const uEmail = (u.email || '').toLowerCase();
+
+              if (uPhone && uPhone === mobile) return true;
+              if (uPhoneClean && targetClean && uPhoneClean === targetClean) return true;
+              if (targetTail9 && targetTail9.length === 9 && (uPhoneClean.endsWith(targetTail9) || uEmail.includes(targetTail9))) return true;
+              if (uEmail === `${mobile}@megacard.local` || uEmail.startsWith(mobile)) return true;
+              return false;
+            });
           }
         }
       } catch (uErr) {

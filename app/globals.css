@@ -36,24 +36,30 @@ select {
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Custom sleek scrollbar for virtual phone screen */
-.phone-scrollbar::-webkit-scrollbar {
-  width: 5px;
+/* Custom sleek scrollbar for virtual phone screen and forms */
+.phone-scrollbar::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
-.phone-scrollbar::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+.phone-scrollbar::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
   border-radius: 9999px;
 }
-.phone-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
+.phone-scrollbar::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
   border-radius: 9999px;
 }
-.phone-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(203, 213, 225, 0.8);
+.phone-scrollbar::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
 }
-.phone-scrollbar {
+.phone-scrollbar,
+.custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.4) rgba(15, 23, 42, 0.6);
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }

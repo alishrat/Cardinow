@@ -734,12 +734,8 @@ function DashboardContent() {
     setCardSuccess(null);
     try {
       await dbService.saveCard(editingCard);
-      setEditingCard(null);
       setCardSuccess('تغییرات کارت ویزیت با موفقیت در دیتابیس ذخیره شد.');
       await refreshData();
-      if (user?.role === 'admin') {
-        setActiveTab('admin-cards');
-      }
     } catch (err: any) {
       setCardError(sanitizeDbError(err.message));
     } finally {

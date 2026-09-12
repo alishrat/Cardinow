@@ -161,6 +161,16 @@ export interface Card {
     background?: string;
     text?: string;
     card_bg?: string;
+    name_color?: string;
+    job_color?: string;
+    company_color?: string;
+    bio_color?: string;
+    text_secondary?: string;
+    box_bg?: string;
+    btn_bg?: string;
+    btn_text?: string;
+    border_color?: string;
+    [key: string]: string | undefined;
   } | null;
   section_orders?: string[] | string | null;
   custom_css?: string | null;

@@ -238,24 +238,24 @@ export function AdminProductsView({
 
       {/* Edit / Create Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-lg w-full p-4 sm:p-6 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-emerald-400" />
-                <span>ویرایش / افزودن محصول و خدمت</span>
+                <span>{editingProduct.id?.startsWith('prod-') || !editingProduct.name ? 'افزودن محصول و خدمت جدید' : 'ویرایش محصول / خدمت'}</span>
               </h3>
               <button
                 onClick={() => setEditingProduct(null)}
-                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
+                className="p-1.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs">
+            <div className="space-y-3.5 text-xs">
               {/* Type & Active */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">نوع آیتم</label>
                   <select
@@ -308,9 +308,9 @@ export function AdminProductsView({
                 />
               </div>
 
-              {/* Image Upload (File Only) */}
+              {/* Image Upload */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-1.5">تصویر محصول / خدمت</label>
+                <label className="block text-slate-300 font-semibold mb-1">تصویر محصول / خدمت</label>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -319,9 +319,9 @@ export function AdminProductsView({
                   className="hidden"
                 />
 
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col items-center justify-center gap-3 min-h-[120px]">
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 flex flex-col items-center justify-center gap-2 min-h-[110px]">
                   {editingProduct.image ? (
-                    <div className="relative w-full h-36 rounded-lg overflow-hidden border border-slate-800 group">
+                    <div className="relative w-full h-32 rounded-lg overflow-hidden border border-slate-800 group">
                       <img
                         src={getImageUrl(editingProduct.image)}
                         alt="تصویر محصول"
@@ -348,25 +348,22 @@ export function AdminProductsView({
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center space-y-2 py-2">
-                      <div className="w-10 h-10 mx-auto rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400">
-                        <ImageIcon className="w-5 h-5" />
-                      </div>
-                      <p className="text-xs text-slate-400">تصویری انتخاب نشده است.</p>
+                    <div className="text-center space-y-1.5 py-1">
+                      <p className="text-[11px] text-slate-400">تصویری برای این محصول انتخاب نشده است.</p>
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingImage}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 font-bold text-xs rounded-xl transition inline-flex items-center gap-2"
+                        className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-emerald-400 font-bold text-xs rounded-xl transition inline-flex items-center gap-2"
                       >
                         {uploadingImage ? (
                           <>
                             <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
-                            <span>در حال آپلود در دایرکتوس...</span>
+                            <span>در حال آپلود...</span>
                           </>
                         ) : (
                           <>
-                            <Upload className="w-4 h-4" />
+                            <Upload className="w-3.5 h-3.5" />
                             <span>انتخاب و آپلود تصویر</span>
                           </>
                         )}
@@ -380,11 +377,11 @@ export function AdminProductsView({
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">توضیحات</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={editingProduct.description || ''}
                   onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
-                  placeholder="توضیحات مشخصات فنی، تراشه و ویژگی‌ها..."
+                  placeholder="توضیحات مشخصات فنی، متریال ساخت و قابلیت‌های این محصول..."
                 />
               </div>
             </div>
@@ -403,7 +400,7 @@ export function AdminProductsView({
                 className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-xl transition flex items-center gap-1.5"
               >
                 {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                <span>ذخیره تغییرات</span>
+                <span>ذخیره نهایی</span>
               </button>
             </div>
           </div>

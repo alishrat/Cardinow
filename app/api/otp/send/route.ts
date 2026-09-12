@@ -53,12 +53,24 @@ export async function POST(req: NextRequest) {
       try {
         const encodedInput = encodeURIComponent(input);
         const encodedLower = encodeURIComponent(input.toLowerCase());
-        const filter = `filter[_or][0][email][_eq]=${encodedInput}&filter[_or][1][email][_eq]=${encodedLower}`;
-        const userRes = await fetch(`${DIRECTUS_URL}/users?${filter}`, { headers });
+        const userRes = await fetch(`${DIRECTUS_URL}/users?filter[email][_eq]=${encodedLower}`, { headers });
         if (userRes.ok) {
           const userJson = await userRes.json();
           if (Array.isArray(userJson?.data) && userJson.data.length > 0) {
             userObj = userJson.data[0];
+          }
+        }
+        // Fallback: search all users list in case of email case or format variations
+        if (!userObj) {
+          const allUsersRes = await fetch(`${DIRECTUS_URL}/users?limit=100`, { headers });
+          if (allUsersRes.ok) {
+            const allUsersJson = await allUsersRes.json();
+            const allUsers = allUsersJson?.data || [];
+            userObj = allUsers.find((u: any) => 
+              (u.email && u.email.trim().toLowerCase() === input.toLowerCase()) ||
+              (u.email && u.email.trim() === input) ||
+              (u.username && u.username.trim().toLowerCase() === input.toLowerCase())
+            );
           }
         }
       } catch (uErr) {
@@ -67,17 +79,17 @@ export async function POST(req: NextRequest) {
 
       if (!userObj) {
         return NextResponse.json(
-          { success: false, error: 'حساب کاربری با این ایمیل یا شناسه یافت نشد.' },
+          { success: false, error: 'حساب کاربری با این ایمیل یافت نشد. لطفاً ایمیل خود را بررسی کنید.' },
           { status: 400 }
         );
       }
 
-      const phoneVal = userObj.user_phone || userObj.location || userObj.mobile || userObj.phone;
+      const phoneVal = userObj.user_phone || userObj.phone || userObj.mobile || userObj.location;
       const extractedMobile = normalizeMobile(phoneVal || '');
 
       if (!extractedMobile || !/^09\d{9}$/.test(extractedMobile)) {
         return NextResponse.json(
-          { success: false, error: 'شماره تماسی برای این کاربر ثبت نشده است. لطفاً از گزینه ورود با رمز عبور استفاده کنید.' },
+          { success: false, error: 'شماره تماسی برای این کاربر در سیستم ثبت نشده است. لطفاً با رمز عبور وارد شوید.' },
           { status: 400 }
         );
       }
