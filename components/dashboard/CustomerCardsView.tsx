@@ -1658,6 +1658,37 @@ export function CustomerCardsView({
               )}
 
             </div>
+
+            {/* Bottom Save Action Bar */}
+            <div className="pt-4 border-t border-slate-850 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setEditingCard(null)}
+                className="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition border border-slate-800 flex items-center gap-1.5 shrink-0"
+              >
+                <ArrowRight className="h-4 w-4" />
+                <span>انصراف</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveCard}
+                disabled={isSavingCard}
+                className="flex-1 py-2.5 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-blue-800 disabled:to-indigo-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 active:scale-[0.99] cursor-pointer"
+              >
+                {isSavingCard ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>در حال ذخیره‌سازی...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    <span>ذخیره تمامی تغییرات کارت</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Right Column: Live mobile preview iframe simulation */}
