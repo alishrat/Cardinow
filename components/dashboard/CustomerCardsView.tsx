@@ -8,7 +8,7 @@ import {
   Users, Building, DollarSign, ArrowLeft, Sliders, Smartphone, Palette, 
   Code, Link2, Trash, CheckSquare, Sparkles, HelpCircle, RefreshCw, Star, ArrowRight,
   Phone, Mail, Send, MessageCircle, ChevronLeft, MapPin, Instagram, Linkedin, Download, QrCode,
-  GripVertical, MoveUp, MoveDown, Layers, RotateCcw, AlignRight, Share2
+  GripVertical, MoveUp, MoveDown, Layers, RotateCcw, AlignRight, Share2, Bell
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Card, Template, toUUID, getImageUrl, dbService, toJalaliDate, SECTION_DEFINITIONS, getSectionOrders, DEFAULT_SECTION_ORDERS, toPersianDigits, toEnglishDigits } from '../../lib/directus';
@@ -17,148 +17,9 @@ import ProfileImageCropperModal from './ProfileImageCropperModal';
 import ImageCropperModal from './ImageCropperModal';
 import { StyledQRCode } from '../ui/StyledQRCode';
 import { downloadStyledQRCode } from '../../lib/styledQrCode';
+import { getTemplateDefaultColors, getResolvedCardColors } from '../../lib/cardColors';
 
-export function getTemplateDefaultColors(templateId?: string | null, templatesList: Template[] = []) {
-  const cleanTId = (templateId || '').toLowerCase();
-  const cleanTUuid = toUUID(templateId);
-
-  const isClassic = !templateId || cleanTId === 'temp-1' || cleanTId === 'classic' || cleanTUuid === '11111111-1111-1111-1111-111111111111';
-  const isBento = cleanTId === 'temp-2' || cleanTId === 'bento' || cleanTUuid === '22222222-2222-2222-2222-222222222222';
-  const isContentCreator = cleanTId === 'temp-3' || cleanTId === 'content-creator' || cleanTUuid === '33333333-3333-3333-3333-333333333333';
-  const isNeonGlass = cleanTId === 'temp-4' || cleanTId === 'neon-glass' || cleanTUuid === '44444444-4444-4444-4444-444444444444';
-  const isMinimal = cleanTId === 'temp-5' || cleanTId === 'minimal' || cleanTUuid === '55555555-5555-5555-5555-555555555555';
-  const isLuxuryDark = cleanTId === 'temp-6' || cleanTId === 'luxury-dark' || cleanTUuid === '66666666-6666-6666-6666-666666666666';
-
-  if (isBento) {
-    return {
-      primary: '#6366f1',
-      secondary: '#8b5cf6',
-      background: '#0f172a',
-      card_bg: '#1e293b',
-      text: '#f8fafc',
-      name_color: '#ffffff',
-      job_color: '#818cf8',
-      company_color: '#94a3b8',
-      bio_color: '#cbd5e1',
-      text_secondary: '#94a3b8',
-      box_bg: '#0f172a80',
-      btn_bg: '#6366f1',
-      btn_text: '#ffffff',
-      border_color: '#334155',
-    };
-  }
-  if (isContentCreator) {
-    return {
-      primary: '#ec4899',
-      secondary: '#8b5cf6',
-      background: '#09090b',
-      card_bg: '#18181b',
-      text: '#fafafa',
-      name_color: '#ffffff',
-      job_color: '#f472b6',
-      company_color: '#a1a1aa',
-      bio_color: '#e4e4e7',
-      text_secondary: '#a1a1aa',
-      box_bg: '#27272a80',
-      btn_bg: '#ec4899',
-      btn_text: '#ffffff',
-      border_color: '#3f3f46',
-    };
-  }
-  if (isLuxuryDark) {
-    return {
-      primary: '#f59e0b',
-      secondary: '#d97706',
-      background: '#0c0a09',
-      card_bg: '#1c1917',
-      text: '#fef3c7',
-      name_color: '#fef3c7',
-      job_color: '#f59e0b',
-      company_color: '#d97706',
-      bio_color: '#e7e5e4',
-      text_secondary: '#a8a29e',
-      box_bg: '#292524',
-      btn_bg: '#f59e0b',
-      btn_text: '#1c1917',
-      border_color: '#78350f',
-    };
-  }
-  if (isNeonGlass) {
-    return {
-      primary: '#06b6d4',
-      secondary: '#3b82f6',
-      background: '#050814',
-      card_bg: '#0f172a',
-      text: '#ffffff',
-      name_color: '#ffffff',
-      job_color: '#06b6d4',
-      company_color: '#38bdf8',
-      bio_color: '#cbd5e1',
-      text_secondary: '#94a3b8',
-      box_bg: '#1e293b',
-      btn_bg: '#06b6d4',
-      btn_text: '#050814',
-      border_color: '#06b6d4',
-    };
-  }
-  if (isMinimal) {
-    return {
-      primary: '#0f172a',
-      secondary: '#475569',
-      background: '#f8fafc',
-      card_bg: '#ffffff',
-      text: '#0f172a',
-      name_color: '#0f172a',
-      job_color: '#334155',
-      company_color: '#64748b',
-      bio_color: '#334155',
-      text_secondary: '#64748b',
-      box_bg: '#f1f5f9',
-      btn_bg: '#0f172a',
-      btn_text: '#ffffff',
-      border_color: '#e2e8f0',
-    };
-  }
-  if (!isClassic) {
-    const activeT = templatesList.find(t => toUUID(t.id) === cleanTUuid || (t.slug && t.slug.toLowerCase() === cleanTId));
-    const schemaColors = activeT?.schema?.default_colors || activeT?.schema?.colors || (activeT as any)?.default_colors;
-    if (schemaColors) {
-      return {
-        primary: schemaColors.primary || '#2563eb',
-        secondary: schemaColors.secondary || '#3b82f6',
-        background: schemaColors.background || '#f1f5f9',
-        card_bg: schemaColors.card_bg || '#ffffff',
-        text: schemaColors.text || '#1e293b',
-        name_color: schemaColors.name_color || schemaColors.text || '#1e293b',
-        job_color: schemaColors.job_color || schemaColors.primary || '#2563eb',
-        company_color: schemaColors.company_color || '#64748b',
-        bio_color: schemaColors.bio_color || schemaColors.text || '#334155',
-        text_secondary: schemaColors.text_secondary || '#64748b',
-        box_bg: schemaColors.box_bg || '#f8fafc',
-        btn_bg: schemaColors.btn_bg || schemaColors.primary || '#2563eb',
-        btn_text: schemaColors.btn_text || '#ffffff',
-        border_color: schemaColors.border_color || '#e2e8f0',
-      };
-    }
-  }
-
-  return {
-    primary: '#2563eb',
-    secondary: '#3b82f6',
-    background: '#f1f5f9',
-    card_bg: '#ffffff',
-    text: '#1e293b',
-    name_color: '#1e293b',
-    job_color: '#2563eb',
-    company_color: '#64748b',
-    bio_color: '#334155',
-    text_secondary: '#64748b',
-    box_bg: '#f8fafc',
-    btn_bg: '#2563eb',
-    btn_text: '#ffffff',
-    border_color: '#e2e8f0',
-  };
-}
+export { getTemplateDefaultColors };
 
 export interface CustomerCardsViewProps {
   user: any;
@@ -1062,21 +923,22 @@ export function CustomerCardsView({
 
                   {/* CUSTOM COLORS */}
                   {(() => {
-                    const activeDefaults = getTemplateDefaultColors(editingCard.template_id, templates);
-                    const curPrimary = editingCard.custom_colors?.primary?.trim() ? editingCard.custom_colors.primary : activeDefaults.primary;
-                    const curSecondary = editingCard.custom_colors?.secondary?.trim() ? editingCard.custom_colors.secondary : activeDefaults.secondary;
-                    const curText = editingCard.custom_colors?.text?.trim() ? editingCard.custom_colors.text : activeDefaults.text;
-                    const curCardBg = editingCard.custom_colors?.card_bg?.trim() ? editingCard.custom_colors.card_bg : activeDefaults.card_bg;
-                    const curBg = editingCard.custom_colors?.background?.trim() ? editingCard.custom_colors.background : activeDefaults.background;
-                    const curName = editingCard.custom_colors?.name_color?.trim() ? editingCard.custom_colors.name_color : activeDefaults.name_color;
-                    const curJob = editingCard.custom_colors?.job_color?.trim() ? editingCard.custom_colors.job_color : activeDefaults.job_color;
-                    const curCompany = editingCard.custom_colors?.company_color?.trim() ? editingCard.custom_colors.company_color : activeDefaults.company_color;
-                    const curBio = editingCard.custom_colors?.bio_color?.trim() ? editingCard.custom_colors.bio_color : activeDefaults.bio_color;
-                    const curTextSec = editingCard.custom_colors?.text_secondary?.trim() ? editingCard.custom_colors.text_secondary : activeDefaults.text_secondary;
-                    const curBoxBg = editingCard.custom_colors?.box_bg?.trim() ? editingCard.custom_colors.box_bg : activeDefaults.box_bg;
-                    const curBtnBg = editingCard.custom_colors?.btn_bg?.trim() ? editingCard.custom_colors.btn_bg : activeDefaults.btn_bg;
-                    const curBtnText = editingCard.custom_colors?.btn_text?.trim() ? editingCard.custom_colors.btn_text : activeDefaults.btn_text;
-                    const curBorder = editingCard.custom_colors?.border_color?.trim() ? editingCard.custom_colors.border_color : activeDefaults.border_color;
+                    const {
+                      primaryColor: curPrimary,
+                      secondaryColor: curSecondary,
+                      bgColor: curBg,
+                      cardBgColor: curCardBg,
+                      textCol: curText,
+                      nameColor: curName,
+                      jobColor: curJob,
+                      companyColor: curCompany,
+                      bioColor: curBio,
+                      textSecondaryColor: curTextSec,
+                      boxBgColor: curBoxBg,
+                      btnBgColor: curBtnBg,
+                      btnTextColor: curBtnText,
+                      customBorderColor: curBorder,
+                    } = getResolvedCardColors(editingCard.custom_colors, editingCard.template_id, templates);
 
                     const updateColor = (key: string, val: string) => {
                       setEditingCard({
@@ -1824,23 +1686,22 @@ export function CustomerCardsView({
                 const isMinimal = cleanTId === 'temp-5' || cleanTId === 'minimal' || cleanTUuid === '55555555-5555-5555-5555-555555555555';
                 const isLuxuryDark = cleanTId === 'temp-6' || cleanTId === 'luxury-dark' || cleanTUuid === '66666666-6666-6666-6666-666666666666';
 
-                const tmplDefaults = getTemplateDefaultColors(templateId, templates);
-
-                const primaryColor = editingCard.custom_colors?.primary?.trim() ? editingCard.custom_colors.primary : tmplDefaults.primary;
-                const secondaryColor = editingCard.custom_colors?.secondary?.trim() ? editingCard.custom_colors.secondary : tmplDefaults.secondary;
-                const cardBg = editingCard.custom_colors?.card_bg?.trim() ? editingCard.custom_colors.card_bg : tmplDefaults.card_bg;
-                const textColor = editingCard.custom_colors?.text?.trim() ? editingCard.custom_colors.text : tmplDefaults.text;
-                const bgColor = editingCard.custom_colors?.background?.trim() ? editingCard.custom_colors.background : tmplDefaults.background;
-
-                const nameColor = editingCard.custom_colors?.name_color?.trim() ? editingCard.custom_colors.name_color : (tmplDefaults.name_color || textColor);
-                const jobColor = editingCard.custom_colors?.job_color?.trim() ? editingCard.custom_colors.job_color : (tmplDefaults.job_color || primaryColor);
-                const companyColor = editingCard.custom_colors?.company_color?.trim() ? editingCard.custom_colors.company_color : (tmplDefaults.company_color || textColor);
-                const bioColor = editingCard.custom_colors?.bio_color?.trim() ? editingCard.custom_colors.bio_color : (tmplDefaults.bio_color || textColor);
-                const textSecondaryColor = editingCard.custom_colors?.text_secondary?.trim() ? editingCard.custom_colors.text_secondary : (tmplDefaults.text_secondary || '#64748b');
-                const boxBg = editingCard.custom_colors?.box_bg?.trim() ? editingCard.custom_colors.box_bg : (tmplDefaults.box_bg || '#ffffff');
-                const btnBg = editingCard.custom_colors?.btn_bg?.trim() ? editingCard.custom_colors.btn_bg : (tmplDefaults.btn_bg || primaryColor);
-                const btnText = editingCard.custom_colors?.btn_text?.trim() ? editingCard.custom_colors.btn_text : (tmplDefaults.btn_text || '#ffffff');
-                const borderColor = editingCard.custom_colors?.border_color?.trim() ? editingCard.custom_colors.border_color : (tmplDefaults.border_color || '#e2e8f0');
+                const {
+                  primaryColor,
+                  secondaryColor,
+                  bgColor,
+                  cardBgColor: cardBg,
+                  textCol: textColor,
+                  nameColor,
+                  jobColor,
+                  companyColor,
+                  bioColor,
+                  textSecondaryColor,
+                  boxBgColor: boxBg,
+                  btnBgColor: btnBg,
+                  btnTextColor: btnText,
+                  customBorderColor: borderColor,
+                } = getResolvedCardColors(editingCard.custom_colors, editingCard.template_id, templates);
 
                 // Check if it is a custom template from Directus (not one of the 6 hardcoded)
                 const isCustomTemplate = !isClassic && !isBento && !isContentCreator && !isNeonGlass && !isMinimal && !isLuxuryDark;
@@ -1898,14 +1759,24 @@ export function CustomerCardsView({
                               switch (secKey) {
                                 case 'save_contact':
                                   return (
-                                    <div 
-                                      key="sec_classic_save"
-                                      onClick={() => editingCard && saveCardToContacts(editingCard)}
-                                      className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1 text-[8px] font-bold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition" 
-                                      style={{ backgroundColor: btnBg, color: btnText }}
-                                    >
-                                      <Download className="h-2.5 w-2.5" />
-                                      <span>ذخیره در مخاطبین گوشی</span>
+                                    <div key="sec_classic_save" className="grid grid-cols-2 gap-1 w-full">
+                                      <button 
+                                        type="button"
+                                        onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                        className="w-full py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[7.5px] font-bold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition" 
+                                        style={{ backgroundColor: btnBg, color: btnText }}
+                                      >
+                                        <Download className="h-2.5 w-2.5" />
+                                        <span>ذخیره مخاطب</span>
+                                      </button>
+                                      <button 
+                                        type="button"
+                                        className="w-full py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[7.5px] font-bold border cursor-pointer hover:opacity-90 active:scale-95 transition"
+                                        style={{ backgroundColor: `${primaryColor}15`, borderColor: `${primaryColor}40`, color: primaryColor }}
+                                      >
+                                        <Bell className="h-2.5 w-2.5" />
+                                        <span>پیوستن به کلاب</span>
+                                      </button>
                                     </div>
                                   );
                                 case 'bio':
@@ -2105,10 +1976,10 @@ export function CustomerCardsView({
 
                       {/* Bento Grid Style */}
                       {isBento && (
-                        <div className="w-full min-h-full bg-slate-900 text-slate-100 p-2.5 flex flex-col font-sans overflow-y-auto space-y-2" style={{ backgroundColor: cardBg || '#0f172a', color: textColor || '#f8fafc' }}>
+                        <div className="w-full min-h-full p-2.5 flex flex-col font-sans overflow-y-auto space-y-2" style={{ backgroundColor: cardBg, color: textColor }}>
                           {/* Profile Card Tile */}
-                          <div className="p-3 bg-slate-800/80 border border-indigo-500/30 rounded-2xl flex items-center gap-2.5 relative overflow-hidden">
-                            <div className="h-11 w-11 rounded-xl border border-indigo-500/50 overflow-hidden shrink-0 bg-slate-950">
+                          <div className="p-3 border rounded-2xl flex items-center gap-2.5 relative overflow-hidden" style={{ backgroundColor: boxBg, borderColor: borderColor }}>
+                            <div className="h-11 w-11 rounded-xl border overflow-hidden shrink-0" style={{ borderColor: borderColor }}>
                               <img 
                                 src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                 alt="profile" 
@@ -2116,9 +1987,9 @@ export function CustomerCardsView({
                               />
                             </div>
                             <div className="min-w-0 flex-grow">
-                              <h4 className="text-xs font-black text-white truncate">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                              <p className="text-[8.5px] font-bold text-indigo-400 truncate">{editingCard.job_title || 'سمت شغلی'}</p>
-                              <p className="text-[7.5px] text-slate-400 truncate">{editingCard.company || 'نام شرکت'}</p>
+                              <h4 className="text-xs font-black truncate" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                              <p className="text-[8.5px] font-bold truncate" style={{ color: jobColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                              <p className="text-[7.5px] truncate opacity-70" style={{ color: companyColor }}>{editingCard.company || 'نام شرکت'}</p>
                             </div>
                           </div>
 
@@ -2127,19 +1998,29 @@ export function CustomerCardsView({
                             switch (secKey) {
                               case 'save_contact':
                                 return (
-                                  <div 
-                                    key="sec_bento_save"
-                                    onClick={() => editingCard && saveCardToContacts(editingCard)}
-                                    className="w-full py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-1 text-[8px] font-black cursor-pointer shadow-sm transition active:scale-95 shrink-0" 
-                                    style={{ backgroundColor: primaryColor }}
-                                  >
-                                    <Download className="h-2.5 w-2.5" />
-                                    <span>ذخیره مخاطب</span>
+                                  <div key="sec_bento_save" className="grid grid-cols-2 gap-1 w-full">
+                                    <button 
+                                      type="button"
+                                      onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                      className="w-full py-1.5 px-1.5 rounded-xl flex items-center justify-center gap-1 text-[7.5px] font-black cursor-pointer shadow-sm transition active:scale-95 shrink-0" 
+                                      style={{ backgroundColor: btnBg, color: btnText }}
+                                    >
+                                      <Download className="h-2.5 w-2.5" />
+                                      <span>ذخیره مخاطب</span>
+                                    </button>
+                                    <button 
+                                      type="button"
+                                      className="w-full py-1.5 px-1.5 rounded-xl flex items-center justify-center gap-1 text-[7.5px] font-black border cursor-pointer transition active:scale-95 shrink-0"
+                                      style={{ backgroundColor: `${primaryColor}15`, borderColor: `${primaryColor}40`, color: primaryColor }}
+                                    >
+                                      <Bell className="h-2.5 w-2.5" />
+                                      <span>پیوستن به کلاب</span>
+                                    </button>
                                   </div>
                                 );
                               case 'bio':
                                 return editingCard.bio ? (
-                                  <div key="sec_bento_bio" className="p-2.5 bg-slate-800/60 border border-slate-700/50 rounded-xl text-[7.5px] leading-relaxed whitespace-pre-line" style={{ color: textColor }}>
+                                  <div key="sec_bento_bio" className="p-2.5 border rounded-xl text-[7.5px] leading-relaxed whitespace-pre-line" style={{ backgroundColor: boxBg, borderColor: borderColor, color: bioColor }}>
                                     {editingCard.bio}
                                   </div>
                                 ) : null;
@@ -2209,11 +2090,11 @@ export function CustomerCardsView({
 
                       {/* Content Creator Bio-Link Style */}
                       {isContentCreator && (
-                        <div className="w-full min-h-full bg-zinc-950 text-zinc-100 p-3 flex flex-col items-center font-sans overflow-y-auto space-y-3" style={{ backgroundColor: cardBg || '#09090b', color: textColor || '#fafafa' }}>
+                        <div className="w-full min-h-full p-3 flex flex-col items-center font-sans overflow-y-auto space-y-3" style={{ backgroundColor: cardBg, color: textColor }}>
                           {/* Avatar with gradient glow ring */}
                           <div className="flex flex-col items-center text-center space-y-1.5 pt-1">
-                            <div className="h-14 w-14 rounded-full p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-500 shrink-0 shadow-lg shadow-pink-500/20">
-                              <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 border-2 border-zinc-950">
+                            <div className="h-14 w-14 rounded-full p-0.5 shrink-0 shadow-lg" style={{ backgroundImage: `linear-gradient(to top right, ${primaryColor}, ${secondaryColor})` }}>
+                              <div className="w-full h-full rounded-full overflow-hidden border-2" style={{ backgroundColor: cardBg, borderColor: cardBg }}>
                                 <img 
                                   src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                   alt="profile" 
@@ -2222,8 +2103,9 @@ export function CustomerCardsView({
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-xs font-black text-white">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                              <p className="text-[8px] font-extrabold text-pink-400 mt-0.5">{editingCard.job_title || 'تولیدکننده محتوا'}</p>
+                              <h4 className="text-xs font-black" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                              <p className="text-[8px] font-extrabold mt-0.5" style={{ color: jobColor }}>{editingCard.job_title || 'تولیدکننده محتوا'}</p>
+                              {editingCard.company && <p className="text-[7.5px] opacity-70 mt-0.5" style={{ color: companyColor }}>{editingCard.company}</p>}
                             </div>
                           </div>
 
@@ -2232,19 +2114,29 @@ export function CustomerCardsView({
                             switch (secKey) {
                               case 'save_contact':
                                 return (
-                                  <div 
-                                    key="sec_cc_save"
-                                    onClick={() => editingCard && saveCardToContacts(editingCard)}
-                                    className="w-full py-2 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 text-white flex items-center justify-center gap-1.5 text-[8px] font-black cursor-pointer shadow-lg shadow-pink-600/30 transition active:scale-95 shrink-0"
-                                    style={{ backgroundImage: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                    <span>ذخیره مستقیم شماره در مخاطبین</span>
+                                  <div key="sec_cc_save" className="grid grid-cols-2 gap-1 w-full shrink-0">
+                                    <button 
+                                      type="button"
+                                      onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                      className="w-full py-1.5 px-1.5 rounded-2xl flex items-center justify-center gap-1 text-[7.5px] font-black cursor-pointer shadow-md transition active:scale-95"
+                                      style={{ backgroundColor: btnBg, color: btnText }}
+                                    >
+                                      <Download className="h-2.5 w-2.5" />
+                                      <span>ذخیره مخاطب</span>
+                                    </button>
+                                    <button 
+                                      type="button"
+                                      className="w-full py-1.5 px-1.5 rounded-2xl flex items-center justify-center gap-1 text-[7.5px] font-black border cursor-pointer transition active:scale-95"
+                                      style={{ backgroundColor: `${primaryColor}15`, borderColor: `${primaryColor}40`, color: primaryColor }}
+                                    >
+                                      <Bell className="h-2.5 w-2.5" />
+                                      <span>پیوستن به کلاب</span>
+                                    </button>
                                   </div>
                                 );
                               case 'bio':
                                 return editingCard.bio ? (
-                                  <div key="sec_cc_bio" className="w-full p-2.5 bg-zinc-900/80 border border-zinc-800 rounded-2xl text-[7.5px] text-zinc-300 text-center leading-relaxed whitespace-pre-line">
+                                  <div key="sec_cc_bio" className="w-full p-2.5 border rounded-2xl text-[7.5px] text-center leading-relaxed whitespace-pre-line" style={{ backgroundColor: boxBg, borderColor: borderColor, color: bioColor }}>
                                     {editingCard.bio}
                                   </div>
                                 ) : null;
@@ -2285,46 +2177,40 @@ export function CustomerCardsView({
 
                       {/* Neon Glass Style */}
                       {isNeonGlass && (
-                        <div className="w-full min-h-full bg-slate-950 text-slate-100 p-3 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg || '#0f172a', color: textColor || '#ffffff' }}>
-                          <div className="p-3 bg-slate-900/80 border border-white/10 rounded-2xl relative overflow-hidden backdrop-blur space-y-3.5 flex-grow">
+                        <div className="w-full min-h-full p-3 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg, color: textColor }}>
+                          <div className="p-3 border rounded-2xl relative overflow-hidden backdrop-blur space-y-3.5 flex-grow" style={{ backgroundColor: boxBg, borderColor: borderColor }}>
                             <div className="absolute top-0 right-0 h-10 w-10 bg-blue-500/10 rounded-full blur-xl"></div>
                             <div className="absolute bottom-0 left-0 h-10 w-10 bg-purple-500/10 rounded-full blur-xl"></div>
 
                             {/* Cover photo */}
-                            <div className="h-16 bg-slate-800 rounded-xl overflow-hidden relative border border-white/10 shrink-0 shadow-md">
+                            <div className="h-16 rounded-xl overflow-hidden relative border shrink-0 shadow-md" style={{ borderColor: borderColor }}>
                               <img 
                                 src={getImageUrl(editingCard.cover_image) || '/cover-fallback.avif'} 
                                 alt="cover" 
                                 className="w-full h-full object-cover"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent"></div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             </div>
 
                             <div className="flex justify-between items-start">
-                              <div className="h-12 w-12 rounded-xl border border-blue-500/30 overflow-hidden shrink-0 bg-zinc-950">
+                              <div className="h-12 w-12 rounded-xl border overflow-hidden shrink-0" style={{ borderColor: primaryColor }}>
                                 <img 
                                   src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                   alt="profile" 
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <span className="text-[6px] text-blue-400 font-black tracking-widest bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                                <Eye className="h-2 w-2 text-cyan-400" />
+                              <span className="text-[6px] font-black tracking-widest border px-1.5 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: `${primaryColor}15`, borderColor: `${primaryColor}30`, color: primaryColor }}>
+                                <Eye className="h-2 w-2" style={{ color: primaryColor }} />
                                 {(editingCard.views_count || 0).toLocaleString('fa-IR')} بازدید
                               </span>
                             </div>
 
                             <div className="space-y-1">
-                              <h4 className="text-xs font-black text-white">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                              <p className="text-[9px] text-blue-400 font-extrabold">{editingCard.job_title || 'سمت شغلی'}</p>
-                              <p className="text-[8px] text-zinc-500 leading-tight">{editingCard.company || 'نام برند یا شرکت'}</p>
+                              <h4 className="text-xs font-black" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                              <p className="text-[9px] font-extrabold" style={{ color: jobColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                              <p className="text-[8px] opacity-70 leading-tight" style={{ color: companyColor }}>{editingCard.company || 'نام برند یا شرکت'}</p>
                             </div>
-
-                            {editingCard.bio && (
-                              <p className="text-[8px] text-zinc-400 leading-relaxed bg-zinc-950/60 p-2 border border-zinc-850 rounded-xl whitespace-pre-line">
-                                {editingCard.bio}
-                              </p>
-                            )}
 
                             {/* VCF download */}
                             {/* DYNAMIC SECTIONS REORDERING ACCORDING TO getSectionOrders */}
@@ -2332,19 +2218,29 @@ export function CustomerCardsView({
                               switch (secKey) {
                                 case 'save_contact':
                                   return (
-                                    <div 
-                                      key="sec_neon_save"
-                                      onClick={() => editingCard && saveCardToContacts(editingCard)}
-                                      className="w-full py-1.5 rounded-lg text-slate-950 flex items-center justify-center gap-1 text-[8px] font-extrabold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition shrink-0" 
-                                      style={{ backgroundImage: `linear-gradient(to left, ${primaryColor}, ${secondaryColor})` }}
-                                    >
-                                      <Download className="h-2.5 w-2.5" />
-                                      <span>ذخیره مستقیم شماره تلفن</span>
+                                    <div key="sec_neon_save" className="grid grid-cols-2 gap-1 w-full shrink-0">
+                                      <button 
+                                        type="button"
+                                        onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                        className="w-full py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[7.5px] font-extrabold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition" 
+                                        style={{ backgroundColor: btnBg, color: btnText }}
+                                      >
+                                        <Download className="h-2.5 w-2.5" />
+                                        <span>ذخیره مخاطب</span>
+                                      </button>
+                                      <button 
+                                        type="button"
+                                        className="w-full py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[7.5px] font-extrabold border cursor-pointer hover:opacity-90 active:scale-95 transition"
+                                        style={{ backgroundColor: `${primaryColor}15`, borderColor: `${primaryColor}40`, color: primaryColor }}
+                                      >
+                                        <Bell className="h-2.5 w-2.5" />
+                                        <span>پیوستن به کلاب</span>
+                                      </button>
                                     </div>
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_neon_bio" className="text-[8px] leading-relaxed bg-zinc-950/60 p-2 border border-zinc-850 rounded-xl whitespace-pre-line" style={{ color: textColor }}>
+                                    <p key="sec_neon_bio" className="text-[8px] leading-relaxed p-2 border rounded-xl whitespace-pre-line" style={{ backgroundColor: boxBg, borderColor: borderColor, color: bioColor }}>
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
@@ -2532,10 +2428,10 @@ export function CustomerCardsView({
 
                       {/* Minimal Style */}
                       {isMinimal && (
-                        <div className="w-full min-h-full bg-stone-50 text-stone-800 p-3.5 space-y-3.5 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg, color: textColor }}>
+                        <div className="w-full min-h-full p-3.5 space-y-3.5 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg, color: textColor }}>
                           
                           {/* Cover photo */}
-                          <div className="h-16 rounded-xl overflow-hidden relative bg-stone-100 border border-stone-200 shrink-0">
+                          <div className="h-16 rounded-xl overflow-hidden relative shrink-0 border" style={{ borderColor: borderColor }}>
                             <img 
                               src={getImageUrl(editingCard.cover_image) || '/cover-fallback.avif'} 
                               alt="cover" 
@@ -2544,7 +2440,7 @@ export function CustomerCardsView({
                           </div>
 
                           <div className="flex flex-col items-center text-center space-y-2 flex-grow">
-                            <div className="h-14 w-14 rounded-full overflow-hidden border border-stone-200 p-0.5 bg-white shrink-0 relative">
+                            <div className="h-14 w-14 rounded-full overflow-hidden border p-0.5 shrink-0 relative" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
                               <img 
                                 src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                 alt="profile" 
@@ -2553,35 +2449,39 @@ export function CustomerCardsView({
                             </div>
 
                             <div className="space-y-0.5">
-                              <h4 className="text-xs font-black text-stone-900">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                              <p className="text-[8px] font-medium uppercase tracking-widest" style={{ color: primaryColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
-                              {editingCard.company && <p className="text-[8px] text-stone-400">{editingCard.company}</p>}
+                              <h4 className="text-xs font-black" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                              <p className="text-[8px] font-medium uppercase tracking-widest" style={{ color: jobColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                              {editingCard.company && <p className="text-[8px] opacity-70" style={{ color: companyColor }}>{editingCard.company}</p>}
                             </div>
-
-                            {editingCard.bio && (
-                              <p className="text-[8px] text-stone-600 leading-relaxed text-center px-2 whitespace-pre-line">
-                                {editingCard.bio}
-                              </p>
-                            )}
 
                             {/* Minimal Dynamic Sections Reordering */}
                             {getSectionOrders(editingCard).map((secKey) => {
                               switch (secKey) {
                                 case 'save_contact':
                                   return (
-                                    <div 
-                                      key="sec_min_save"
-                                      onClick={() => editingCard && saveCardToContacts(editingCard)}
-                                      className="w-full py-1 rounded-lg text-white flex items-center justify-center gap-1 text-[7.5px] font-bold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition" 
-                                      style={{ backgroundColor: primaryColor }}
-                                    >
-                                      <Download className="h-2.5 w-2.5" />
-                                      <span>ذخیره در مخاطبین</span>
+                                    <div key="sec_min_save" className="grid grid-cols-2 gap-1 w-full shrink-0">
+                                      <button 
+                                        type="button"
+                                        onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                        className="w-full py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[7.5px] font-bold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition" 
+                                        style={{ backgroundColor: btnBg, color: btnText }}
+                                      >
+                                        <Download className="h-2.5 w-2.5" />
+                                        <span>ذخیره مخاطب</span>
+                                      </button>
+                                      <button 
+                                        type="button"
+                                        className="w-full py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[7.5px] font-bold border cursor-pointer hover:opacity-90 active:scale-95 transition"
+                                        style={{ backgroundColor: `${primaryColor}15`, borderColor: `${primaryColor}40`, color: primaryColor }}
+                                      >
+                                        <Bell className="h-2.5 w-2.5" />
+                                        <span>پیوستن به کلاب</span>
+                                      </button>
                                     </div>
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_min_bio" className="text-[8px] leading-relaxed text-center px-2 whitespace-pre-line" style={{ color: textColor }}>
+                                    <p key="sec_min_bio" className="text-[8px] leading-relaxed text-center px-2 whitespace-pre-line border p-2 rounded-xl" style={{ backgroundColor: boxBg, borderColor: borderColor, color: bioColor }}>
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
@@ -2775,25 +2675,25 @@ export function CustomerCardsView({
 
                       {/* Luxury Dark Style */}
                       {isLuxuryDark && (
-                        <div className="w-full min-h-full bg-stone-950 text-amber-100 p-3.5 space-y-3.5 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg, color: textColor }}>
-                          <div className="border border-amber-500/20 bg-stone-900/60 p-3 rounded-2xl flex flex-col flex-grow space-y-3.5 relative overflow-hidden">
+                        <div className="w-full min-h-full p-3.5 space-y-3.5 flex flex-col font-sans overflow-y-auto" style={{ backgroundColor: cardBg, color: textColor }}>
+                          <div className="border p-3 rounded-2xl flex flex-col flex-grow space-y-3.5 relative overflow-hidden" style={{ backgroundColor: boxBg, borderColor: primaryColor || borderColor }}>
                             <div className="absolute top-0 right-0 h-16 w-16 bg-amber-500/5 rounded-full blur-2xl"></div>
 
                             {/* Cover photo */}
-                            <div className="h-16 rounded-xl overflow-hidden relative border border-amber-500/30 shrink-0 shadow-md">
+                            <div className="h-16 rounded-xl overflow-hidden relative border shrink-0 shadow-md" style={{ borderColor: primaryColor || borderColor }}>
                               <img 
                                 src={getImageUrl(editingCard.cover_image) || '/cover-fallback.avif'} 
                                 alt="cover" 
                                 className="w-full h-full object-cover"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 to-transparent opacity-60"></div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             </div>
 
                             <div className="flex justify-between items-center">
-                              <span className="text-[5px] text-amber-500/70 font-mono tracking-widest uppercase border border-amber-500/10 px-2 py-0.5 rounded-full">
+                              <span className="text-[5px] font-mono tracking-widest uppercase border px-2 py-0.5 rounded-full" style={{ borderColor: `${primaryColor}30`, color: primaryColor }}>
                                 LUXURY COLLECTION
                               </span>
-                              <div className="h-10 w-10 rounded-lg border-2 border-amber-500/40 overflow-hidden shrink-0">
+                              <div className="h-10 w-10 rounded-lg border-2 overflow-hidden shrink-0" style={{ borderColor: primaryColor }}>
                                 <img 
                                   src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} 
                                   alt="profile" 
@@ -2803,9 +2703,9 @@ export function CustomerCardsView({
                             </div>
 
                             <div className="space-y-0.5 text-right">
-                              <h4 className="text-xs font-serif font-bold text-amber-200 tracking-wide">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                              <p className="text-[7.5px] font-mono uppercase tracking-wider" style={{ color: primaryColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
-                              {editingCard.company && <p className="text-[7px] text-stone-500">{editingCard.company}</p>}
+                              <h4 className="text-xs font-serif font-bold tracking-wide" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                              <p className="text-[7.5px] font-mono uppercase tracking-wider" style={{ color: jobColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                              {editingCard.company && <p className="text-[7px] opacity-70" style={{ color: companyColor }}>{editingCard.company}</p>}
                             </div>
 
                             {/* DYNAMIC SECTIONS REORDERING FOR LUXURY DARK */}
@@ -2813,18 +2713,29 @@ export function CustomerCardsView({
                               switch (secKey) {
                                 case 'save_contact':
                                   return (
-                                    <div 
-                                      key="sec_lux_save"
-                                      onClick={() => editingCard && saveCardToContacts(editingCard)}
-                                      className="w-full py-1 rounded-lg border border-amber-500/40 text-amber-200 flex items-center justify-center gap-1 text-[7.5px] font-bold shadow-sm cursor-pointer hover:bg-amber-500/10 transition shrink-0"
-                                    >
-                                      <Download className="h-2.5 w-2.5" />
-                                      <span>ذخیره مستقیم کارت شخصی</span>
+                                    <div key="sec_lux_save" className="grid grid-cols-2 gap-1 w-full shrink-0">
+                                      <button 
+                                        type="button"
+                                        onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                        className="w-full py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[7.5px] font-bold shadow-sm cursor-pointer hover:opacity-90 active:scale-95 transition" 
+                                        style={{ backgroundColor: btnBg, color: btnText }}
+                                      >
+                                        <Download className="h-2.5 w-2.5" />
+                                        <span>ذخیره مخاطب</span>
+                                      </button>
+                                      <button 
+                                        type="button"
+                                        className="w-full py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[7.5px] font-bold border cursor-pointer hover:opacity-90 active:scale-95 transition"
+                                        style={{ backgroundColor: `${primaryColor}15`, borderColor: `${primaryColor}40`, color: primaryColor }}
+                                      >
+                                        <Bell className="h-2.5 w-2.5" />
+                                        <span>پیوستن به کلاب</span>
+                                      </button>
                                     </div>
                                   );
                                 case 'bio':
                                   return editingCard.bio ? (
-                                    <p key="sec_lux_bio" className="text-[7.5px] leading-relaxed bg-stone-950/40 p-2 rounded-lg border border-stone-800/40 text-justify whitespace-pre-line" style={{ color: textColor }}>
+                                    <p key="sec_lux_bio" className="text-[7.5px] leading-relaxed p-2 rounded-lg border text-justify whitespace-pre-line" style={{ backgroundColor: boxBg, borderColor: borderColor, color: bioColor }}>
                                       {editingCard.bio}
                                     </p>
                                   ) : null;
@@ -3003,26 +2914,38 @@ export function CustomerCardsView({
 
                       {/* Fallback Custom Template */}
                       {isCustomTemplate && (() => {
+                        const activeTemplate = templates.find(t => 
+                          (t.id && templateId && toUUID(t.id) === toUUID(templateId)) || 
+                          t.id === templateId || 
+                          t.slug === templateId || 
+                          (t.slug && templateId && t.slug.toLowerCase() === templateId.toLowerCase())
+                        );
+
                         let tSchema: any = activeTemplate?.schema || {};
                         if (typeof tSchema === 'string') {
                           try { tSchema = JSON.parse(tSchema); } catch { tSchema = {}; }
                         }
                         const isDarkTheme = ['dark', 'neon', 'cyber', 'gold', 'glass'].includes(tSchema.theme || '') || tSchema.theme === 'dark';
-                        const tColors = tSchema.colors || {};
                         const tLayout = tSchema.layout || {};
                         const tFx = tSchema.effects || {};
                         const tTypography = tSchema.typography || {};
 
-                        const pColor = editingCard.custom_colors?.primary?.trim() ? editingCard.custom_colors.primary : (tColors.primary || tmplDefaults.primary || '#2563eb');
-                        const sColor = editingCard.custom_colors?.secondary?.trim() ? editingCard.custom_colors.secondary : (tColors.secondary || tmplDefaults.secondary || '#3b82f6');
-                        const bColor = editingCard.custom_colors?.background?.trim() ? editingCard.custom_colors.background : (tColors.background || tmplDefaults.background || '#f1f5f9');
-                        const txtColor = editingCard.custom_colors?.text?.trim() ? editingCard.custom_colors.text : (tColors.text || (isDarkTheme ? '#f8fafc' : '#0f172a'));
-                        const txtSecColor = editingCard.custom_colors?.secondary?.trim() 
-                          ? editingCard.custom_colors.secondary 
-                          : editingCard.custom_colors?.text?.trim()
-                          ? editingCard.custom_colors.text
-                          : (tColors.text_secondary || (isDarkTheme ? '#94a3b8' : '#64748b'));
-                        const customCardBg = editingCard.custom_colors?.card_bg?.trim() ? editingCard.custom_colors.card_bg : (tColors.card_bg || (isDarkTheme ? '#0f172a' : '#ffffff'));
+                        const {
+                          primaryColor: pColor,
+                          secondaryColor: sColor,
+                          bgColor: bColor,
+                          cardBgColor: customCardBg,
+                          textCol: txtColor,
+                          nameColor,
+                          jobColor,
+                          companyColor,
+                          bioColor,
+                          textSecondaryColor: txtSecColor,
+                          boxBgColor: boxBg,
+                          btnBgColor: btnBg,
+                          btnTextColor: btnText,
+                          customBorderColor: borderColor,
+                        } = getResolvedCardColors(editingCard.custom_colors, editingCard.template_id, templates);
 
                         const avatarPosition = tLayout.avatar_position || 'overlap-center';
                         const avatarShape = tLayout.avatar_shape || 'circle';
@@ -3116,16 +3039,16 @@ export function CustomerCardsView({
 
                               {/* Header Layouts */}
                               {headerStyle === 'bento' ? (
-                                <div className="p-2.5 bg-black/5 dark:bg-white/5 border border-slate-200/10 rounded-xl flex items-center gap-2">
+                                <div className="p-2.5 border rounded-xl flex items-center gap-2" style={{ backgroundColor: boxBg, borderColor: borderColor }}>
                                   {avatarPosition === 'inside-header' && (
                                     <div className={`${avatarSizeClass} overflow-hidden border shrink-0 bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
                                       <img src={getImageUrl(editingCard.profile_image) || '/profile-fallback.jpg'} alt="profile" className={`w-full h-full object-cover ${avatarRadiusClass} ${isDiamond ? '-rotate-45 scale-125' : ''}`} />
                                     </div>
                                   )}
                                   <div>
-                                    <h4 className="text-[10px] font-black">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                                    <p className="text-[8px] font-bold" style={{ color: pColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
-                                    {editingCard.company && <p className="text-[7px] opacity-70">{editingCard.company}</p>}
+                                    <h4 className="text-[10px] font-black" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                                    <p className="text-[8px] font-bold mt-0.5" style={{ color: jobColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                                    {editingCard.company && <p className="text-[7px]" style={{ color: companyColor }}>{editingCard.company}</p>}
                                   </div>
                                 </div>
                               ) : headerStyle === 'content_creator' ? (
@@ -3138,13 +3061,13 @@ export function CustomerCardsView({
                                     </div>
                                   )}
                                   <div>
-                                    <h4 className="text-[10px] font-black">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                                    <p className="text-[8px] font-bold text-pink-400">{editingCard.job_title || 'تولیدکننده محتوا'}</p>
-                                    {editingCard.company && <p className="text-[7px] opacity-70">{editingCard.company}</p>}
+                                    <h4 className="text-[10px] font-black" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                                    <p className="text-[8px] font-bold mt-0.5" style={{ color: jobColor }}>{editingCard.job_title || 'تولیدکننده محتوا'}</p>
+                                    {editingCard.company && <p className="text-[7px]" style={{ color: companyColor }}>{editingCard.company}</p>}
                                   </div>
                                 </div>
                               ) : headerStyle === 'split' ? (
-                                <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100/20">
+                                <div className="flex items-center gap-2 pb-1.5 border-b" style={{ borderColor: borderColor }}>
                                   {avatarPosition === 'inside-header' && (
                                     <div className={`${avatarSizeClass} overflow-hidden border shrink-0 bg-slate-900 ${avatarRadiusClass} ${isGlowingAvatar ? 'ring-2 ring-amber-400' : ''} ${isDiamond ? 'rotate-45 scale-90' : ''}`} style={{ borderColor: pColor }}>
                                       <img 
@@ -3155,9 +3078,9 @@ export function CustomerCardsView({
                                     </div>
                                   )}
                                   <div>
-                                    <h4 className="text-[10px] font-black">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                                    <p className="text-[8px] font-bold" style={{ color: pColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
-                                    {editingCard.company && <p className="text-[7px] opacity-70">{editingCard.company}</p>}
+                                    <h4 className="text-[10px] font-black" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                                    <p className="text-[8px] font-bold mt-0.5" style={{ color: jobColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                                    {editingCard.company && <p className="text-[7px]" style={{ color: companyColor }}>{editingCard.company}</p>}
                                   </div>
                                 </div>
                               ) : (
@@ -3172,9 +3095,9 @@ export function CustomerCardsView({
                                     </div>
                                   )}
                                   <div>
-                                    <h4 className="text-[10px] font-black">{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
-                                    <p className="text-[8px] font-bold mt-0.5" style={{ color: pColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
-                                    {editingCard.company && <p className="text-[7px] opacity-70">{editingCard.company}</p>}
+                                    <h4 className="text-[10px] font-black" style={{ color: nameColor }}>{editingCard.first_name || 'نام'} {editingCard.last_name || 'خانوادگی'}</h4>
+                                    <p className="text-[8px] font-bold mt-0.5" style={{ color: jobColor }}>{editingCard.job_title || 'سمت شغلی'}</p>
+                                    {editingCard.company && <p className="text-[7px]" style={{ color: companyColor }}>{editingCard.company}</p>}
                                   </div>
                                 </div>
                               )}
@@ -3184,27 +3107,37 @@ export function CustomerCardsView({
                                 switch (secKey) {
                                   case 'save_contact':
                                     return (
-                                      <div 
-                                        key="sec_cust_save"
-                                        onClick={() => editingCard && saveCardToContacts(editingCard)}
-                                        className={`w-full py-1.5 px-2 text-white text-center text-[7.5px] font-bold cursor-pointer hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-1 shrink-0 ${buttonRadiusClass} ${
-                                          buttonStyle === 'glass' ? 'bg-white/10 border border-white/20 backdrop-blur-md text-white' :
-                                          buttonStyle === 'gradient' ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow' :
-                                          buttonStyle === 'neon' ? 'border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.5)] text-cyan-300' :
-                                          buttonStyle === '3d-press' ? 'border-b-4 border-black/40 active:translate-y-0.5' : ''
-                                        }`} 
-                                        style={{ backgroundColor: !['glass', 'gradient', 'neon'].includes(buttonStyle) ? pColor : undefined }}
-                                      >
-                                        <Download className="h-2.5 w-2.5" />
-                                        <span>ذخیره در دفترچه مخاطبین</span>
+                                      <div key="sec_cust_save" className="grid grid-cols-2 gap-1.5 shrink-0">
+                                        <button 
+                                          type="button"
+                                          onClick={() => editingCard && saveCardToContacts(editingCard)}
+                                          className={`w-full py-1.5 px-2 font-bold flex items-center justify-center gap-1 transition hover:opacity-90 text-[7.5px] shadow-sm cursor-pointer ${buttonRadiusClass} ${
+                                            buttonStyle === 'glass' ? 'bg-white/10 border border-white/20 backdrop-blur-md text-white' :
+                                            buttonStyle === 'gradient' ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white' :
+                                            buttonStyle === 'neon' ? 'border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.5)] text-cyan-300' :
+                                            buttonStyle === '3d-press' ? 'border-b-4 border-black/40 active:translate-y-0.5' : ''
+                                          }`} 
+                                          style={{ backgroundColor: !['glass', 'gradient', 'neon'].includes(buttonStyle) ? btnBg : undefined, color: btnText, borderColor: buttonStyle === 'neon' ? pColor : undefined }}
+                                        >
+                                          <Download className="h-2.5 w-2.5" />
+                                          <span>ذخیره مخاطب</span>
+                                        </button>
+                                        <button 
+                                          type="button"
+                                          className={`w-full py-1.5 px-2 font-bold flex items-center justify-center gap-1 transition hover:opacity-90 text-[7.5px] border cursor-pointer ${buttonRadiusClass}`}
+                                          style={{ borderColor: pColor, color: pColor, backgroundColor: 'rgba(0,0,0,0.02)' }}
+                                        >
+                                          <Bell className="h-2.5 w-2.5" />
+                                          <span>پیوستن به کلاب</span>
+                                        </button>
                                       </div>
                                     );
                                   case 'bio':
                                     return editingCard.bio ? (
                                       <div 
                                         key="sec_cust_bio" 
-                                        className={bioStyle === 'card-boxed' ? "p-2 bg-black/5 dark:bg-white/5 border border-slate-200/10 rounded-xl text-[7.5px] leading-relaxed text-center whitespace-pre-line" : "text-[7.5px] leading-relaxed text-center whitespace-pre-line opacity-85"}
-                                        style={{ color: txtSecColor }}
+                                        className={bioStyle === 'card-boxed' ? "p-2 border rounded-xl text-[7.5px] leading-relaxed text-center whitespace-pre-line" : "text-[7.5px] leading-relaxed text-center whitespace-pre-line opacity-85"}
+                                        style={{ color: bioColor, backgroundColor: bioStyle === 'card-boxed' ? boxBg : undefined, borderColor: borderColor }}
                                       >
                                         {editingCard.bio}
                                       </div>

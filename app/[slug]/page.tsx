@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { dbService, Card, Template, getImageUrl, parseCardFields, getSectionOrders, toUUID, toPersianDigits, toEnglishDigits } from '../../lib/directus';
+import { getResolvedCardColors } from '../../lib/cardColors';
 import { saveCardToContacts } from '../../lib/vcard';
 import { StyledQRCode } from '../../components/ui/StyledQRCode';
 import { downloadStyledQRCode } from '../../lib/styledQrCode';
@@ -631,149 +632,23 @@ export default function PublicCardPage() {
   const isLuxuryDark = cleanTId === 'temp-6' || cleanTId === 'luxury-dark' || cleanTUuid === '66666666-6666-6666-6666-666666666666';
   const isCustomTemplate = !isClassic && !isBento && !isContentCreator && !isNeonGlass && !isMinimal && !isLuxuryDark;
 
-  // Template Default Colors Fallback with full granular tokens
-  let tmplDefaults: Record<string, string> = {
-    primary: '#2563eb',
-    secondary: '#3b82f6',
-    background: '#f1f5f9',
-    card_bg: '#ffffff',
-    text: '#1e293b',
-    name_color: '#1e293b',
-    job_color: '#2563eb',
-    company_color: '#64748b',
-    bio_color: '#334155',
-    text_secondary: '#64748b',
-    box_bg: '#f8fafc',
-    btn_bg: '#2563eb',
-    btn_text: '#ffffff',
-    border_color: '#e2e8f0',
-  };
-
-  if (isBento) {
-    tmplDefaults = {
-      primary: '#6366f1',
-      secondary: '#8b5cf6',
-      background: '#0f172a',
-      card_bg: '#1e293b',
-      text: '#f8fafc',
-      name_color: '#ffffff',
-      job_color: '#818cf8',
-      company_color: '#94a3b8',
-      bio_color: '#cbd5e1',
-      text_secondary: '#94a3b8',
-      box_bg: '#0f172a80',
-      btn_bg: '#6366f1',
-      btn_text: '#ffffff',
-      border_color: '#334155',
-    };
-  } else if (isContentCreator) {
-    tmplDefaults = {
-      primary: '#ec4899',
-      secondary: '#8b5cf6',
-      background: '#09090b',
-      card_bg: '#18181b',
-      text: '#fafafa',
-      name_color: '#ffffff',
-      job_color: '#f472b6',
-      company_color: '#a1a1aa',
-      bio_color: '#e4e4e7',
-      text_secondary: '#a1a1aa',
-      box_bg: '#27272a80',
-      btn_bg: '#ec4899',
-      btn_text: '#ffffff',
-      border_color: '#3f3f46',
-    };
-  } else if (isLuxuryDark) {
-    tmplDefaults = {
-      primary: '#f59e0b',
-      secondary: '#d97706',
-      background: '#0c0a09',
-      card_bg: '#1c1917',
-      text: '#fef3c7',
-      name_color: '#fef3c7',
-      job_color: '#f59e0b',
-      company_color: '#d97706',
-      bio_color: '#e7e5e4',
-      text_secondary: '#a8a29e',
-      box_bg: '#292524',
-      btn_bg: '#f59e0b',
-      btn_text: '#1c1917',
-      border_color: '#78350f',
-    };
-  } else if (isNeonGlass) {
-    tmplDefaults = {
-      primary: '#06b6d4',
-      secondary: '#3b82f6',
-      background: '#050814',
-      card_bg: '#0f172a',
-      text: '#ffffff',
-      name_color: '#ffffff',
-      job_color: '#06b6d4',
-      company_color: '#38bdf8',
-      bio_color: '#cbd5e1',
-      text_secondary: '#94a3b8',
-      box_bg: '#1e293b',
-      btn_bg: '#06b6d4',
-      btn_text: '#050814',
-      border_color: '#06b6d4',
-    };
-  } else if (isMinimal) {
-    tmplDefaults = {
-      primary: '#0f172a',
-      secondary: '#475569',
-      background: '#f8fafc',
-      card_bg: '#ffffff',
-      text: '#0f172a',
-      name_color: '#0f172a',
-      job_color: '#334155',
-      company_color: '#64748b',
-      bio_color: '#334155',
-      text_secondary: '#64748b',
-      box_bg: '#f1f5f9',
-      btn_bg: '#0f172a',
-      btn_text: '#ffffff',
-      border_color: '#e2e8f0',
-    };
-  } else if (isCustomTemplate) {
-    const matchedTemp = templates.find(t => toUUID(t.id) === cleanTUuid || (t.slug && t.slug.toLowerCase() === cleanTId));
-    const schemaColors = matchedTemp?.schema?.default_colors || matchedTemp?.schema?.colors || (matchedTemp as any)?.default_colors;
-    if (schemaColors) {
-      tmplDefaults = {
-        primary: schemaColors.primary || tmplDefaults.primary,
-        secondary: schemaColors.secondary || tmplDefaults.secondary,
-        background: schemaColors.background || tmplDefaults.background,
-        card_bg: schemaColors.card_bg || tmplDefaults.card_bg,
-        text: schemaColors.text || tmplDefaults.text,
-        name_color: schemaColors.name_color || schemaColors.text || tmplDefaults.text,
-        job_color: schemaColors.job_color || schemaColors.primary || tmplDefaults.primary,
-        company_color: schemaColors.company_color || schemaColors.text_secondary || tmplDefaults.company_color,
-        bio_color: schemaColors.bio_color || schemaColors.text || tmplDefaults.text,
-        text_secondary: schemaColors.text_secondary || tmplDefaults.text_secondary,
-        box_bg: schemaColors.box_bg || tmplDefaults.box_bg,
-        btn_bg: schemaColors.btn_bg || schemaColors.primary || tmplDefaults.btn_bg,
-        btn_text: schemaColors.btn_text || tmplDefaults.btn_text,
-        border_color: schemaColors.border_color || tmplDefaults.border_color,
-      };
-    }
-  }
-
-  // Priority logic: User's custom_colors overrides template defaults
-  const primaryColor = card.custom_colors?.primary?.trim() ? card.custom_colors.primary : tmplDefaults.primary;
-  const secondaryColor = card.custom_colors?.secondary?.trim() ? card.custom_colors.secondary : tmplDefaults.secondary;
-  const bgColor = card.custom_colors?.background?.trim() ? card.custom_colors.background : tmplDefaults.background;
-  const textCol = card.custom_colors?.text?.trim() ? card.custom_colors.text : tmplDefaults.text;
-  const cardBgColor = card.custom_colors?.card_bg?.trim() ? card.custom_colors.card_bg : tmplDefaults.card_bg;
-
-  // Granular color overrides
-  const nameColor = card.custom_colors?.name_color?.trim() ? card.custom_colors.name_color : (tmplDefaults.name_color || textCol);
-  const jobColor = card.custom_colors?.job_color?.trim() ? card.custom_colors.job_color : (tmplDefaults.job_color || primaryColor);
-  const companyColor = card.custom_colors?.company_color?.trim() ? card.custom_colors.company_color : (tmplDefaults.company_color || card.custom_colors?.text_secondary || tmplDefaults.text_secondary || textCol);
-  const bioColor = card.custom_colors?.bio_color?.trim() ? card.custom_colors.bio_color : (tmplDefaults.bio_color || textCol);
-  const textSecondaryColor = card.custom_colors?.text_secondary?.trim() ? card.custom_colors.text_secondary : (tmplDefaults.text_secondary || '#64748b');
-  const boxBgColor = card.custom_colors?.box_bg?.trim() ? card.custom_colors.box_bg : (tmplDefaults.box_bg || 'rgba(0, 0, 0, 0.03)');
-  const btnBgColor = card.custom_colors?.btn_bg?.trim() ? card.custom_colors.btn_bg : (tmplDefaults.btn_bg || primaryColor);
-  const btnTextColor = card.custom_colors?.btn_text?.trim() ? card.custom_colors.btn_text : (tmplDefaults.btn_text || '#ffffff');
-  const customBorderColor = card.custom_colors?.border_color?.trim() ? card.custom_colors.border_color : (tmplDefaults.border_color || 'rgba(0, 0, 0, 0.08)');
+  // Unified Color Calculation from shared cardColors library
+  const {
+    primaryColor,
+    secondaryColor,
+    bgColor,
+    cardBgColor,
+    textCol,
+    nameColor,
+    jobColor,
+    companyColor,
+    bioColor,
+    textSecondaryColor,
+    boxBgColor,
+    btnBgColor,
+    btnTextColor,
+    customBorderColor,
+  } = getResolvedCardColors(card.custom_colors, card.template_id, templates);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-0 sm:p-4 rtl text-right font-sans relative" dir="rtl" style={{ backgroundColor: bgColor, fontFamily: 'var(--font-vazirmatn), sans-serif' }}>
